@@ -238,6 +238,10 @@ colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 lambdaquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambdaquantiles) <- c("agemid", "low95", "median", "up95")
 
+wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"w"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
+
+
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("model fit") +
@@ -257,7 +261,13 @@ lambda <- ggplot() + theme_bw() + ggtitle("FOI") +
 
 lambda #full screen
 
+w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
+  geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("Maternal immunity") 
 
+
+w #full screen
 
 
 
