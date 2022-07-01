@@ -113,7 +113,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
 # THETA ---------------------------------------------------------
 
 # A = mean FOI (proportion infected per day)
-theta <- c(A=0.05) # these are just random values, to be fitted
+theta <- c(A=0.02) # these are just random values, to be fitted
 
 
 # INITS ---------------------------------------------------------
@@ -186,7 +186,7 @@ nchains <- 2
 cpus <- 1 # or 2 if you want parallel, but it does not seem to be faster?
 mcmc_settings <- list(iterations = 2*80000, 
                       nrChains = nchains)
-sampler <- "DEzs"
+sampler <- "Metropolis"
 
 if (cpus == 1) {
   bayesianSetup <- createBayesianSetup(prior = prior,
@@ -202,7 +202,7 @@ if (cpus == 1) {
 
 # DIAGNOSTICS -----------------------------------------------
 
-plot(trace) #put plot in full screen to work
+plot(trace) 
 
 # burn-in
 nburn <- 10000
@@ -215,7 +215,7 @@ gelmanDiagnostics(trace, plot=TRUE, start=nburn)
 
 # remove burn-in for trajsim simulation
 tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal) #put in full screen to work
+plot(tracefinal)
 effectiveSize(tracefinal)
 
 # Posterior summary
