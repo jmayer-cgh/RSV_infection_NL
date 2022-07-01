@@ -117,12 +117,12 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
 # THETA ---------------------------------------------------------
 
 # A = mean FOI (proportion infected per day)
-# w = rate of waning maternal immunity
+# B = rate of waning maternal immunity
 theta <- c(A=0.02, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
-inits <- c(M = 1, S=1-1e-12, Z=1e-12) # initial conditions for the states (as proportions)
+inits <- c(M=1-1e-12-1e-12, S=1e-12, Z=1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
 # SIMULATION TIME  ---------------------------------------------------------
