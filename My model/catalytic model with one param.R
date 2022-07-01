@@ -232,6 +232,7 @@ trajquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quant
 colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambdaquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+
 colnames(lambdaquantiles) <- c("agemid", "low95", "median", "up95")
 
 
