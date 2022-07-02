@@ -50,7 +50,6 @@ data <- data %>%
   )
 
 data <- data %>% dplyr::group_by(agegrp, season_birth) %>% 
-  #dplyr::group_by(season_birth)%>%
   dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
                    N=n(), # Total N in age group
                    nconv=sum(infection)) # n seroconverted in age group
@@ -113,11 +112,11 @@ model <- function(theta, age, inits) {
     S_sm = exp(state[5]) # susceptible
     Z_sm = exp(state[6]) # seroconverted after infection
     M_au = exp(state[7]) # proportion with maternal immunity
-    S_au = exp(state[7]) # susceptible
-    Z_au = exp(state[8]) # seroconverted after infection
-    M_wt = exp(state[9]) # proportion with maternal immunity
-    S_wt = exp(state[10]) # susceptible
-    Z_wt = exp(state[11]) # seroconverted after infection
+    S_au = exp(state[8]) # susceptible
+    Z_au = exp(state[9]) # seroconverted after infection
+    M_wt = exp(state[10]) # proportion with maternal immunity
+    S_wt = exp(state[11]) # susceptible
+    Z_wt = exp(state[12]) # seroconverted after infection
     
     # changes in states
     dM_sp = - mu*M_sp
@@ -125,7 +124,7 @@ model <- function(theta, age, inits) {
     dZ_sp = + lambda_sp*S_sp
     dM_sm = - mu*M_sm
     dS_sm = + mu*M_sm - lambda_sm*S_sm
-    dZ_sm = + lambda_sp*S_sm
+    dZ_sm = + lambda_sm*S_sm
     dM_au = - mu*M_au
     dS_au = + mu*M_au - lambda_au*S_au
     dZ_au = + lambda_au*S_au
@@ -135,7 +134,7 @@ model <- function(theta, age, inits) {
     
     return(list(c(dM_sp/M_sp,dS_sp/S_sp, dZ_sp/Z_sp,
                   dM_sm/M_sm,dS_sm/S_sm, dZ_sm/Z_sm,
-                  dM_au/M_sp,dS_au/S_au, dZ_au/Z_au,
+                  dM_au/M_au,dS_au/S_au, dZ_au/Z_au,
                   dM_wt/M_wt,dS_wt/S_wt, dZ_wt/Z_wt),
                   lambda_sp=lambda_sp,lambda_sm=lambda_sm,
                   lambda_au=lambda_au,lambda_wt=lambda_wt,mu=mu))
@@ -210,10 +209,10 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
 theta <- c(P = 0.02, M = 0.02, A=0.02, W = 0.02, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
-inits <- c(M_sp=0.25-1e-12-1e-12, S_sp=1e-12, Z_sp=1e-12,
-           M_sm=0.25-1e-12-1e-12, S_sm=1e-12, Z_sm=1e-12,
-           M_au=0.25-1e-12-1e-12, S_au=1e-12, Z_au=1e-12,
-           M_wt=0.25-1e-12-1e-12, S_wt=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
+inits <- c(M_sp=0.25-8e-12, S_sp=1e-12, Z_sp=1e-12,
+           M_sm=0.25-8e-12, S_sm=1e-12, Z_sm=1e-12,
+           M_au=0.25-8e-12, S_au=1e-12, Z_au=1e-12,
+           M_wt=0.25-8e-12, S_wt=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
 # SIMULATION TIME  ---------------------------------------------------------
