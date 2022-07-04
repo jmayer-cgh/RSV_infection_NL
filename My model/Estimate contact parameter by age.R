@@ -139,7 +139,8 @@ data <- data %>%
     )
   )
 
-# Infection by age
+
+# Infection by age--------------------------------------------------------------
 tab <- table(data$agegrp, data$infection)
 ptab <- prop.table(tab, margin=1)
 dframe <- data.frame(values=rownames(tab), infected=ptab[,2])
@@ -151,9 +152,28 @@ p<-ggplot(data=dframe, aes(x=values, y=infected, fill = values)) +
 p
 
 
-# Contacts by age
+# Contacts by age---------------------------------------------------------------
 data %>% filter(complete.cases(contacttotal)) %>% 
   group_by(agegrp) %>% 
   ggplot(aes(x=agegrp,y=contacttotal,fill=factor(infection)))+geom_boxplot()+
   labs(title="Total number of contacts by age and infection status",
        x ="Age in days", y = "Total contacts", fill = "Infection status") 
+
+#Correlation between total number of contacts and age
+contacts <- data %>% filter(complete.cases(contacttotal))
+cor(contacts$agegrp, contacts$contacttotal)
+
+n <- unique(data$agegrp)
+a <- seq(1, 19)
+linearMod <- lm(contacttotal ~ age_days, data=data)  # build linear regression model on full data
+print(linearMod)
+
+groups <- arrange(data, agegrp)
+head(groups$agemid)
+
+contacts <- groups %>% filter(complete.cases(contacttotal))
+linearMod <- lm(contacttotal ~ agemid, data=contacts)  # build linear regression model on full data
+print(linearMod)
+plot(linearMod)
+
+
