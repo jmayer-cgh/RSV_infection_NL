@@ -58,6 +58,76 @@ data <- data %>% dplyr::group_by(agegrp, season_birth) %>%
 data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data$nconv, data$N, method="exact")[,c("mean","lower","upper")]
 
 
+# Get proportion of children born in each season for each age group
+get_proportions <- function (dframe){
+  agegrp <- c(0)
+  season_birth <- c("Pomme")
+  agemid <- c (0)
+  N <- c(0)
+  nconv <- c(0)
+  seroprev_mean <- c(0)
+  seroprev_low95 <- c(0)
+  seroprev_up95 <- c(0)
+  prop <- c(0)
+  df <- data.frame(agegrp, season_birth, agemid, N, nconv, seroprev_mean, seroprev_low95, seroprev_up95, prop)
+  
+  groups <- unique(dframe$agegrp)
+  
+  for (gp in groups){
+    subs <- subset (dframe, agegrp == gp)
+    subs$agegrp <- as.double(subs$agegrp)
+    subs$prop <- subs$N/sum(subs$N)
+    df_list <- list(df, subs)
+    df <- df_list %>% reduce(full_join)
+  }
+  return (df)
+}
+
+prop.df<- get_proportions(data)
+prop.df <- prop.df[-c(1), ]
+
+# Plot the proportions of children born in each season
+
+p <- ggplot(prop.df, aes(x = agegrp, y=prop, fill = season_birth)) + 
+  geom_bar(stat="identity", position = "dodge") +
+  labs(title="Proportion born in each season by age group",
+                                 x ="Age group", y = "Proportion") +
+  scale_fill_discrete(name="Season")
+p
+
+born_spring <- prop.df%>%filter(season_birth == "Spring")
+sp <- ggplot(born_spring, aes(x = agegrp, y=prop)) + 
+  geom_bar(stat="identity", fill = "lightgreen") +
+  labs(title="Proportion born in spring by age group",
+       x ="Age group", y = "Proportion") 
+sp
+
+born_summer <- prop.df%>%filter(season_birth == "Summer")
+sm <- ggplot(born_summer, aes(x = agegrp, y=prop)) + 
+  geom_bar(stat="identity", fill = "lightblue") +
+  labs(title="Proportion born in summer by age group",
+       x ="Age group", y = "Proportion") 
+sm
+
+born_autumn <- prop.df%>%filter(season_birth == "Autumn")
+au <- ggplot(born_autumn, aes(x = agegrp, y=prop)) + 
+  geom_bar(stat="identity", fill = "red") +
+  labs(title="Proportion born in autumn by age group",
+       x ="Age group", y = "Proportion") 
+au
+
+born_winter <- prop.df%>%filter(season_birth == "Winter")
+wt <- ggplot(born_winter, aes(x = agegrp, y=prop)) + 
+  geom_bar(stat="identity", fill = "purple") +
+  labs(title="Proportion born in winter by age group",
+       x ="Age group", y = "Proportion") 
+wt
+
+mean_sp <- median(born_spring$prop) #median proportion of children born in spring
+mean_sm <- median(born_summer$prop) #median proportion of children born in summer
+mean_au <- median(born_autumn$prop) #median proportion of children born in autumn
+mean_wt <- median(born_winter$prop) #median proportion of children born in winter
+
 # Plot the whole data frame (difficult to read)
 ggplot(data) +
   geom_point(aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
@@ -117,10 +187,10 @@ model <- function(theta, age, inits) {
     
     # changes in states
     dM = -mu*M
-    dS_sp = + mu*M*0.25 - lambda_sp*S_sp #chnage 0.25 to the proportion of children born in spring
-    dS_sm = + mu*M*0.25 - lambda_sm*S_sm
-    dS_au = + mu*M*0.25 - lambda_au*S_au
-    dS_wt = + mu*M*0.25 - lambda_wt*S_wt
+    dS_sp = + mu*M*0.26 - lambda_sp*S_sp #0.26 is the median proportion of children born in spring
+    dS_sm = + mu*M*0.29 - lambda_sm*S_sm #0.29 is the median proportion of children born in summer
+    dS_au = + mu*M*0.24 - lambda_au*S_au #0.24 is the median proportion of children born in autumn
+    dS_wt = + mu*M*0.20 - lambda_wt*S_wt #0.20 is the median proportion of children born in winter
     dZ = + lambda_sp*S_sp + lambda_sm*S_sm + lambda_au*S_au + lambda_wt*S_wt
     
     return(list(c(dM/M,dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, dS_wt/S_wt, dZ/Z), 
@@ -288,7 +358,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "trace_FOI_w_all_season_together.rds")
+saveRDS(trace, "trace_FOI_w_all_season_together_prop.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
