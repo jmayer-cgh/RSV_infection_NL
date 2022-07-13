@@ -176,7 +176,7 @@ agepred <- spring.df$agemid
 
 # TEST MODEL  ---------------------------------------------------------
 
-test <- model_sp(theta, agepred, inits)
+test2 <- model_sp(theta, agepred, inits)
 ggplot(test) + geom_line(aes(x=time, y=conv))
 ggplot(test) + geom_line(aes(x=time, y=lambda)) #should be constant
 ggplot(test) + geom_line(aes(x=time, y=w))

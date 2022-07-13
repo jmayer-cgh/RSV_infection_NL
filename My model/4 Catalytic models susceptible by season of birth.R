@@ -178,73 +178,40 @@ ggplot(winter.df) +
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is why we log-transform them when in the model input and exponentiate them inside the model
 
-model <- function(theta, age, inits) {
+model_sp <- function(theta, age, inits) {
   
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
     lambda_sp = param[["P"]] + age * 0 #constant FOI for children born in spring, age will be added later
-    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer, age will be added later
-    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn, age will be added later
-    lambda_wt = param [["W"]] + age*0 #constant FOI for children born in winter, age will be added later
-    
     # waning maternal immunity, same for all children
-    mu = param[["B"]] 
+    mu_sp = param[["B"]] 
     
     # states 
     # proportion with maternal immunity
     M_sp = exp(state[1]) # born in spring
-    M_sm = exp(state[2]) # born in summer
-    M_au = exp(state[3]) # born in autumn
-    M_wt = exp(state[4]) # born in winter
     # Susceptible
-    S_sp = exp(state[5]) # susceptible born in spring
-    S_sm = exp(state[6]) # susceptible born in summer
-    S_au = exp(state[7]) #susceptible born in autumn
-    S_wt = exp(state[8]) #susceptible born in winter
+    S_sp = exp(state[2]) # susceptible born in spring
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in spring
-    Z_sm = exp(state[10]) # seroconverted after infection born in summer
-    Z_au = exp(state[11]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[12]) # seroconverted after infection born in winter
-    Z_all = c(Z_sp, Z_sm, Z_au, Z_wt)
+    Z_sp = exp(state[3]) # seroconverted after infection born in spring
     
     # changes in states
-    dM_sp = -mu*M_sp
-    dM_sm = -mu*M_sm
-    dM_au = -mu*M_au
-    dM_wt = -mu*M_wt
-    dS_sp = + mu*M_sp - lambda_sp*S_sp 
-    dS_sm = + mu*M_sm - lambda_sm*S_sm 
-    dS_au = + mu*M_au - lambda_au*S_au 
-    dS_wt = + mu*M_wt - lambda_wt*S_wt
+    dM_sp = - mu_sp*M_sp
+    dS_sp = + mu_sp*M_sp - lambda_sp*S_sp 
     dZ_sp = + lambda_sp*S_sp
-    dZ_sm = + lambda_sm*S_sm 
-    dZ_au = + lambda_au*S_au
-    dZ_wt = + lambda_wt*S_wt
-    
-    return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
-                  dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, dS_wt/S_wt, 
-                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt), 
-                lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
-                lambda_au = lambda_au, lambda_wt = lambda_wt,
-                mu=mu, Z_all = Z_all))
+   
+    return(list(c(dM_sp/M_sp,
+                  dS_sp/S_sp, 
+                  dZ_sp/Z_sp), 
+                lambda_sp=lambda_sp,
+                mu_sp=mu_sp))
     
     
   }
   
-traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
-                             M_sm=log(inits[["M_sm"]]),
-                             M_au=log(inits[["M_au"]]),
-                             M_wt=log(inits[["M_wt"]]),
-                             S_sp=log(inits[["S_sp"]]),
-                             S_sm=log(inits[["S_sm"]]),
-                             S_au=log(inits[["S_au"]]),
-                             S_wt=log(inits[["S_wt"]]),
-                             Z_sp=log(inits[["Z_sp"]]),
-                             Z_sm=log(inits[["Z_sm"]]),
-                             Z_au=log(inits[["Z_au"]]),
-                             Z_wt=log(inits[["Z_wt"]])),
+traj <- data.frame(ode(y=c(M_sp=log(inits[["M"]]),
+                             S_sp=log(inits[["S"]]),
+                             Z_sp=log(inits[["Z"]])),
                          times=age, 
                          func=catalytic, 
                          parms=theta, 
@@ -253,8 +220,150 @@ traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
   
 
   
-  traj$conv <- exp(traj$Z_sp +traj$Z_sm + traj$Z_au + traj$Z_wt) # cumulative seroconversion (=observed state)
-  traj$inc <- c(inits[["Z_sp"]]+inits[["Z_sm"]]+inits[["Z_au"]]+inits[["Z_wt"]], diff(exp(traj$Z_sp +traj$Z_sm + traj$Z_au + traj$Z_wt))) # incident seroconversion
+  traj$conv <- exp(traj$Z_sp) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits[["Z"]], diff(exp(traj$Z_sp))) # incident seroconversion
+  
+  return(traj)
+  
+}
+
+model_sm <- function(theta, age, inits) {
+  
+  catalytic <- function(age, state, param) {
+    
+    # FOI / seroconversion rate
+    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer, age will be added later
+    
+    # waning maternal immunity, same for all children
+    mu_sm = param[["B"]] 
+    
+    # states 
+    M_sm = exp(state[1]) # born in summer
+    S_sm = exp(state[2]) # susceptible born in summer
+    Z_sm = exp(state[3]) # seroconverted after infection born in summer
+    
+    # changes in states
+    dM_sm = -mu_sm*M_sm
+    dS_sm = + mu_sm*M_sm - lambda_sm*S_sm 
+    dZ_sm = + lambda_sm*S_sm 
+    
+    return(list(c(dM_sm/M_sm,dS_sm/S_sm,dZ_sm/Z_sm), lambda_sm = lambda_sm,
+                mu_sm=mu_sm))
+    
+    
+  }
+  
+  traj <- data.frame(ode(y=c(M_sm=log(inits[["M"]]),
+                             S_sm=log(inits[["S"]]),
+                             Z_sm=log(inits[["Z"]])),
+                         times=age, 
+                         func=catalytic, 
+                         parms=theta, 
+                         method="lsoda",
+                         verbose=F))
+  
+  
+  
+  traj$conv <- exp(traj$Z_sm) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits[["Z"]], diff(exp(traj$Z_sm))) # incident seroconversion
+  
+  return(traj)
+  
+}
+
+model_au <- function(theta, age, inits) {
+  
+  catalytic <- function(age, state, param) {
+    
+    # FOI / seroconversion rate
+    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn, age will be added later
+    
+    # waning maternal immunity, same for all children
+    mu_au = param[["B"]] 
+    
+    # states 
+    # proportion with maternal immunity
+    M_au = exp(state[1]) # born in autumn
+    # Susceptible
+    S_au = exp(state[2]) #susceptible born in autumn
+    #Seroconverted
+    Z_au = exp(state[3]) # seroconverted after infection born in autumn
+    
+    # changes in states
+    dM_au = -mu_au*M_au
+    dS_au = + mu_au*M_au - lambda_au*S_au 
+    dZ_au = + lambda_au*S_au
+    
+    return(list(c(dM_au/M_au,
+                  dS_au/S_au, dZ_au/Z_au), 
+                lambda_au = lambda_au, 
+                mu_au=mu_au))
+    
+    
+  }
+  
+  traj <- data.frame(ode(y=c(M_au=log(inits[["M"]]),
+                             S_au=log(inits[["S"]]),
+                             Z_au=log(inits[["Z"]])),
+                         times=age, 
+                         func=catalytic, 
+                         parms=theta, 
+                         method="lsoda",
+                         verbose=F))
+  
+  
+  
+  traj$conv <- exp(traj$Z_au) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits[["Z"]], diff(exp(traj$Z_au)))
+  return(traj)
+  
+}
+
+model_wt <- function(theta, age, inits) {
+  
+  catalytic <- function(age, state, param) {
+    
+    # FOI / seroconversion rate
+    lambda_wt = param [["W"]] + age*0 #constant FOI for children born in winter, age will be added later
+    
+    # waning maternal immunity, same for all children
+    mu_wt = param[["B"]] 
+    
+    # states 
+    # proportion with maternal immunity
+    M_wt = exp(state[1]) # born in winter
+    # Susceptible
+    S_wt = exp(state[2]) #susceptible born in winter
+    #Seroconverted
+    Z_wt = exp(state[3]) # seroconverted after infection born in winter
+    
+    # changes in states
+    dM_wt = -mu_wt*M_wt
+    dS_wt = + mu_wt*M_wt - lambda_wt*S_wt
+    dZ_wt = + lambda_wt*S_wt
+    
+    return(list(c(dM_wt/M_wt,
+                 dS_wt/S_wt, 
+                  dZ_wt/Z_wt), 
+                 lambda_wt = lambda_wt,
+                mu_wt=mu_wt))
+    
+    
+  }
+  
+  traj <- data.frame(ode(y=c(M_wt=log(inits[["M"]]),
+                             S_wt=log(inits[["S"]]),
+                             Z_wt=log(inits[["Z"]])),
+                         times=age, 
+                         func=catalytic, 
+                         parms=theta, 
+                         method="lsoda",
+                         verbose=F))
+  
+  
+  
+  traj$conv <- exp(traj$Z_wt) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits[["Z"]], diff(exp(traj$Z_wt))) # incident seroconversion
   
   return(traj)
   
@@ -296,20 +405,30 @@ theta <- c(P=0.02, M=0.02, A=0.02, W=0.02, B = 0.01) # these are just random val
 
 # INITS ---------------------------------------------------------
 
-inits <- c(M_sp=0.26*(1-8*1e-12), M_sm = 0.29*(1-8*1e-12), M_au= 0.24*(1-8*1e-12), M_wt = 0.20*(1-8*1e-12),
+'#inits <- c(M_sp=0.26*(1-8*1e-12), M_sm = 0.29*(1-8*1e-12), M_au= 0.24*(1-8*1e-12), M_wt = 0.20*(1-8*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
            Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
+#'
+
+inits <- c(M=1-1e-12-1e-12, S=1e-12, Z=1e-12)
 
 # SIMULATION TIME  ---------------------------------------------------------
 data <- arrange(data, agemid)
 agepred <- data$agemid
+agepred_sp <- spring.df$agemid
+agepred_sm <- summer.df$agemid
+agepred_au <- autumn.df$agemid
+agepred_wt <- winter.df$agemid
 
 # TEST MODEL  --------------------------------------------------------
-test <- model(theta, agepred, inits)
-ggplot(test) + geom_line(aes(x=time, y=conv))
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) #should be constant
-ggplot(test) + geom_line(aes(x=time, y=mu))
+test_sp <- model_sp(theta, agepred_sp, inits)
+test_sm <- model_sm(theta, agepred_sm, inits)
+test_au <- model_au(theta, agepred_au, inits)
+test_wt <- model_wt(theta, agepred_wt, inits)
+ggplot(test_wt) + geom_line(aes(x=time, y=conv))
+ggplot(test_sm) + geom_line(aes(x=time, y=lambda_sm)) #should be constant
+ggplot(test_sp) + geom_line(aes(x=time, y=mu_sp))
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
@@ -330,22 +449,60 @@ loglik <- function(theta, age, data, model, inits) {
   
 } 
 
-# Test function
-loglik(theta, agepred, data, model, inits)
+# Test function for each season
+loglik(theta, agepred_sp, spring.df, model_sp, inits) # spring
+loglik(theta, agepred_sm, summer.df, model_sm, inits) # summer
+loglik(theta, agepred_au, autumn.df, model_au, inits) # autumn
+loglik(theta, agepred_wt, winter.df, model_wt, inits) # winter
 
 # Wrapper for BT: loglik can only take the fitted parameters as argument
-loglik_wrapper <- function(par) {
+loglik_wrapper_sp <- function(par) {
   
   parX = theta
   parX[index] = par
   
   return(loglik(theta = parX,
-                age = agepred, 
-                data = data,
-                model = match.fun(model),
+                age = agepred_sp, 
+                data = spring.df,
+                model = match.fun(model_sp),
                 inits = inits))
 } 
 
+loglik_wrapper_sm <- function(par) {
+  
+  parX = theta
+  parX[index] = par
+  
+  return(loglik(theta = parX,
+                age = agepred_sm, 
+                data = summer.df,
+                model = match.fun(model_sm),
+                inits = inits))
+}
+
+loglik_wrapper_au <- function(par) {
+  
+  parX = theta
+  parX[index] = par
+  
+  return(loglik(theta = parX,
+                age = agepred_au, 
+                data = autumn.df,
+                model = match.fun(model_au),
+                inits = inits))
+}
+
+loglik_wrapper_wt <- function(par) {
+  
+  parX = theta
+  parX[index] = par
+  
+  return(loglik(theta = parX,
+                age = agepred_wt, 
+                data = winter.df,
+                model = match.fun(model_wt),
+                inits = inits))
+}
 # FITTING -------------------------------------------
 
 # Estimated params
@@ -367,75 +524,136 @@ mcmc_settings <- list(iterations = 2*80000,
 sampler <- "Metropolis"
 
 if (cpus == 1) {
-  bayesianSetup <- createBayesianSetup(prior = prior,
-                                       likelihood = loglik_wrapper,
+  #spring
+  bayesianSetup_sp <- createBayesianSetup(prior = prior,
+                                       likelihood = loglik_wrapper_sp,
                                        names = names(theta[index]),
                                        parallel = FALSE)
   
-  system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
+  system.time({trace_sp <- runMCMC(bayesianSetup = bayesianSetup_sp, 
                                 sampler = sampler, 
                                 settings = mcmc_settings)})
+  
+  #summer
+  bayesianSetup_sm <- createBayesianSetup(prior = prior,
+                                          likelihood = loglik_wrapper_sm,
+                                          names = names(theta[index]),
+                                          parallel = FALSE)
+  
+  system.time({trace_sm <- runMCMC(bayesianSetup = bayesianSetup_sm, 
+                                   sampler = sampler, 
+                                   settings = mcmc_settings)})
+  
+  #autumn
+  bayesianSetup_au <- createBayesianSetup(prior = prior,
+                                          likelihood = loglik_wrapper_au,
+                                          names = names(theta[index]),
+                                          parallel = FALSE)
+  
+  system.time({trace_au <- runMCMC(bayesianSetup = bayesianSetup_au, 
+                                   sampler = sampler, 
+                                   settings = mcmc_settings)})
+  
+  # winter
+  bayesianSetup_wt <- createBayesianSetup(prior = prior,
+                                          likelihood = loglik_wrapper_wt,
+                                          names = names(theta[index]),
+                                          parallel = FALSE)
+  
+  system.time({trace_wt <- runMCMC(bayesianSetup = bayesianSetup_wt, 
+                                   sampler = sampler, 
+                                   settings = mcmc_settings)})
   
 }
 
 # DIAGNOSTICS -----------------------------------------------
 
-plot(trace) 
+plot(trace_sp)
+plot(trace_sm) 
+plot(trace_au)
+plot(trace_wt) 
 
 # burn-in
 nburn <- 10000
-plot(trace, parametersOnly = TRUE, start =nburn)
+plot(trace_sp, parametersOnly = TRUE, start=nburn)
+plot(trace_sm, parametersOnly = TRUE, start=nburn)
+plot(trace_au, parametersOnly = TRUE, start=nburn)
+plot(trace_wt, parametersOnly = TRUE, start=nburn)
 
 # check convergence and correlations
-gelmanDiagnostics(trace, plot=TRUE, start=nburn)
-correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
-marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
+gelmanDiagnostics(trace_sp, plot=TRUE, start=nburn)
+gelmanDiagnostics(trace_sm, plot=TRUE, start=nburn)
+gelmanDiagnostics(trace_au, plot=TRUE, start=nburn)
+gelmanDiagnostics(trace_wt, plot=TRUE, start=nburn)
+correlationPlot(getSample(trace_sp, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
+marginalPlot(trace_sp, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
 
 # remove burn-in for trajsim simulation
-tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal)
-effectiveSize(tracefinal)
+tracefinal_sp <- getSample(trace_sp, parametersOnly = TRUE, coda=TRUE, start=nburn)
+plot(tracefinal_sp)
+effectiveSize(tracefinal_sp)
+
+tracefinal_sm <- getSample(trace_sm, parametersOnly = TRUE, coda=TRUE, start=nburn)
+plot(tracefinal_sm)
+effectiveSize(tracefinal_sm)
+
+tracefinal_au <- getSample(trace_au, parametersOnly = TRUE, coda=TRUE, start=nburn)
+tracefinal_wt <- getSample(trace_wt, parametersOnly = TRUE, coda=TRUE, start=nburn)
 
 # Posterior summary
-summary(tracefinal)
+summary(tracefinal_sp)
+summary(tracefinal_sm)
 
 # save the trace
-saveRDS(trace, "trace_FOI_w_all_season_together_prop.rds")
+#saveRDS(trace_sp, "trace_FOI_w_all_season_together_prop.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
 
 # Calculate simulated trajectory quantiles
-trajsim <- maketrajsim(tracefinal, theta, agepred, model, inits, 1000)
+trajsim <- maketrajsim(tracefinal_sp, theta, agepred_sp, model_sp, inits, 1000)
 trajquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambda_spquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
 
-lambda_smquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+trajsim_sm <- maketrajsim(tracefinal_sm, theta, agepred_sm, model_sm, inits, 1000)
+trajquantiles_sm <- plyr::ddply(.data=trajsim_sm, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_sm) <- c("agemid", "low95", "median", "up95")
+
+lambda_smquantiles <- plyr::ddply(.data=trajsim_sm, .variables="time", function(x) quantile(x[,"lambda_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
 
-lambda_auquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_au"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+trajsim_au <- maketrajsim(tracefinal_au, theta, agepred_au, model_au, inits, 1000)
+trajquantiles_au <- plyr::ddply(.data=trajsim_au, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_au) <- c("agemid", "low95", "median", "up95")
+
+lambda_auquantiles <- plyr::ddply(.data=trajsim_au, .variables="time", function(x) quantile(x[,"lambda_au"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
 
-lambda_wtquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+trajsim_wt <- maketrajsim(tracefinal_wt, theta, agepred_wt, model_wt, inits, 1000)
+trajquantiles_wt <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_wt) <- c("agemid", "low95", "median", "up95")
+
+lambda_wtquantiles <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"lambda_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
 
-wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+wquantiles <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"mu_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
 
 
 # Plot fit and FOI
-fit <- ggplot() + theme_bw() + ggtitle("model fit") +
-  geom_point(data=data_no_season, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+fit_sp <- ggplot() + theme_bw() + ggtitle("model fit in spring") +
+  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
-fit
+
+fit_sp
 
 lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI in spring") +
   geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -443,11 +661,42 @@ lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI in spring") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sp
 
+fit_sm <- ggplot() + theme_bw() + ggtitle("model fit in summer") +
+  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles_sm, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_sm, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+
+fit_sm
+
 lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI in summer") +
   geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sm
+
+fit_au <- ggplot() + theme_bw() + ggtitle("model fit in autumn") +
+  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles_au, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_au, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+
+fit_au
+
+
+fit_wt <- ggplot() + theme_bw() + ggtitle("model fit in winter") +
+  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles_wt, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_wt, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+
+fit_wt
 
 lambda_au <- ggplot() + theme_bw() + ggtitle("FOI in autumn") +
   geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -461,7 +710,7 @@ lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI in winter") +
   xlab("age (days)") + ylab("FOI") 
 lambda_wt
 
-w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
+w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity in winter") +
   geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("Maternal immunity") 
