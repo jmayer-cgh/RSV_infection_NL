@@ -24,6 +24,8 @@ theme_set(theme_minimal())
 
 data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
                  sep=",")
+library(readr)
+data <- read_csv("LSHTM/Project/Data/infection_status.csv")
 
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
@@ -49,6 +51,11 @@ data <- data %>%
       Birth_mo %in% winter ~ "Winter")
   )
 
+data_no_season <- data %>% dplyr::group_by(agegrp) %>% 
+  dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
+                   N=n(), # Total N in age group
+                   nconv=sum(infection))
+
 data <- data %>% dplyr::group_by(agegrp, season_birth) %>% 
   dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
                    N=n(), # Total N in age group
@@ -56,6 +63,7 @@ data <- data %>% dplyr::group_by(agegrp, season_birth) %>%
 
 # Calculate seroprevalence and binomial confidence intervals
 data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data$nconv, data$N, method="exact")[,c("mean","lower","upper")]
+data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_season$nconv, data_no_season$N, method="exact")[,c("mean","lower","upper")]
 
 
 # Get proportion of children born in each season for each age group
@@ -134,6 +142,11 @@ ggplot(data) +
   geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = season_birth)) +
   ylab("Proportion seroconverted") + xlab("age (days)") + labs(colour = "season of birth")
 
+ggplot(data_no_season) +
+  geom_point(aes(x=agemid, y=seroprev_mean)) +
+  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+
 #Plot by season
 spring.df <- subset(data, season_birth == 'Spring')
 ggplot(spring.df) +
@@ -169,12 +182,12 @@ model <- function(theta, age, inits) {
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
-    lambda_sp = param[["P"]] + age * 0 #constant FOI for children born in spring
-    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer
-    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn
-    lambda_wt = param [["W"]] + age*0
+    lambda_sp = param[["P"]] + age * 0 #constant FOI for children born in spring, age will be added later
+    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer, age will be added later
+    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn, age will be added later
+    lambda_wt = param [["W"]] + age*0 #constant FOI for children born in winter, age will be added later
     
-    # waning maternal immunity
+    # waning maternal immunity, same for all children
     mu = param[["B"]] 
     
     # states 
@@ -387,8 +400,8 @@ colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("model fit") +
-  geom_point(data=data, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
-  geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = season_birth)) +
+  geom_point(data=data_no_season, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
