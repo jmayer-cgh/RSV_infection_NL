@@ -183,7 +183,7 @@ model_sp <- function(theta, age, inits) {
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
-    lambda_sp = param[["P"]] + age * 0 #constant FOI for children born in spring, age will be added later
+    lambda_sp = param[["A"]] + age * 0 #constant FOI for children born in spring, age will be added later
     # waning maternal immunity, same for all children
     mu_sp = param[["B"]] 
     
@@ -232,7 +232,7 @@ model_sm <- function(theta, age, inits) {
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
-    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer, age will be added later
+    lambda_sm = param[["A"]] + age*0 #constant FOI for children born in summer, age will be added later
     
     # waning maternal immunity, same for all children
     mu_sm = param[["B"]] 
@@ -324,7 +324,7 @@ model_wt <- function(theta, age, inits) {
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
-    lambda_wt = param [["W"]] + age*0 #constant FOI for children born in winter, age will be added later
+    lambda_wt = param [["A"]] + age*0 #constant FOI for children born in winter, age will be added later
     
     # waning maternal immunity, same for all children
     mu_wt = param[["B"]] 
@@ -401,7 +401,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
 # A = mean FOI for children born in autumn
 # W = mean FOI for children born in winter
 # B = rate of waning maternal immunity
-theta <- c(P=0.02, M=0.02, A=0.02, W=0.02, B = 0.01) # these are just random values, to be fitted
+theta <- c(A=0.02,B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -426,6 +426,12 @@ test_sp <- model_sp(theta, agepred_sp, inits)
 test_sm <- model_sm(theta, agepred_sm, inits)
 test_au <- model_au(theta, agepred_au, inits)
 test_wt <- model_wt(theta, agepred_wt, inits)
+
+conv_all <- c(test_sp$conv, test_sm$conv, test_au$conv, test_wt$conv) #get all converted together
+time_all <- c(test_sp$time, test_sm$time, test_au$time, test_wt$time) #get all ages together
+test_all <- data.frame(time_all, conv_all)
+
+ggplot(test_all) + geom_line(aes(x=time_all, y=conv_all))
 ggplot(test_wt) + geom_line(aes(x=time, y=conv))
 ggplot(test_sm) + geom_line(aes(x=time, y=lambda_sm)) #should be constant
 ggplot(test_sp) + geom_line(aes(x=time, y=mu_sp))
@@ -506,13 +512,13 @@ loglik_wrapper_wt <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "B") # parameters to estimate, can be modified
+estpars <- c("A", "B") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P=0, M=0, A=0, W=0, B = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2)
+lower = c(A=0,B = 0)
+upper = c(A=0.1,B = 0.2)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -687,6 +693,12 @@ fit_au <- ggplot() + theme_bw() + ggtitle("model fit in autumn") +
 
 fit_au
 
+lambda_au <- ggplot() + theme_bw() + ggtitle("FOI in autumn") +
+  geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("FOI") 
+lambda_au
+
 
 fit_wt <- ggplot() + theme_bw() + ggtitle("model fit in winter") +
   geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
@@ -698,11 +710,6 @@ fit_wt <- ggplot() + theme_bw() + ggtitle("model fit in winter") +
 
 fit_wt
 
-lambda_au <- ggplot() + theme_bw() + ggtitle("FOI in autumn") +
-  geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_au
 
 lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI in winter") +
   geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
