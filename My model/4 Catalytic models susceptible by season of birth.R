@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding season of birth
 # Author: Julia Mayer
-# Last updated: 03.07.2022
+# Last updated: 16.07.2022
 ################################################################
 
 
@@ -173,18 +173,87 @@ ggplot(winter.df) +
   geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95),colour ='black') +
   ylab("Proportion seroconverted") + xlab("age (days)") + labs(title ="Proportion seroconverted born in winter")
 
+
+for (i in (spring.df$agemid)){
+  if ( (i>0) & (i<820.75)) {
+  print (i)
+  }
+}
+
+coucou <- spring.df[spring.df$agemid>= 730]
+
+for (i in summer.df$agemid){
+  if ((i<=30.25*3) 
+      || (i>=365 & i<=(365+30.25*3))
+      || (i>=(730) & i<=(730+(30.25*3)))
+      || (i>=(3*365) & i<=(3*365+30.25*3))
+      || (i>=(4*365) & i<=(4*365+30.25*3))) {
+    print (i)
+  }
+}
+
+
+for (i in (spring.df$agemid)){
+    print (i)
+  }
+
+
+summer.df$agemid
+
 # MODEL EQUATION  ------------------------------------------------------------
 
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is why we log-transform them when in the model input and exponentiate them inside the model
+#- There is one model for each season of birth
 
+# Children born in spring
 model_sp <- function(theta, age, inits) {
   
   catalytic <- function(age, state, param) {
     
     # FOI / seroconversion rate
-    lambda_sp = param[["A"]] + age * 0 #constant FOI for children born in spring, age will be added later
-    # waning maternal immunity, same for all children
+    spring_FOI = 0
+    summer_FOI = 0
+    autumn_FOI = 0
+    winter_FOI = 0
+    
+    if ( (age<= 30.35*3)                                      #experience the spring FOI during spring
+        || ( (age>=365) & (age <=(365+30.25*3)) ) 
+        || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
+        || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
+        || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
+        || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+      spring_FOI = 1
+    } 
+    
+    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the summer FOI during summer
+         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
+         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
+         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
+         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
+         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+      summer_FOI = 1
+    } 
+    
+    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the autumn FOI during autumn
+         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
+         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
+         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
+         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
+         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+      autumn_FOI = 1
+    } 
+    
+    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the winter FOI during winter
+         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
+         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
+         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
+         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.25*12))) 
+         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+      winter_FOI = 1
+    } 
+    
+    lambda_sp = param[["P"]]*spring_FOI + param[["M"]]*summer_FOI + param[["A"]]*autumn_FOI + param[["W"]]*winter_FOI #FOI depends on the season
     mu_sp = param[["B"]] 
     
     # states 
@@ -231,9 +300,48 @@ model_sm <- function(theta, age, inits) {
   
   catalytic <- function(age, state, param) {
     
-    # FOI / seroconversion rate
-    lambda_sm = param[["A"]] + age*0 #constant FOI for children born in summer, age will be added later
+    spring_FOI = 0
+    summer_FOI = 0
+    autumn_FOI = 0
+    winter_FOI = 0
     
+    if ( (age<= 30.35*3)                                      #experience the summer FOI during summer
+         || ( (age>=365) & (age <=(365+30.25*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+      summer_FOI = 1
+    } 
+    
+    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the autumn FOI during autumn
+         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
+         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
+         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
+         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
+         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+      autumn_FOI = 1
+    } 
+    
+    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the winter FOI during winter
+         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
+         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
+         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
+         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
+         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+      winter_FOI = 1
+    } 
+    
+    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the spring FOI during spring
+         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
+         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
+         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
+         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.24*12))) 
+         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+      spring_FOI = 1
+    } 
+    
+    lambda_sm = param[["P"]]*spring_FOI + param[["M"]]*summer_FOI + param[["A"]]*autumn_FOI + param[["W"]]*winter_FOI
     # waning maternal immunity, same for all children
     mu_sm = param[["B"]] 
     
@@ -275,8 +383,48 @@ model_au <- function(theta, age, inits) {
   
   catalytic <- function(age, state, param) {
     
-    # FOI / seroconversion rate
-    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn, age will be added later
+    spring_FOI = 0
+    summer_FOI = 0
+    autumn_FOI = 0
+    winter_FOI = 0
+    
+    if ( (age<= 30.35*3)                                      #experience the autumn FOI during autumn
+         || ( (age>=365) & (age <=(365+30.25*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+      autumn_FOI = 1
+    } 
+    
+    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the winter FOI during winter
+         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
+         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
+         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
+         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
+         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+      winter_FOI = 1
+    } 
+    
+    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the spring FOI during spring
+         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
+         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
+         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
+         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
+         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+      spring_FOI = 1
+    } 
+    
+    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the summer FOI during summer
+         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
+         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
+         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
+         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.25*12))) 
+         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+     summer_FOI = 1
+    } 
+    
+    lambda_au = param[["P"]]*spring_FOI + param[["M"]]*summer_FOI + param[["A"]]*autumn_FOI + param[["W"]]*winter_FOI
     
     # waning maternal immunity, same for all children
     mu_au = param[["B"]] 
@@ -323,9 +471,50 @@ model_wt <- function(theta, age, inits) {
   
   catalytic <- function(age, state, param) {
     
-    # FOI / seroconversion rate
-    lambda_wt = param [["A"]] + age*0 #constant FOI for children born in winter, age will be added later
     
+    #FOI
+    spring_FOI = 0
+    summer_FOI = 0
+    autumn_FOI = 0
+    winter_FOI = 0
+    
+    if ( (age<= 30.35*3)                                      #experience the winter FOI during winter
+         || ( (age>=365) & (age <=(365+30.25*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+      winter_FOI = 1
+    } 
+    
+    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the spring FOI during spring
+         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
+         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
+         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
+         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
+         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+      spring_FOI = 1
+    } 
+    
+    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the summer FOI during summer
+         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
+         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
+         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
+         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
+         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+      summer_FOI = 1
+    } 
+    
+    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the autumn FOI during autumn
+         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
+         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
+         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
+         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.24*12))) 
+         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+      autumn_FOI = 1
+    } 
+    
+    lambda_wt = param[["P"]]*spring_FOI + param[["M"]]*summer_FOI + param[["A"]]*autumn_FOI + param[["W"]]*winter_FOI
     # waning maternal immunity, same for all children
     mu_wt = param[["B"]] 
     
@@ -401,7 +590,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
 # A = mean FOI for children born in autumn
 # W = mean FOI for children born in winter
 # B = rate of waning maternal immunity
-theta <- c(A=0.02,B = 0.01) # these are just random values, to be fitted
+theta <- c(P = 0.02, M = 0.02, A=0.02, W = 0.02, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -433,8 +622,15 @@ test_all <- data.frame(time_all, conv_all)
 
 ggplot(test_all) + geom_line(aes(x=time_all, y=conv_all))
 ggplot(test_wt) + geom_line(aes(x=time, y=conv))
-ggplot(test_sm) + geom_line(aes(x=time, y=lambda_sm)) #should be constant
-ggplot(test_sp) + geom_line(aes(x=time, y=mu_sp))
+ggplot(test_sp) + geom_line(aes(x=time, y=lambda_sp)) #should vary
+ggplot(test_sm) + geom_line(aes(x=time, y=lambda_sm)) #should vary
+ggplot(test_au) + geom_line(aes(x=time, y=lambda_au)) #should vary
+ggplot(test_wt) + geom_line(aes(x=time, y=lambda_wt)) #should vary
+
+ggplot(test_sp) + geom_line(aes(x=time, y=mu_sp)) #should be constant
+ggplot(test_sm) + geom_line(aes(x=time, y=mu_sm)) #should be constant
+ggplot(test_au) + geom_line(aes(x=time, y=mu_au)) #should be constant
+ggplot(test_wt) + geom_line(aes(x=time, y=mu_wt)) #should be constant
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
@@ -512,13 +708,13 @@ loglik_wrapper_wt <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("A", "B") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "B") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(A=0,B = 0)
-upper = c(A=0.1,B = 0.2)
+lower = c(P=0, M=0, A=0, W=0, B = 0)
+upper = c(P=0.1, M=0.1, A=0.1, W=0.1, B = 0.2)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -541,7 +737,7 @@ if (cpus == 1) {
                                 settings = mcmc_settings)})
   
   #summer
-  bayesianSetup_sm <- createBayesianSetup(prior = prior,
+  '#bayesianSetup_sm <- createBayesianSetup(prior = prior,
                                           likelihood = loglik_wrapper_sm,
                                           names = names(theta[index]),
                                           parallel = FALSE)
@@ -568,7 +764,7 @@ if (cpus == 1) {
   
   system.time({trace_wt <- runMCMC(bayesianSetup = bayesianSetup_wt, 
                                    sampler = sampler, 
-                                   settings = mcmc_settings)})
+                                   settings = mcmc_settings)})#'
   
 }
 
