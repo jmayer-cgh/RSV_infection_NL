@@ -464,6 +464,7 @@ model_wt <- function(theta, age, inits) {
   
 }
 
+#bring all models together
 model_all <- function(theta, data, inits){
   traj <- data.frame(matrix(ncol = 8, nrow=0))
   colnames(traj) <- c('time', 'M', 'S', 'Z', 'lambda', 'mu', 'conv', 'inc')
@@ -488,7 +489,9 @@ model_all <- function(theta, data, inits){
   traj_wt <- model_wt(theta, age_wt, inits)
   traj <- rbind(traj, traj_wt)
   
-  return (traj)
+  result = list(traj,traj_sp, traj_sm, traj_au, traj_wt)
+  
+  return (result)
 }
 
 # TRAJECTORY SIMULATION  ------------------------------------------------------------
@@ -564,23 +567,41 @@ agepred_au <- autumn.df$agemid
 agepred_wt <- winter.df$agemid
 
 # TEST MODEL  --------------------------------------------------------
+test_all <- as.data.frame(model_all (theta, data, inits)[1])
+
+
+#Check that the overall model gives the same result as the individual ones
 test_sp <- model_sp(theta, agepred_sp, inits)
 test_sm <- model_sm(theta, agepred_sm, inits)
 test_au <- model_au(theta, agepred_au, inits)
 test_wt <- model_wt(theta, agepred_wt, inits)
-pomme <- model_all (theta, data, inits)
 
+test_sp2 <- as.data.frame(model_all (theta, data, inits)[2])
+test_sm2 <- as.data.frame(model_all (theta, data, inits)[3])
+test_au2 <- as.data.frame(model_all (theta, data, inits)[4])
+test_wt2 <- as.data.frame(model_all (theta, data, inits)[5])
 
-ggplot(pomme) + geom_line(aes(x=time, y=conv))
+ggplot(test_all) + geom_line(aes(x=time, y=conv))
+
+ggplot(test_sp) + geom_line(aes(x=time, y=conv))
+ggplot(test_sp2) + geom_line(aes(x=time, y=conv)) 
+
+ggplot(test_sm) + geom_line(aes(x=time, y=conv))
+ggplot(test_sm2) + geom_line(aes(x=time, y=conv))
+
+ggplot(test_au) + geom_line(aes(x=time, y=conv))
+ggplot(test_au2) + geom_line(aes(x=time, y=conv))
+
 ggplot(test_wt) + geom_line(aes(x=time, y=conv))
+ggplot(test_wt2) + geom_line(aes(x=time, y=conv))
 
-ggplot(pomme) + geom_line(aes(x=time, y=lambda))
+ggplot(test_all) + geom_line(aes(x=time, y=lambda))
 ggplot(test_sp) + geom_line(aes(x=time, y=lambda)) #should vary
 ggplot(test_sm) + geom_line(aes(x=time, y=lambda)) #should vary
 ggplot(test_au) + geom_line(aes(x=time, y=lambda)) #should vary
 ggplot(test_wt) + geom_line(aes(x=time, y=lambda)) #should vary
 
-ggplot(pomme) + geom_line(aes(x=time, y=mu))
+ggplot(test_all) + geom_line(aes(x=time, y=mu))
 ggplot(test_sp) + geom_line(aes(x=time, y=mu)) #should be constant
 ggplot(test_sm) + geom_line(aes(x=time, y=mu)) #should be constant
 ggplot(test_au) + geom_line(aes(x=time, y=mu)) #should be constant
@@ -588,6 +609,7 @@ ggplot(test_wt) + geom_line(aes(x=time, y=mu)) #should be constant
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
+# Log-likelihood for individual season models
 loglik <- function(theta, age, data, model, inits) {
   
   traj <- match.fun(model)(theta, age, inits)
@@ -605,9 +627,12 @@ loglik <- function(theta, age, data, model, inits) {
   
 } 
 
-loglik2 <- function(theta, data, model, inits) {
+# Log-likelihood for the whole dataset
+# Season should be 1 for the whole dataset
+# Season = 2 --> spring, season = 3 --> summer, season = 4 --> autumn, season = 5 --> winter
+loglik2 <- function(theta, data, model, season = 1, inits) {
   
-  traj <- match.fun(model)(theta, data, inits)
+  traj <- as.data.frame(match.fun(model)(theta, data, inits)[season])
   
   nconv <- data$nconv[!is.na(data$nconv)] # n seroconverted at each age point  (data)
   N <- data$N[!is.na(data$nconv)] # total N at each age point  (data) 
@@ -622,12 +647,17 @@ loglik2 <- function(theta, data, model, inits) {
   
 } 
 
+
 # Test function for each season
-loglik2(theta, data, model_all, inits)
+loglik2(theta, data, model_all, 1, inits)
 loglik(theta, agepred_sp, spring.df, model_sp, inits) # spring
+loglik2(theta, data, model_all, 2, inits)
 loglik(theta, agepred_sm, summer.df, model_sm, inits) # summer
+loglik2(theta, data, model_all, 3, inits)
 loglik(theta, agepred_au, autumn.df, model_au, inits) # autumn
+loglik2(theta, data, model_all, 4, inits)
 loglik(theta, agepred_wt, winter.df, model_wt, inits) # winter
+loglik2(theta, data, model_all, 5, inits)
 
 # Wrapper for BT: loglik can only take the fitted parameters as argument
 loglik_wrapper <- function(par) {
