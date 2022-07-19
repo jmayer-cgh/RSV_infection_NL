@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding season of birth
 # Author: Julia Mayer
-# Last updated: 17.07.2022
+# Last updated: 18.07.2022
 ################################################################
 
 
@@ -831,7 +831,7 @@ summary(tracefinal_au)#'
 # Calculate simulated trajectory quantiles
 trajsim <- maketrajsim2(tracefinal, theta, agepred, model_all, data, inits, 1000) #add data here?
 trajquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantile) <- c("agemid", "low95", "median", "up95")
+colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambda_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_quantiles) <- c("agemid", "low95", "median", "up95")
@@ -889,12 +889,20 @@ colnames(wquantiles_wt) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
-  geom_point(data=data, aes(x=agemid, y=seroprev_mean)) +
+  geom_point(data=data, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
   geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 fit
+
+fit_no_season <- ggplot() + theme_bw() + ggtitle("Model fit") +
+  geom_point(data=data_no_season, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+fit_no_season
 
 
 lambda <- ggplot() + theme_bw() + ggtitle("FOI over time") +
