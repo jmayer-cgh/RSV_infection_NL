@@ -31,8 +31,8 @@ data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
 data$agegrp <- cut(data$age_days,
-                   breaks=c(seq(0,730, by=30.25*2),
-                            seq(909,2000, by=30.25*6)), 
+                   breaks=c(seq(0,730, by=30.41*2),
+                            seq(909,2000, by=30.41*6)), 
                    include.lowest = T, right=F)
 # Divide by season of birth
 spring <- c(3, 4, 5)
@@ -123,39 +123,39 @@ model_sp <- function(theta, age, inits) {
     autumn_FOI = 0
     winter_FOI = 0
     
-    if ( (age<= 30.35*3)                                      #experience the spring FOI during spring
-        || ( (age>=365) & (age <=(365+30.25*3)) ) 
-        || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
-        || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
-        || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
-        || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+    if ( (age<= 30.41*3)                                      #experience the spring FOI during spring
+        || ( (age>=365) & (age <=(365+30.41*3)) ) 
+        || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+        || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+        || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+        || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
       spring_FOI = 1
     } 
     
-    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the summer FOI during summer
-         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
-         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
-         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
-         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
-         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+    if ( (age>30.41*3 & age <=30.41*6 )                       #experience the summer FOI during summer
+         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
       summer_FOI = 1
     } 
     
-    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the autumn FOI during autumn
-         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
-         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
-         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
-         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
-         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+    if ( (age>30.41*6 & age <=30.41*9 )                     # experience the autumn FOI during autumn
+         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
       autumn_FOI = 1
     } 
     
-    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the winter FOI during winter
-         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
-         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
-         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
-         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.25*12))) 
-         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+    if ( (age>30.41*9 & age <=30.41*12 )                     #experience the winter FOI during winter
+         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
       winter_FOI = 1
     } 
     
@@ -211,39 +211,39 @@ model_sm <- function(theta, age, inits) {
     autumn_FOI = 0
     winter_FOI = 0
     
-    if ( (age<= 30.35*3)                                      #experience the summer FOI during summer
-         || ( (age>=365) & (age <=(365+30.25*3)) ) 
-         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
-         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
-         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
-         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+    if ( (age<= 30.41*3)                                      #experience the summer FOI during summer
+         || ( (age>=365) & (age <=(365+30.41*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
       summer_FOI = 1
     } 
     
-    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the autumn FOI during autumn
-         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
-         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
-         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
-         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
-         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+    if ( (age>30.41*3 & age <=30.41*6 )                       #experience the autumn FOI during autumn
+         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
       autumn_FOI = 1
     } 
     
-    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the winter FOI during winter
-         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
-         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
-         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
-         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
-         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+    if ( (age>30.41*6 & age <=30.41*9 )                     # experience the winter FOI during winter
+         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
       winter_FOI = 1
     } 
     
-    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the spring FOI during spring
-         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
-         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
-         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
-         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.24*12))) 
-         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+    if ( (age>30.41*9 & age <=30.41*12 )                     #experience the spring FOI during spring
+         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
       spring_FOI = 1
     } 
     
@@ -294,39 +294,39 @@ model_au <- function(theta, age, inits) {
     autumn_FOI = 0
     winter_FOI = 0
     
-    if ( (age<= 30.35*3)                                      #experience the autumn FOI during autumn
-         || ( (age>=365) & (age <=(365+30.25*3)) ) 
-         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
-         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
-         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
-         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+    if ( (age<= 30.41*3)                                      #experience the autumn FOI during autumn
+         || ( (age>=365) & (age <=(365+30.41*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
       autumn_FOI = 1
     } 
     
-    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the winter FOI during winter
-         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
-         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
-         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
-         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
-         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+    if ( (age>30.41*3 & age <=30.41*6 )                       #experience the winter FOI during winter
+         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
       winter_FOI = 1
     } 
     
-    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the spring FOI during spring
-         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
-         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
-         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
-         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
-         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+    if ( (age>30.41*6 & age <=30.41*9 )                     # experience the spring FOI during spring
+         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
       spring_FOI = 1
     } 
     
-    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the summer FOI during summer
-         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
-         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
-         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
-         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.25*12))) 
-         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+    if ( (age>30.41*9 & age <=30.41*12 )                     #experience the summer FOI during summer
+         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
      summer_FOI = 1
     } 
     
@@ -384,39 +384,39 @@ model_wt <- function(theta, age, inits) {
     autumn_FOI = 0
     winter_FOI = 0
     
-    if ( (age<= 30.35*3)                                      #experience the winter FOI during winter
-         || ( (age>=365) & (age <=(365+30.25*3)) ) 
-         || ( (age >= 2*365) & (age <= (2*365+30.24*3))) 
-         || ((age >= 3*365) & (age <= (3*365+30.24*3))) 
-         || ((age >= 4*365) & (age <= (4*365+30.24*3))) 
-         || ((age >= 5*365) & (age <= (5*365+30.24*3))) ){
+    if ( (age<= 30.41*3)                                      #experience the winter FOI during winter
+         || ( (age>=365) & (age <=(365+30.41*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
       winter_FOI = 1
     } 
     
-    if ( (age>30.35*3 & age <=30.35*6 )                       #experience the spring FOI during spring
-         || ( (age>365+30.35*3) & (age <=(365+30.25*6)) ) 
-         || ( (age > 2*365 + 30.35*3) & (age <= (2*365+30.24*6))) 
-         || ((age > 3*365 + 30.35*3) & (age <= (3*365+30.24*6))) 
-         || ((age > 4*365 + 30.35*3) & (age <= (4*365+30.24*6))) 
-         || ((age > 5*365 + 30.35*3) & (age <= (5*365+30.24*6))) ){
+    if ( (age>30.41*3 & age <=30.41*6 )                       #experience the spring FOI during spring
+         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
       spring_FOI = 1
     } 
     
-    if ( (age>30.35*6 & age <=30.35*9 )                     # experience the summer FOI during summer
-         || ( (age>365+30.35*6) & (age <=(365+30.25*9)) ) 
-         || ( (age > 2*365 + 30.35*6) & (age <= (2*365+30.24*9))) 
-         || ((age > 3*365 + 30.35*6) & (age <= (3*365+30.24*9))) 
-         || ((age > 4*365 + 30.35*6) & (age <= (4*365+30.24*9))) 
-         || ((age > 5*365 + 30.35*6) & (age <= (5*365+30.24*9))) ){
+    if ( (age>30.41*6 & age <=30.41*9 )                     # experience the summer FOI during summer
+         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
       summer_FOI = 1
     } 
     
-    if ( (age>30.35*9 & age <=30.35*12 )                     #experience the autumn FOI during autumn
-         || ( (age>365+30.35*9) & (age <=(365+30.25*12)) ) 
-         || ( (age > 2*365 + 30.35*9) & (age <= (2*365+30.24*12))) 
-         || ((age > 3*365 + 30.35*9) & (age <= (3*365+30.24*12))) 
-         || ((age > 4*365 + 30.35*9) & (age <= (4*365+30.24*12))) 
-         || ((age > 5*365 + 30.35*9) & (age <= (5*365+30.24*12))) ){
+    if ( (age>30.41*9 & age <=30.41*12 )                     #experience the autumn FOI during autumn
+         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
       autumn_FOI = 1
     } 
     
@@ -469,7 +469,7 @@ model_all <- function(theta, data, inits){
   traj <- data.frame(matrix(ncol = 8, nrow=0))
   colnames(traj) <- c('time', 'M', 'S', 'Z', 'lambda', 'mu', 'conv', 'inc')
   
-  spring.df <- spring.df <- subset(data, season_birth == 'Spring')
+  spring.df <- subset(data, season_birth == 'Spring')
   age_sp <- spring.df$agemid
   traj_sp <- model_sp(theta, age_sp, inits)
   traj <- rbind(traj, traj_sp)
@@ -518,7 +518,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
   
 }
 
-maketrajsim2 <- function(trace, theta, age, model, data, inits, ndraw) {
+maketrajsim2 <- function(trace, theta, age, model, data, inits, ndraw, season) {
   
   #Draw n fitted parameter vectors theta from the MCMC object
   sample <- getSample(trace, parametersOnly = TRUE, thin=1, numSamples=ndraw) #trace is a sampler, parametersOnly = T means that likelihood, posterior and prior values are not provided in the output, thin = thinning parameter
@@ -529,7 +529,7 @@ maketrajsim2 <- function(trace, theta, age, model, data, inits, ndraw) {
     theta.sample <- c(x, theta[!is.na(theta)])
     
     #Simulate trajectory for selected theta
-    traj <- match.fun(model)(theta.sample, data, inits) #match.fun extracts the underlying function
+    traj <- as.data.frame(match.fun(model)(theta.sample, data, inits)[season]) #match.fun extracts the underlying function
     traj <- cbind(as.data.frame(t(x)), traj)
   })
   
@@ -630,9 +630,18 @@ loglik <- function(theta, age, data, model, inits) {
 # Log-likelihood for the whole dataset
 # Season should be 1 for the whole dataset
 # Season = 2 --> spring, season = 3 --> summer, season = 4 --> autumn, season = 5 --> winter
-loglik2 <- function(theta, data, model, season = 1, inits) {
+loglik2 <- function(theta, data, model, season, inits) {
   
   traj <- as.data.frame(match.fun(model)(theta, data, inits)[season])
+  if (season == 2){
+    data <- subset(data, season_birth == 'Spring')
+  }else if (season == 3){
+    data <- subset(data, season_birth == 'Summer')
+  }else if (season == 4){
+    data <- subset(data, season_birth == 'Autumn')
+  }else if (season == 5){
+    data <- subset(data, season_birth == 'Winter')
+  }
   
   nconv <- data$nconv[!is.na(data$nconv)] # n seroconverted at each age point  (data)
   N <- data$N[!is.na(data$nconv)] # total N at each age point  (data) 
@@ -659,7 +668,9 @@ loglik2(theta, data, model_all, 4, inits)
 loglik(theta, agepred_wt, winter.df, model_wt, inits) # winter
 loglik2(theta, data, model_all, 5, inits)
 
+seas = 1
 # Wrapper for BT: loglik can only take the fitted parameters as argument
+# Wrapper for model_all function
 loglik_wrapper <- function(par) {
   
   parX = theta
@@ -668,10 +679,11 @@ loglik_wrapper <- function(par) {
   return(loglik2(theta = parX,
                 data = data,
                 model = match.fun(model_all),
+                season = seas,
                 inits = inits))
 } 
 
-
+# Wrappers per season
 loglik_wrapper_sp <- function(par) {
   
   parX = theta
@@ -734,7 +746,7 @@ prior <- createUniformPrior(lower=lower[estpars],
                             upper=upper[estpars])
 # MCMC settings
 nchains <- 2
-cpus <- 1 # or 2 if you want parallel, but it does not seem to be faster?
+cpus <- 2 # or 2 if you want parallel, but it does not seem to be faster?
 mcmc_settings <- list(iterations = 2*80000, 
                       nrChains = nchains)
 sampler <- "Metropolis"
@@ -748,7 +760,7 @@ system.time({trace <- runMCMC(bayesianSetup = bayesianSetup,
                                  sampler = sampler, 
                                  settings = mcmc_settings)})
 
-'#if (cpus == 1) {
+ '#if (cpus == 1) {
   #spring
   bayesianSetup_sp <- createBayesianSetup(prior = prior,
                                        likelihood = loglik_wrapper_sp,
@@ -859,7 +871,7 @@ summary(tracefinal_au)#'
 # POSTPROCESSING AND RESULTS -----------------------------------
 
 # Calculate simulated trajectory quantiles
-trajsim <- maketrajsim2(tracefinal, theta, agepred, model_all, data, inits, 1000) #add data here?
+trajsim <- maketrajsim2(tracefinal, theta, agepred, model_all, data, inits, 1000, seas) 
 trajquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
@@ -923,7 +935,8 @@ fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
   geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "season of birth")
+
 fit
 
 fit_no_season <- ggplot() + theme_bw() + ggtitle("Model fit") +
@@ -931,9 +944,40 @@ fit_no_season <- ggplot() + theme_bw() + ggtitle("Model fit") +
   geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
+  xlab("age (days)") + ylab("proportion seroconverted")
 fit_no_season
 
+fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit for the spring cohort") +
+  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
+  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "season of birth")
+fit_sp
+
+fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit for the summer cohort") +
+  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
+  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "season of birth")
+fit_sm
+
+fit_au <- ggplot() + theme_bw() + ggtitle("Model fit for the autumn cohort") +
+  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
+  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "season of birth")
+fit_au
+
+fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit for the winter cohort") +
+  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
+  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "season of birth")
+fit_wt
 
 lambda <- ggplot() + theme_bw() + ggtitle("FOI over time") +
   geom_ribbon(data=lambda_quantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -1031,5 +1075,5 @@ w_wt <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity in winter") +
 w_wt
 #'
 
-
+write.csv(lambda_quantiles, "lambda_quantiles.csv")
 
