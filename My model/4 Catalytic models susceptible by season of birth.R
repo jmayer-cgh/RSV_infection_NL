@@ -1,7 +1,7 @@
 ################################################################
 # RSV seroconversion MSc project
 # Adding season of birth
-# Author: Julia Mayer
+# Author: Julia Mayer 
 # Last updated: 16.07.2022
 ################################################################
 
