@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding season of birth
 # Author: Julia Mayer
-# Last updated: 03.07.2022
+# Last updated: 21.07.2022
 ################################################################
 
 
@@ -31,8 +31,8 @@ data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
 data$agegrp <- cut(data$age_days,
-                   breaks=c(seq(0,730, by=30.25*2),
-                            seq(909,2000, by=30.25*6)), 
+                   breaks=c(seq(0,730, by=30.41*2),
+                            seq(909,2000, by=30.41*6)), 
                    include.lowest = T, right=F)
 # Divide by season of birth
 spring <- c(3, 4, 5)
@@ -65,77 +65,6 @@ data <- data %>% dplyr::group_by(agegrp, season_birth) %>%
 # Calculate seroprevalence and binomial confidence intervals
 data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data$nconv, data$N, method="exact")[,c("mean","lower","upper")]
 data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_season$nconv, data_no_season$N, method="exact")[,c("mean","lower","upper")]
-
-
-# Get proportion of children born in each season for each age group
-get_proportions <- function (dframe){
-  agegrp <- c(0)
-  season_birth <- c("Pomme")
-  agemid <- c (0)
-  N <- c(0)
-  nconv <- c(0)
-  seroprev_mean <- c(0)
-  seroprev_low95 <- c(0)
-  seroprev_up95 <- c(0)
-  prop <- c(0)
-  df <- data.frame(agegrp, season_birth, agemid, N, nconv, seroprev_mean, seroprev_low95, seroprev_up95, prop)
-  
-  groups <- unique(dframe$agegrp)
-  
-  for (gp in groups){
-    subs <- subset (dframe, agegrp == gp)
-    subs$agegrp <- as.double(subs$agegrp)
-    subs$prop <- subs$N/sum(subs$N)
-    df_list <- list(df, subs)
-    df <- df_list %>% reduce(full_join)
-  }
-  return (df)
-}
-
-prop.df<- get_proportions(data)
-prop.df <- prop.df[-c(1), ]
-
-# Plot the proportions of children born in each season
-
-p <- ggplot(prop.df, aes(x = agegrp, y=prop, fill = season_birth)) + 
-  geom_bar(stat="identity", position = "dodge") +
-  labs(title="Proportion born in each season by age group",
-                                 x ="Age group", y = "Proportion") +
-  scale_fill_discrete(name="Season")
-p
-
-born_spring <- prop.df%>%filter(season_birth == "Spring")
-sp <- ggplot(born_spring, aes(x = agegrp, y=prop)) + 
-  geom_bar(stat="identity", fill = "lightgreen") +
-  labs(title="Proportion born in spring by age group",
-       x ="Age group", y = "Proportion") 
-sp
-
-born_summer <- prop.df%>%filter(season_birth == "Summer")
-sm <- ggplot(born_summer, aes(x = agegrp, y=prop)) + 
-  geom_bar(stat="identity", fill = "lightblue") +
-  labs(title="Proportion born in summer by age group",
-       x ="Age group", y = "Proportion") 
-sm
-
-born_autumn <- prop.df%>%filter(season_birth == "Autumn")
-au <- ggplot(born_autumn, aes(x = agegrp, y=prop)) + 
-  geom_bar(stat="identity", fill = "red") +
-  labs(title="Proportion born in autumn by age group",
-       x ="Age group", y = "Proportion") 
-au
-
-born_winter <- prop.df%>%filter(season_birth == "Winter")
-wt <- ggplot(born_winter, aes(x = agegrp, y=prop)) + 
-  geom_bar(stat="identity", fill = "purple") +
-  labs(title="Proportion born in winter by age group",
-       x ="Age group", y = "Proportion") 
-wt
-
-mean_sp <- median(born_spring$prop) #median proportion of children born in spring
-mean_sm <- median(born_summer$prop) #median proportion of children born in summer
-mean_au <- median(born_autumn$prop) #median proportion of children born in autumn
-mean_wt <- median(born_winter$prop) #median proportion of children born in winter
 
 # Plot the whole data frame (difficult to read)
 ggplot(data) +
@@ -178,15 +107,101 @@ ggplot(winter.df) +
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is why we log-transform them when in the model input and exponentiate them inside the model
 
-model <- function(theta, age, inits) {
+model <- function(theta, age, inits, data) {
   
-  catalytic <- function(age, state, param) {
+  catalytic <- function(age, state, param, data) {
     
     # FOI / seroconversion rate
-    lambda_sp = param[["P"]] + age * 0 #constant FOI for children born in spring, age will be added later
-    lambda_sm = param[["M"]] + age*0 #constant FOI for children born in summer, age will be added later
-    lambda_au = param[["A"]] + age*0 #constant FOI for children born in autumn, age will be added later
-    lambda_wt = param [["W"]] + age*0 #constant FOI for children born in winter, age will be added later
+    # Define booleans to know which season the cohort is in
+    spring_FOI_sp = 0
+    summer_FOI_sp = 0
+    autumn_FOI_sp = 0
+    winter_FOI_sp = 0
+    spring_FOI_sm = 0
+    summer_FOI_sm = 0
+    autumn_FOI_sm = 0
+    winter_FOI_sm = 0
+    spring_FOI_au = 0
+    summer_FOI_au = 0
+    autumn_FOI_au = 0
+    winter_FOI_au = 0
+    spring_FOI_wt = 0
+    summer_FOI_wt = 0
+    autumn_FOI_wt = 0
+    winter_FOI_wt = 0
+    
+    if ( (age<= 30.41*3)                                      # FOI of the season in which the children were born
+         || ( (age>=365) & (age <=(365+30.41*3)) ) 
+         || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+         || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+         || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
+      if (data$season_birth == 'Spring'){
+        spring_FOI_sp = 1
+      }else if (data$season_birth == 'Summer'){
+        summer_FOI_sm = 1
+      }else if (data$season_birth == 'Autumn'){
+        autumn_FOI_au = 1
+      }else if (data$season_birth == 'Winter'){
+        winter_FOI_wt = 1
+      }
+    } 
+    
+    if ( (age>30.41*3 & age <=30.41*6 )                       # FOI of the season after the children were born
+         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
+      if (data$season_birth == 'Spring'){
+        summer_FOI_sp = 1
+      }else if (data$season_birth == 'Summer'){
+        autumn_FOI_sm = 1
+      }else if (data$season_birth == 'Autumn'){
+        winter_FOI_au = 1
+      }else if (data$season_birth == 'Winter'){
+        spring_FOI_wt = 1
+      }
+    } 
+    
+    if ( (age>30.41*6 & age <=30.41*9 )                     # FOI 2 seasons after birth
+         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
+      if (data$season_birth == 'Spring'){
+        autumn_FOI_sp = 1
+      }else if (data$season_birth == 'Summer'){
+        winter_FOI_sm = 1
+      }else if (data$season_birth == 'Autumn'){
+        spring_FOI_au = 1
+      }else if (data$season_birth == 'Winter'){
+        summer_FOI_wt = 1
+      }
+    } 
+    
+    if ( (age>30.41*9 & age <=30.41*12 )                     # FOI 3 seasons after birth
+         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
+      if (data$season_birth == 'Spring'){
+        winter_FOI_sp = 1
+      }else if (data$season_birth == 'Summer'){
+        spring_FOI_sm = 1
+      }else if (data$season_birth == 'Autumn'){
+        summer_FOI_au = 1
+      }else if (data$season_birth == 'Winter'){
+        autumn_FOI_wt = 1
+      }
+    } 
+      
+    lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp + param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp
+    lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm
+    lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au + param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au
+    lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -248,13 +263,15 @@ traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
                          times=age, 
                          func=catalytic, 
                          parms=theta, 
+                         data = data,
                          method="lsoda",
                          verbose=F))
   
 
-  
-  traj$conv <- exp(traj$Z_sp +traj$Z_sm + traj$Z_au + traj$Z_wt) # cumulative seroconversion (=observed state)
-  traj$inc <- c(inits[["Z_sp"]]+inits[["Z_sm"]]+inits[["Z_au"]]+inits[["Z_wt"]], diff(exp(traj$Z_sp +traj$Z_sm + traj$Z_au + traj$Z_wt))) # incident seroconversion
+  traj$Z_all <- c(traj$Z_sp, traj$Z_sm, traj$Z_au, traj$Z_wt)
+  inits.Z_all <- c(inits[["Z_sp"]], inits[["Z_sm"]],inits[["Z_au"]],inits[["Z_wt"]])
+  traj$conv <- exp(Z_all) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits.Z_all, diff(exp(traj$Z_all))) # incident seroconversion
   
   return(traj)
   
@@ -264,7 +281,7 @@ traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
 
 # This function draws n samples from the posterior to calculate the posterior predictive uncertainty (95%)
 
-maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
+maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
   
   #Draw n fitted parameter vectors theta from the MCMC object
   sample <- getSample(trace, parametersOnly = TRUE, thin=1, numSamples=ndraw) #trace is a sampler, parametersOnly = T means that likelihood, posterior and prior values are not provided in the output, thin = thinning parameter
@@ -275,7 +292,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw) {
     theta.sample <- c(x, theta[!is.na(theta)])
     
     #Simulate trajectory for selected theta
-    traj <- match.fun(model)(theta.sample, age, inits) #match.fun extracts the underlying function
+    traj <- match.fun(model)(theta.sample, age, inits, data) #match.fun extracts the underlying function
     traj <- cbind(as.data.frame(t(x)), traj)
   })
   
@@ -296,6 +313,7 @@ theta <- c(P=0.02, M=0.02, A=0.02, W=0.02, B = 0.01) # these are just random val
 
 # INITS ---------------------------------------------------------
 
+#Should this add up to 1?
 inits <- c(M_sp=0.26*(1-8*1e-12), M_sm = 0.29*(1-8*1e-12), M_au= 0.24*(1-8*1e-12), M_wt = 0.20*(1-8*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
            Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
@@ -306,7 +324,7 @@ data <- arrange(data, agemid)
 agepred <- data$agemid
 
 # TEST MODEL  --------------------------------------------------------
-test <- model(theta, agepred, inits)
+test <- model(theta, agepred, inits, data)
 ggplot(test) + geom_line(aes(x=time, y=conv))
 ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) #should be constant
 ggplot(test) + geom_line(aes(x=time, y=mu))
