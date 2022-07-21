@@ -549,12 +549,7 @@ maketrajsim2 <- function(trace, theta, age, model, data, inits, ndraw, season) {
 theta <- c(P = 0.0201, M = 0.0202, A=0.0203, W = 0.0204, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
-
-'#inits <- c(M_sp=0.26*(1-8*1e-12), M_sm = 0.29*(1-8*1e-12), M_au= 0.24*(1-8*1e-12), M_wt = 0.20*(1-8*1e-12),
-           S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
-           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
-#'
 
 inits <- c(M=1-1e-12-1e-12, S=1e-12, Z=1e-12)
 
@@ -760,75 +755,18 @@ system.time({trace <- runMCMC(bayesianSetup = bayesianSetup,
                                  sampler = sampler, 
                                  settings = mcmc_settings)})
 
- '#if (cpus == 1) {
-  #spring
-  bayesianSetup_sp <- createBayesianSetup(prior = prior,
-                                       likelihood = loglik_wrapper_sp,
-                                       names = names(theta[index]),
-                                       parallel = FALSE)
-  
-  system.time({trace_sp <- runMCMC(bayesianSetup = bayesianSetup_sp, 
-                                sampler = sampler, 
-                                settings = mcmc_settings)})
-  
-  #summer
-  bayesianSetup_sm <- createBayesianSetup(prior = prior,
-                                          likelihood = loglik_wrapper_sm,
-                                          names = names(theta[index]),
-                                          parallel = FALSE)
-  
-  system.time({trace_sm <- runMCMC(bayesianSetup = bayesianSetup_sm, 
-                                   sampler = sampler, 
-                                   settings = mcmc_settings)})
-  
-  #autumn
-  bayesianSetup_au <- createBayesianSetup(prior = prior,
-                                          likelihood = loglik_wrapper_au,
-                                          names = names(theta[index]),
-                                          parallel = FALSE)
-  
-  system.time({trace_au <- runMCMC(bayesianSetup = bayesianSetup_au, 
-                                   sampler = sampler, 
-                                   settings = mcmc_settings)})
-  
-  # winter
-  bayesianSetup_wt <- createBayesianSetup(prior = prior,
-                                          likelihood = loglik_wrapper_wt,
-                                          names = names(theta[index]),
-                                          parallel = FALSE)
-  
-  system.time({trace_wt <- runMCMC(bayesianSetup = bayesianSetup_wt, 
-                                   sampler = sampler, 
-                                   settings = mcmc_settings)})
-  
-}#'
 
 # DIAGNOSTICS -----------------------------------------------
 plot(trace)
 
-'#
-plot(trace_sp)
-plot(trace_sm) 
-plot(trace_au)
-plot(trace_wt) 
-#'
-
 # burn-in
 nburn <- 10000
 plot(trace, parametersOnly = TRUE, start=nburn)
-'#
-plot(trace_sp, parametersOnly = TRUE, start=nburn)
-plot(trace_sm, parametersOnly = TRUE, start=nburn)
-plot(trace_au, parametersOnly = TRUE, start=nburn)
-plot(trace_wt, parametersOnly = TRUE, start=nburn)#'
+
 
 # check convergence and correlations
 gelmanDiagnostics(trace, plot=TRUE, start=nburn)
-'#
-gelmanDiagnostics(trace_sp, plot=TRUE, start=nburn)
-gelmanDiagnostics(trace_sm, plot=TRUE, start=nburn)
-gelmanDiagnostics(trace_au, plot=TRUE, start=nburn)
-gelmanDiagnostics(trace_wt, plot=TRUE, start=nburn)#'
+
 
 correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
 marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
@@ -838,34 +776,9 @@ tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
 plot(tracefinal)
 effectiveSize(tracefinal)
 
-'#
-tracefinal_sp <- getSample(trace_sp, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal_sp)
-effectiveSize(tracefinal_sp)
-
-tracefinal_sm <- getSample(trace_sm, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal_sm)
-effectiveSize(tracefinal_sm)
-
-tracefinal_au <- getSample(trace_au, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal_au)
-effectiveSize(tracefinal_au)
-
-tracefinal_wt <- getSample(trace_wt, parametersOnly = TRUE, coda=TRUE, start=nburn)
-plot(tracefinal_wt)
-effectiveSize(tracefinal_wt)#'
-
-# Posterior summary
-summary(tracefinal)
-
-'#
-summary(tracefinal_sp)
-summary(tracefinal_sm)
-summary(tracefinal_wt)
-summary(tracefinal_au)#'
 
 # save the trace
-#saveRDS(trace_sp, "trace_FOI_w_all_season_together_prop.rds")
+saveRDS(trace, "trace_changing_FOI_w_all_season_together.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -880,53 +793,6 @@ colnames(lambda_quantiles) <- c("agemid", "low95", "median", "up95")
 
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
-
-
-'#
-#Spring
-trajsim_sp <- maketrajsim(tracefinal_sp, theta, agepred_sp, model_sp, inits, 1000)
-trajquantiles_sp <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sp) <- c("agemid", "low95", "median", "up95")
-
-lambda_spquantiles <- plyr::ddply(.data=trajsim_sp, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
-
-wquantiles_sp <- plyr::ddply(.data=trajsim_sp, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(wquantiles_sp) <- c("agemid", "low95", "median", "up95")
-
-#Summer
-trajsim_sm <- maketrajsim(tracefinal_sm, theta, agepred_sm, model_sm, inits, 1000)
-trajquantiles_sm <- plyr::ddply(.data=trajsim_sm, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sm) <- c("agemid", "low95", "median", "up95")
-
-lambda_smquantiles <- plyr::ddply(.data=trajsim_sm, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
-wquantiles_sm <- plyr::ddply(.data=trajsim_sm, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(wquantiles_sm) <- c("agemid", "low95", "median", "up95")
-
-#Autumn
-trajsim_au <- maketrajsim(tracefinal_au, theta, agepred_au, model_au, inits, 1000)
-trajquantiles_au <- plyr::ddply(.data=trajsim_au, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_au) <- c("agemid", "low95", "median", "up95")
-
-lambda_auquantiles <- plyr::ddply(.data=trajsim_au, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
-
-wquantiles_au <- plyr::ddply(.data=trajsim_au, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(wquantiles_au) <- c("agemid", "low95", "median", "up95")
-
-#Winter
-trajsim_wt <- maketrajsim(tracefinal_wt, theta, agepred_wt, model_wt, inits, 1000)
-trajquantiles_wt <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_wt) <- c("agemid", "low95", "median", "up95")
-
-lambda_wtquantiles <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"lambda"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
-
-wquantiles_wt <- plyr::ddply(.data=trajsim_wt, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(wquantiles_wt) <- c("agemid", "low95", "median", "up95")
-#'
-
 
 
 # Plot fit and FOI
@@ -990,90 +856,6 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
   geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("Maternal immunity") 
 w
-
-'#
-fit_sp <- ggplot() + theme_bw() + ggtitle("model fit in spring") +
-  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
-
-
-fit_sp
-
-lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI in spring") +
-  geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_spquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_sp
-
-fit_sm <- ggplot() + theme_bw() + ggtitle("model fit in summer") +
-  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles_sm, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles_sm, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
-
-
-fit_sm
-
-lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI in summer") +
-  geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_sm
-
-fit_au <- ggplot() + theme_bw() + ggtitle("model fit in autumn") +
-  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles_au, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles_au, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
-
-
-fit_au
-
-lambda_au <- ggplot() + theme_bw() + ggtitle("FOI in autumn") +
-  geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_au
-
-w_au <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity in autumn") +
-  geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("Maternal immunity") 
-
-
-w_au
-
-
-fit_wt <- ggplot() + theme_bw() + ggtitle("model fit in winter") +
-  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles_wt, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles_wt, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") 
-
-
-fit_wt
-
-
-lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI in winter") +
-  geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_wtquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_wt
-
-w_wt <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity in winter") +
-  geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("Maternal immunity") 
-
-
-w_wt
-#'
 
 write.csv(lambda_quantiles, "lambda_quantiles.csv")
 
