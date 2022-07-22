@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding season of birth
 # Author: Julia Mayer
-# Last updated: 21.07.2022
+# Last updated: 22.07.2022
 ################################################################
 
 
@@ -103,7 +103,6 @@ ggplot(winter.df) +
   ylab("Proportion seroconverted") + xlab("age (days)") + labs(title ="Proportion seroconverted born in winter")
 
 # MODEL EQUATION  ------------------------------------------------------------
-
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is why we log-transform them when in the model input and exponentiate them inside the model
 
@@ -129,79 +128,60 @@ model <- function(theta, age, inits, data) {
     summer_FOI_wt = 0
     autumn_FOI_wt = 0
     winter_FOI_wt = 0
-    
-    if ( (age<= 30.41*3)                                      # FOI of the season in which the children were born
-         || ( (age>=365) & (age <=(365+30.41*3)) ) 
-         || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
-         || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
-         || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
-         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
-      if (data$season_birth == 'Spring'){
-        spring_FOI_sp = 1
-      }else if (data$season_birth == 'Summer'){
-        summer_FOI_sm = 1
-      }else if (data$season_birth == 'Autumn'){
-        autumn_FOI_au = 1
-      }else if (data$season_birth == 'Winter'){
-        winter_FOI_wt = 1
-      }
-    } 
-    
-    if ( (age>30.41*3 & age <=30.41*6 )                       # FOI of the season after the children were born
-         || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
-         || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
-         || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
-         || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
-         || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
-      if (data$season_birth == 'Spring'){
-        summer_FOI_sp = 1
-      }else if (data$season_birth == 'Summer'){
-        autumn_FOI_sm = 1
-      }else if (data$season_birth == 'Autumn'){
-        winter_FOI_au = 1
-      }else if (data$season_birth == 'Winter'){
-        spring_FOI_wt = 1
-      }
-    } 
-    
-    if ( (age>30.41*6 & age <=30.41*9 )                     # FOI 2 seasons after birth
-         || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
-         || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
-         || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
-         || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
-         || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
-      if (data$season_birth == 'Spring'){
-        autumn_FOI_sp = 1
-      }else if (data$season_birth == 'Summer'){
-        winter_FOI_sm = 1
-      }else if (data$season_birth == 'Autumn'){
-        spring_FOI_au = 1
-      }else if (data$season_birth == 'Winter'){
-        summer_FOI_wt = 1
-      }
-    } 
-    
-    if ( (age>30.41*9 & age <=30.41*12 )                     # FOI 3 seasons after birth
-         || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
-         || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
-         || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
-         || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
-         || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
-      if (data$season_birth == 'Spring'){
-        winter_FOI_sp = 1
-      }else if (data$season_birth == 'Summer'){
-        spring_FOI_sm = 1
-      }else if (data$season_birth == 'Autumn'){
-        summer_FOI_au = 1
-      }else if (data$season_birth == 'Winter'){
-        autumn_FOI_wt = 1
-      }
-    } 
+  
+      if ( (age<= 30.41*3)                                      # FOI of the season in which the children were born
+           || ( (age>=365) & (age <=(365+30.41*3)) ) 
+           || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+           || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
+           || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
+           || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
+          spring_FOI_sp = 1
+          summer_FOI_sm = 1
+          autumn_FOI_au = 1
+          winter_FOI_wt = 1
+      } 
       
-    lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp + param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp
-    lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm
-    lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au + param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au
-    lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt
+      if ( (age>30.41*3 & age <=30.41*6 )                       # FOI of the season after the children were born
+           || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
+           || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+           || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
+           || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
+           || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
+          summer_FOI_sp = 1
+          autumn_FOI_sm = 1
+          winter_FOI_au = 1
+          spring_FOI_wt = 1
+      } 
+      
+      if ( (age>30.41*6 & age <=30.41*9 )                     # FOI 2 seasons after birth
+           || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
+           || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+           || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
+           || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
+           || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
+          autumn_FOI_sp = 1
+          winter_FOI_sm = 1
+          spring_FOI_au = 1
+          summer_FOI_wt = 1
+      } 
+      
+      if ( (age>30.41*9 & age <=30.41*12 )                     # FOI 3 seasons after birth
+           || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
+           || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+           || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
+           || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
+           || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
+          winter_FOI_sp = 1
+          spring_FOI_sm = 1
+          summer_FOI_au = 1
+          autumn_FOI_wt = 1
+      } 
+    
+      # FOI for each birth cohort
+      lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp + param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp
+      lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm
+      lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au + param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au
+      lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -215,14 +195,14 @@ model <- function(theta, age, inits, data) {
     # Susceptible
     S_sp = exp(state[5]) # susceptible born in spring
     S_sm = exp(state[6]) # susceptible born in summer
-    S_au = exp(state[7]) #susceptible born in autumn
-    S_wt = exp(state[8]) #susceptible born in winter
+    S_au = exp(state[7]) # susceptible born in autumn
+    S_wt = exp(state[8]) # susceptible born in winter
     #Seroconverted
     Z_sp = exp(state[9]) # seroconverted after infection born in spring
     Z_sm = exp(state[10]) # seroconverted after infection born in summer
     Z_au = exp(state[11]) # seroconverted after infection born in autumn
     Z_wt = exp(state[12]) # seroconverted after infection born in winter
-    Z_all = c(Z_sp, Z_sm, Z_au, Z_wt)
+    Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
     dM_sp = -mu*M_sp
@@ -237,13 +217,16 @@ model <- function(theta, age, inits, data) {
     dZ_sm = + lambda_sm*S_sm 
     dZ_au = + lambda_au*S_au
     dZ_wt = + lambda_wt*S_wt
+    dZ_all = + lambda_sp*S_sp + lambda_sm*S_sm + lambda_au*S_au + lambda_wt*S_wt
+    
     
     return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
                   dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, dS_wt/S_wt, 
-                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt), 
+                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt,
+                  dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
-                mu=mu, Z_all = Z_all))
+                mu=mu))
     
     
   }
@@ -259,7 +242,8 @@ traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
                              Z_sp=log(inits[["Z_sp"]]),
                              Z_sm=log(inits[["Z_sm"]]),
                              Z_au=log(inits[["Z_au"]]),
-                             Z_wt=log(inits[["Z_wt"]])),
+                             Z_wt=log(inits[["Z_wt"]]),
+                             Z_all = log(inits[["Z_all"]])),
                          times=age, 
                          func=catalytic, 
                          parms=theta, 
@@ -267,15 +251,12 @@ traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
                          method="lsoda",
                          verbose=F))
   
-
-  traj$Z_all <- c(traj$Z_sp, traj$Z_sm, traj$Z_au, traj$Z_wt)
-  inits.Z_all <- c(inits[["Z_sp"]], inits[["Z_sm"]],inits[["Z_au"]],inits[["Z_wt"]])
-  traj$conv <- exp(Z_all) # cumulative seroconversion (=observed state)
-  traj$inc <- c(inits.Z_all, diff(exp(traj$Z_all))) # incident seroconversion
-  
+  traj$conv <- exp(traj$Z_all) # cumulative seroconversion (=observed state)
+  traj$inc <- c(inits[["Z_all"]], diff(exp(traj$Z_all))) # incident seroconversion
   return(traj)
   
 }
+
 
 # TRAJECTORY SIMULATION  ------------------------------------------------------------
 
@@ -304,19 +285,20 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 
 # THETA ---------------------------------------------------------
 
-# P = mean FOI (proportion infected per day) for children born in Spring
+# P = mean FOI (proportion infected per day) for children born in spring
 # M = mean FOI for children born in summer
 # A = mean FOI for children born in autumn
 # W = mean FOI for children born in winter
 # B = rate of waning maternal immunity
-theta <- c(P=0.02, M=0.02, A=0.02, W=0.02, B = 0.01) # these are just random values, to be fitted
+theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
 #Should this add up to 1?
-inits <- c(M_sp=0.26*(1-8*1e-12), M_sm = 0.29*(1-8*1e-12), M_au= 0.24*(1-8*1e-12), M_wt = 0.20*(1-8*1e-12),
+inits <- c(M_sp=0.26*(1-9*1e-12), M_sm = 0.29*(1-9*1e-12), M_au= 0.24*(1-9*1e-12), M_wt = 0.20*(1-8*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
-           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12) # initial conditions for the states (as proportions)
+           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12,
+           Z_all = 1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
 # SIMULATION TIME  ---------------------------------------------------------
@@ -326,7 +308,9 @@ agepred <- data$agemid
 # TEST MODEL  --------------------------------------------------------
 test <- model(theta, agepred, inits, data)
 ggplot(test) + geom_line(aes(x=time, y=conv))
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) #should be constant
+ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) #should vary
+ggplot(test) + geom_line(aes(x=time, y=lambda_sm))
+ggplot(test) + geom_line(aes(x=time, y=lambda_au))
 ggplot(test) + geom_line(aes(x=time, y=mu))
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
@@ -418,7 +402,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "trace_FOI_w_all_season_together_prop.rds")
+saveRDS(trace, "trace_seasonal_FOI_ and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -446,7 +430,7 @@ colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
 
 # Plot fit and FOI
-fit <- ggplot() + theme_bw() + ggtitle("model fit") +
+fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
   geom_point(data=data_no_season, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -455,25 +439,70 @@ fit <- ggplot() + theme_bw() + ggtitle("model fit") +
 
 fit
 
-lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI in spring") +
+fit_season <- ggplot() + theme_bw() + ggtitle("Model fit on data stratified by season") +
+  geom_point(data=data, aes(x=agemid, y=seroprev_mean, color = season_birth)) +
+  geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(color = "Season of birth")
+
+fit_season
+
+fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
+  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+fit_sp
+
+fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
+  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+fit_sm
+
+fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
+  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+fit_au
+
+fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
+  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+fit_wt
+
+lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort") +
   geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_spquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sp
 
-lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI in summer") +
+lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort") +
   geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sm
 
-lambda_au <- ggplot() + theme_bw() + ggtitle("FOI in autumn") +
+lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort") +
   geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_au
 
-lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI in winter") +
+lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort") +
   geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_wtquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
@@ -486,6 +515,3 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
 
 
 w
-
-
-
