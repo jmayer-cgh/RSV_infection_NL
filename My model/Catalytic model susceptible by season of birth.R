@@ -129,9 +129,9 @@ model <- function(theta, age, inits, data) {
     autumn_FOI_wt = 0
     winter_FOI_wt = 0
   
-      if ( (age<= 30.41*3)                                      # FOI of the season in which the children were born
-           || ( (age>=365) & (age <=(365+30.41*3)) ) 
-           || ( (age >= 2*365) & (age <= (2*365+30.41*3))) 
+      if ( (age <= 30.41*3)                                      # FOI of the season in which the children were born
+           || ((age>=365) & (age <= (365+30.41*3))) 
+           || ((age >= 2*365) & (age <= (2*365+30.41*3))) 
            || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
            || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
            || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
@@ -142,8 +142,8 @@ model <- function(theta, age, inits, data) {
       } 
       
       if ( (age>30.41*3 & age <=30.41*6 )                       # FOI of the season after the children were born
-           || ( (age>365+30.41*3) & (age <=(365+30.41*6)) ) 
-           || ( (age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
+           || ((age > 365 + 30.41*3) & (age <= (365+30.41*6))) 
+           || ((age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
            || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
            || ((age > 4*365 + 30.41*3) & (age <= (4*365+30.41*6))) 
            || ((age > 5*365 + 30.41*3) & (age <= (5*365+30.41*6))) ){
@@ -153,9 +153,9 @@ model <- function(theta, age, inits, data) {
           spring_FOI_wt = 1
       } 
       
-      if ( (age>30.41*6 & age <=30.41*9 )                     # FOI 2 seasons after birth
-           || ( (age>365+30.41*6) & (age <=(365+30.41*9)) ) 
-           || ( (age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
+      if ( (age > 30.41*6 & age <= 30.41*9 )                     # FOI 2 seasons after birth
+           || ((age > 365+30.41*6) & (age <= (365+30.41*9))) 
+           || ((age > 2*365 + 30.41*6) & (age <= (2*365+30.41*9))) 
            || ((age > 3*365 + 30.41*6) & (age <= (3*365+30.41*9))) 
            || ((age > 4*365 + 30.41*6) & (age <= (4*365+30.41*9))) 
            || ((age > 5*365 + 30.41*6) & (age <= (5*365+30.41*9))) ){
@@ -165,9 +165,9 @@ model <- function(theta, age, inits, data) {
           summer_FOI_wt = 1
       } 
       
-      if ( (age>30.41*9 & age <=30.41*12 )                     # FOI 3 seasons after birth
-           || ( (age>365+30.41*9) & (age <=(365+30.41*12)) ) 
-           || ( (age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
+      if ( (age > 30.41*9 & age <= 30.41*12 )                     # FOI 3 seasons after birth
+           || ((age > 365+30.41*9) & (age <= (365+30.41*12))) 
+           || ((age > 2*365 + 30.41*9) & (age <= (2*365+30.41*12))) 
            || ((age > 3*365 + 30.41*9) & (age <= (3*365+30.41*12))) 
            || ((age > 4*365 + 30.41*9) & (age <= (4*365+30.41*12))) 
            || ((age > 5*365 + 30.41*9) & (age <= (5*365+30.41*12))) ){
