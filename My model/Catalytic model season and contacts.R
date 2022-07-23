@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding contacts
 # Author: Julia Mayer
-# Last updated: 22.07.2022
+# Last updated: 23.07.2022
 ################################################################
 
 
@@ -177,11 +177,20 @@ model <- function(theta, age, inits, data) {
           autumn_FOI_wt = 1
       } 
     
-      # FOI for each birth cohort
-      lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp + param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp
-      lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm
-      lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au + param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au
-      lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt
+      # FOI for each birth cohort 
+      # numerical values from linear regression on number of contacts
+      lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp +
+                  param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp +
+                  0.015142*age 
+      lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
+                  param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm +
+                  0.465865 + 0.009492*age
+      lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au +
+                  param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au +
+                  3.583089 + 0.002052*age
+      lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + 
+                  param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt +
+                   0.012427*age
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
