@@ -410,8 +410,8 @@ effectiveSize(tracefinal)
 # Posterior summary
 summary(tracefinal)
 
-# save the trace
-saveRDS(trace, "trace_seasonal_FOI_ and_w.rds")
+#save the trace
+saveRDS(trace, "trace_seasonal_FOI_with_contacts_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------

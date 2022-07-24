@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding contacts
 # Author: Julia Mayer
-# Last updated: 23.07.2022
+# Last updated: 24.07.2022
 ################################################################
 
 
@@ -235,7 +235,7 @@ model <- function(theta, age, inits, data) {
       contacts_au = 12/4*contacts_au # NB: no children born in autumn are aged 48-54 months
       contacts_wt = 21/4*contacts_wt
     }
-    if ((age > 30.41*54) & (age <= 30.41*60)){
+    if (age > 30.41*54){
       contacts_sp = 25/4*contacts_sp
       contacts_sm = 13/1*contacts_sm
       contacts_au = 11.5/4*contacts_au
@@ -246,16 +246,16 @@ model <- function(theta, age, inits, data) {
     # should I add the contacts? Do I need an extra parameter?
     lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp +
       param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp +
-      contacts_sp 
+      param[["C"]]*contacts_sp 
     lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
       param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm +
-      contacts_sm
+      param[["C"]]*contacts_sm
     lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au +
       param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au +
-      contacts_au
+      param[["C"]]*contacts_au
     lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + 
       param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt +
-      contacts_wt
+      param[["C"]]*contacts_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -364,7 +364,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # A = mean FOI for children born in autumn
 # W = mean FOI for children born in winter
 # B = rate of waning maternal immunity
-theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01) # these are just random values, to be fitted
+theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01, C = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -425,13 +425,13 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "B") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "B", "C") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P=0, M=0, A=0, W=0, B = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2)
+lower = c(P=0, M=0, A=0, W=0, B = 0, C = 0)
+upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2, C = 0.2)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -476,7 +476,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "trace_seasonal_FOI_ and_w.rds")
+#saveRDS(trace, "trace_seasonal_FOI_ and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
