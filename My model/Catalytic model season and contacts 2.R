@@ -188,58 +188,58 @@ model <- function(theta, age, inits, data) {
     '#the median number of contacts for children aged 9-12 months is x/y*median 
     number of contacts of children aged 0-6 months#'
     if ((age > 30.41*6) & (age <= 30.41*12)){ 
-      contacts_sp = 5/4*contacts_sp
-      contacts_sm = 3.5/1*contacts_sm
-      contacts_au = 3/4*contacts_au
-      contacts_wt = 4/4*contacts_wt
+      contacts_sp = 5/4
+      contacts_sm = 3.5/1
+      contacts_au = 3/4
+      contacts_wt = 4/4
     } 
     if ((age > 30.41*12) & (age <= 30.41*18)){
-      contacts_sp = 5/4*contacts_sp
-      contacts_sm = 3.5/1*contacts_sm
-      contacts_au = 5/4*contacts_au
-      contacts_wt = 4/4*contacts_wt
+      contacts_sp = 5/4
+      contacts_sm = 3.5/1
+      contacts_au = 5/4
+      contacts_wt = 4/4
     }
     if ((age > 30.41*18) & (age <= 30.41*24)){
-    contacts_sp = 4.5/4*contacts_sp
-    contacts_sm = 7/1*contacts_sm
-    contacts_au = 4/4*contacts_au
-    contacts_wt = 4.5/4*contacts_wt
+    contacts_sp = 4.5/4
+    contacts_sm = 7/1
+    contacts_au = 4/4
+    contacts_wt = 4.5/4
     }
     if ((age > 30.41*24) & (age <= 30.41*30)){
-      contacts_sp = 6/4*contacts_sp
-      contacts_sm = 7.5/1*contacts_sm
-      contacts_au = 6/4*contacts_au
-      contacts_wt = 6/4*contacts_wt
+      contacts_sp = 6/4
+      contacts_sm = 7.5/1
+      contacts_au = 6/4
+      contacts_wt = 6/4
     }
     if ((age > 30.41*30) & (age <= 30.41*36)){
-      contacts_sp = 8/4*contacts_sp
-      contacts_sm = 6/1*contacts_sm
-      contacts_au = 6/4*contacts_au
-      contacts_wt = 6/4*contacts_wt
+      contacts_sp = 8/4
+      contacts_sm = 6/1
+      contacts_au = 6/4
+      contacts_wt = 6/4
     }
     if ((age > 30.41*36) & (age <= 30.41*42)){
-      contacts_sp = 20/4*contacts_sp
-      contacts_sm = 9/1*contacts_sm
-      contacts_au = 9/4*contacts_au
-      contacts_wt = 7.5/4*contacts_wt
+      contacts_sp = 20/4
+      contacts_sm = 9/1
+      contacts_au = 9/4
+      contacts_wt = 7.5/4
     }
     if ((age > 30.41*42) & (age <= 30.41*48)){
-      contacts_sp = 14/4*contacts_sp
-      contacts_sm = 11/1*contacts_sm
-      contacts_au = 12/4*contacts_au
-      contacts_wt = 11/4*contacts_wt
+      contacts_sp = 14/4
+      contacts_sm = 11/1
+      contacts_au = 12/4
+      contacts_wt = 11/4
     }
     if ((age > 30.41*48) & (age <= 30.41*54)){
-      contacts_sp = 29/4*contacts_sp
-      contacts_sm = 25/1*contacts_sm
-      contacts_au = 12/4*contacts_au # NB: no children born in autumn are aged 48-54 months
-      contacts_wt = 21/4*contacts_wt
+      contacts_sp = 29/4
+      contacts_sm = 25/1
+      contacts_au = 12/4  # NB: no children born in autumn are aged 48-54 months
+      contacts_wt = 21/4
     }
     if (age > 30.41*54){
-      contacts_sp = 25/4*contacts_sp
-      contacts_sm = 13/1*contacts_sm
-      contacts_au = 11.5/4*contacts_au
-      contacts_wt = 26.5/4*contacts_wt
+      contacts_sp = 25/4
+      contacts_sm = 13/1
+      contacts_au = 11.5/4
+      contacts_wt = 26.5/4
     }
     
     # FOI for each birth cohort 
@@ -359,17 +359,18 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 
 # THETA ---------------------------------------------------------
 
-# P = mean FOI (proportion infected per day) for children born in spring
-# M = mean FOI for children born in summer
-# A = mean FOI for children born in autumn
-# W = mean FOI for children born in winter
+# P = mean FOI (proportion infected per day) in spring
+# M = mean FOI for children in summer
+# A = mean FOI for children in autumn
+# W = mean FOI for children in winter
 # B = rate of waning maternal immunity
-theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01, C = 0.01) # these are just random values, to be fitted
+# C = contact parameter
+theta <- c(P=0.02002, M=0.02001, A=0.02003, W=0.02004, B = 0.01, C = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
 #Should this add up to 1?
-inits <- c(M_sp=0.26*(1-9*1e-12), M_sm = 0.29*(1-9*1e-12), M_au= 0.24*(1-9*1e-12), M_wt = 0.20*(1-8*1e-12),
+inits <- c(M_sp=0.26*(1-9*1e-12), M_sm = 0.29*(1-9*1e-12), M_au= 0.24*(1-9*1e-12), M_wt = 0.20*(1-9*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
            Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12,
            Z_all = 1e-12) # initial conditions for the states (as proportions)
@@ -380,12 +381,14 @@ data <- arrange(data, agemid)
 agepred <- data$agemid
 
 # TEST MODEL  --------------------------------------------------------
+# Notes: lambdas should vary over time, mu shouldn't
 test <- model(theta, agepred, inits, data)
 ggplot(test) + geom_line(aes(x=time, y=conv))
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) #should vary
-ggplot(test) + geom_line(aes(x=time, y=lambda_sm))
-ggplot(test) + geom_line(aes(x=time, y=lambda_au))
-ggplot(test) + geom_line(aes(x=time, y=mu))
+ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the spring birth cohort")
+ggplot(test) + geom_line(aes(x=time, y=lambda_sm)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the summer birth cohort")
+ggplot(test) + geom_line(aes(x=time, y=lambda_au)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the autumn birth cohort")
+ggplot(test) + geom_line(aes(x=time, y=lambda_wt)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort")
+ggplot(test) + geom_line(aes(x=time, y=mu)) + xlab("Age (days)") + ylab("Waning rate")
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
