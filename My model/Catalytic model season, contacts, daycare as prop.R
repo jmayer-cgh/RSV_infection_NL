@@ -454,14 +454,26 @@ agepred <- data$agemid
 # Notes: lambda should vary over time, mu shouldn't
 test <- model(theta, agepred, inits, data)
 ggplot(test) + geom_line(aes(x=time, y=conv))
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the spring birth cohort (no daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp_d)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the spring birth cohort (daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_sm)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the summer birth cohort (no daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_sm_d)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the summer birth cohort (daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_au)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the autumn birth cohort (no daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_au_d)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the autumn birth cohort (daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_wt)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort (no daycare)")
-ggplot(test) + geom_line(aes(x=time, y=lambda_wt_d)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort (daycare)")
+ggplot(test) + geom_line(aes(x=time, y=lambda_sp, color = 'Not attending daycare')) + 
+               geom_line(aes(x=time, y=lambda_sp_d, color = 'Attending daycare')) + 
+               xlab("Age (days)") + ylab("FOI") + labs(color = 'Daycare') + ggtitle("FOI for the spring birth cohort") 
+
+ggplot(test) + geom_line(aes(x=time, y=lambda_sm, color = 'Not attending daycare'))+ 
+              geom_line(aes(x=time, y=lambda_sm_d, color = 'Attending daycare'))+
+              xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the summer birth cohort") +
+              labs(color = 'Daycare')
+             
+
+ggplot(test) + geom_line(aes(x=time, y=lambda_au, color = 'Not attending daycare')) +
+               geom_line(aes(x=time, y=lambda_au_d, color = 'Attending daycare'))+ 
+               xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the autumn birth cohort ") +
+              labs (color = 'Daycare')
+
+ggplot(test) + geom_line(aes(x=time, y=lambda_wt, color = 'Not attending daycare')) +
+               geom_line(aes(x=time, y=lambda_wt_d, color = 'Attending daycare'))+
+               xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort") + 
+              labs(color = 'Daycare')
+
 ggplot(test) + geom_line(aes(x=time, y=mu)) + xlab("Age (days)") + ylab("Waining rate")
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
@@ -553,7 +565,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-#saveRDS(trace, "trace_seasonal_FOI_ and_w.rds")
+saveRDS(trace, "trace_seasonal_FOI_contacts_daycare_and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -566,14 +578,26 @@ colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 lambda_spquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
 
+lambda_spdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sp_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(lambda_spdquantiles) <- c("agemid", "low95", "median", "up95")
+
 lambda_smquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
+
+lambda_smdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sm_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(lambda_smdquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambda_auquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_au"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
 
+lambda_audquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_au_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(lambda_audquantiles) <- c("agemid", "low95", "median", "up95")
+
 lambda_wtquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
+
+lambda_wtdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(lambda_wtdquantiles) <- c("agemid", "low95", "median", "up95")
 
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
@@ -635,29 +659,53 @@ fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
 
 fit_wt
 
-lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort") +
+lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (no daycare)") +
   geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_spquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sp
 
-lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort") +
+lambda_sp_d <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (daycare)") +
+  geom_ribbon(data=lambda_spdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=lambda_spdquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("FOI") 
+lambda_sp_d
+
+lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort (no daycare)") +
   geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sm
 
-lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort") +
+lambda_sm_d <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort (daycare)") +
+  geom_ribbon(data=lambda_smdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=lambda_smdquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("FOI") 
+lambda_sm_d
+
+lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (no daycare)") +
   geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_au
 
-lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort") +
+lambda_au_d <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (daycare)") +
+  geom_ribbon(data=lambda_audquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=lambda_audquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("FOI") 
+lambda_au_d
+
+lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (no daycare)") +
   geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_wtquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_wt
+
+lambda_wt_d <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (daycare)") +
+  geom_ribbon(data=lambda_wtdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=lambda_wtdquantiles, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("FOI") 
+lambda_wt_d
 
 w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
   geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +

@@ -390,6 +390,13 @@ ggplot(test) + geom_line(aes(x=time, y=lambda_au)) + xlab("Age (days)") + ylab("
 ggplot(test) + geom_line(aes(x=time, y=lambda_wt)) + xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort")
 ggplot(test) + geom_line(aes(x=time, y=mu)) + xlab("Age (days)") + ylab("Waning rate")
 
+ggplot(test) + geom_line(aes(x=time, y=lambda_sp, color = 'Spring')) + 
+              geom_line(aes(x=time, y=lambda_sm, color = 'Summer')) + 
+              geom_line(aes(x=time, y=lambda_au, color = 'Autumn')) + 
+             geom_line(aes(x=time, y=lambda_wt, color = 'Winter')) +  
+             xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the four birth cohorts") +
+             labs(color = 'Season')
+
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
 loglik <- function(theta, age, data, model, inits) {
