@@ -469,7 +469,7 @@ if (cpus == 1) {
 plot(trace) 
 
 # burn-in
-nburn <- 10000
+nburn <- 20000
 plot(trace, parametersOnly = TRUE, start =nburn)
 
 # check convergence and correlations
@@ -599,3 +599,8 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
 
 
 w
+
+write.csv(lambda_spquantiles, "lambda_sp.csv")
+write.csv(lambda_smquantiles, "lambda_sm.csv")
+write.csv(lambda_auquantiles, "lambda_au.csv")
+write.csv(lambda_wtquantiles, "lambda_wt.csv")

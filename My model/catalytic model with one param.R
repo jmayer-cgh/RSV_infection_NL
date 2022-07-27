@@ -210,8 +210,8 @@ plot(trace, parametersOnly = TRUE, start =nburn)
 
 # check convergence and correlations
 gelmanDiagnostics(trace, plot=TRUE, start=nburn)
-#correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
-#marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
+correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
+marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
 
 # remove burn-in for trajsim simulation
 tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
