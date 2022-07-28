@@ -392,7 +392,7 @@ if (cpus == 1) {
 plot(trace) 
 
 # burn-in
-nburn <- 10000
+nburn <- 20000
 plot(trace, parametersOnly = TRUE, start =nburn)
 
 # check convergence and correlations
