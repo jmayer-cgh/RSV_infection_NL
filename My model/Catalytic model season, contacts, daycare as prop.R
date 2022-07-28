@@ -323,13 +323,9 @@ model <- function(theta, age, inits, data) {
     M_wt = exp(state[4]) # born in winter
     # Susceptible
     S_sp = exp(state[5]) # susceptible born in spring 
-    #S_sp_nd = exp(state[5]) # susceptible born in spring not attending daycare 
     S_sm = exp(state[6]) # susceptible born in summer 
-    #S_sm_nd = exp((1-daycare_sm)*state[6]) # susceptible born in summer not attending daycare
     S_au = exp(state[7]) # susceptible born in autumn
-    #S_au_nd = exp((1-daycare_au)*state[7]) # susceptible born in autumn not attending daycare
     S_wt = exp(state[8]) # susceptible born in winter
-    #S_wt_nd = exp((1-daycare_wt)*state[8]) # susceptible born in winter attending daycare
     #Seroconverted
     Z_sp = exp(state[9]) # seroconverted after infection born in spring
     Z_sm = exp(state[10]) # seroconverted after infection born in summer
@@ -346,10 +342,6 @@ model <- function(theta, age, inits, data) {
     dS_sm = + mu*M_sm - (1-daycare_sm)*lambda_sm*S_sm - daycare_sm*lambda_sm_d*S_sm
     dS_au = + mu*M_au - (1-daycare_au)*lambda_au*S_au - daycare_au*lambda_au_d*S_au 
     dS_wt = + mu*M_wt - (1-daycare_wt)*lambda_wt*S_wt - daycare_wt*lambda_wt_d*S_wt
-    #dS_sp_d = + mu*M_sp - lambda_sp_d*S_sp_d 
-    #dS_sm_d = + mu*M_sm - lambda_sm_d*S_sm_d 
-    #dS_au_d = + mu*M_au - lambda_au_d*S_au_d
-    #dS_wt_d = + mu*M_wt - lambda_wt_d*S_wt_d
     dZ_sp = + (1-daycare_sp)*lambda_sp*S_sp + daycare_sp*lambda_sp_d*S_sp
     dZ_sm = + (1-daycare_sm)*lambda_sm*S_sm + daycare_sm*lambda_sm_d*S_sm
     dZ_au = + (1-daycare_au)*lambda_au*S_au + daycare_au*lambda_au_d*S_au
