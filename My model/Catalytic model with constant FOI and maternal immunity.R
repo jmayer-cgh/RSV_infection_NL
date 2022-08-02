@@ -190,7 +190,7 @@ nchains <- 2
 cpus <- 1 # or 2 if you want parallel, but it does not seem to be faster?
 mcmc_settings <- list(iterations = 2*80000, 
                       nrChains = nchains)
-sampler <- "Metropolis"
+sampler <- "DEzs"
 
 if (cpus == 1) {
   bayesianSetup <- createBayesianSetup(prior = prior,
