@@ -506,7 +506,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "trace_seasonal_FOI_contacts_one_daycare_and_w5.rds")
+saveRDS(trace, "DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -682,18 +682,18 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 
 w
 
-write.csv(lambda_spquantiles, "lambda_sp5.csv")
-write.csv(lambda_smquantiles, "lambda_sm5.csv")
-write.csv(lambda_auquantiles, "lambda_au5.csv")
-write.csv(lambda_auquantiles, "lambda_wt5.csv")
+write.csv(lambda_spquantiles, "DEzs_lambda_sp.csv")
+write.csv(lambda_smquantiles, "DEzs_lambda_sm.csv")
+write.csv(lambda_auquantiles, "DEzs_lambda_au.csv")
+write.csv(lambda_auquantiles, "DEzs_lambda_wt.csv")
 
-write.csv(Pquantiles, "Pquantiles5.csv")
-write.csv(Mquantiles, "Mquantiles5.csv")
-write.csv(Aquantiles, "Aquantiles5.csv")
-write.csv(Wquantiles, "Wquantiles5.csv")
-write.csv(Cquantiles, "Cquantiles5.csv")
-write.csv(Dquantiles, "Dquantiles5.csv")
-write.csv(wquantiles, "Immunity_quantiles5.csv")
+write.csv(Pquantiles, "DEzs_Pquantiles.csv")
+write.csv(Mquantiles, "DEzs_Mquantiles.csv")
+write.csv(Aquantiles, "DEzs_Aquantiles.csv")
+write.csv(Wquantiles, "DEzs_Wquantiles.csv")
+write.csv(Cquantiles, "DEzs_Cquantiles.csv")
+write.csv(Dquantiles, "DEzs_Dquantiles.csv")
+write.csv(wquantiles, "DEzs_Immunity_quantiles.csv")
 
-write.csv(trajquantiles, "trajquantiles5.csv")
-write.csv(trajsim, "trajsim5.csv")
+write.csv(trajquantiles, "DEzs_trajquantiles.csv")
+write.csv(trajsim, "DEzs_trajsim.csv")
