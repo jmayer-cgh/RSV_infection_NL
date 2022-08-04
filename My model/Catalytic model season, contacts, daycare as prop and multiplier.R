@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding daycare attendance as a multiplication
 # Author: Julia Mayer
-# Last updated: 02.08.2022
+# Last updated: 04.08.2022
 ################################################################
 
 
@@ -135,11 +135,11 @@ model <- function(theta, age, inits, data) {
     contacts_au = 1
     contacts_wt = 1
     
-    # Baseline percentage of daycare attendance (0-6 months)
-    daycare_sp = 0.222222
-    daycare_sm = 0.045455
-    daycare_au = 0.260870
-    daycare_wt = 0.169492
+    # Baseline percentage of daycare attendance 
+    daycare = 0
+    if (age >= 30.41*9){
+      daycare = 0.4075758
+    }
     
     # Get seasonal FOI
     if ( (age <= 30.41*3)                                      # FOI of the season in which the children were born
@@ -198,90 +198,54 @@ model <- function(theta, age, inits, data) {
       contacts_sm = 3.5/1
       contacts_au = 3/4
       contacts_wt = 4/4
-      daycare_sp = 0.404762
-      daycare_sm = 0.408451
-      daycare_au = 0.42857
-      daycare_wt = 0.32258
     } 
     if ((age > 30.41*12) & (age <= 30.41*18)){
       contacts_sp = 5/4
       contacts_sm = 3.5/1
       contacts_au = 5/4
       contacts_wt = 4/4
-      daycare_sp = 0.333333
-      daycare_sm = 0.500000
-      daycare_au = 0.333333
-      daycare_wt = 0.30769
     }
     if ((age > 30.41*18) & (age <= 30.41*24)){
       contacts_sp = 4.5/4
       contacts_sm = 7/1
       contacts_au = 4/4
       contacts_wt = 4.5/4
-      daycare_sp = 0.45833
-      daycare_sm = 0.526316
-      daycare_au = 0.38095
-      daycare_wt = 0.35294
     }
     if ((age > 30.41*24) & (age <= 30.41*30)){
       contacts_sp = 6/4
       contacts_sm = 7.5/1
       contacts_au = 6/4
       contacts_wt = 6/4
-      daycare_sp = 1.000000
-      daycare_sm = 0.642857
-      daycare_au = 0.37500
-      daycare_wt = 0.33333
     }
     if ((age > 30.41*30) & (age <= 30.41*36)){
       contacts_sp = 8/4
       contacts_sm = 6/1
       contacts_au = 6/4
       contacts_wt = 6/4
-      daycare_sp = 0.88889
-      daycare_sm = 0.785714
-      daycare_au = 0.55556
-      daycare_wt = 0.50000
     }
     if ((age > 30.41*36) & (age <= 30.41*42)){
       contacts_sp = 20/4
       contacts_sm = 9/1
       contacts_au = 9/4
       contacts_wt = 7.5/4
-      daycare_sp = 0.87500
-      daycare_sm = 0.750000
-      daycare_au = 0.80000
-      daycare_wt = 0.66667
     }
     if ((age > 30.41*42) & (age <= 30.41*48)){
       contacts_sp = 14/4
       contacts_sm = 11/1
       contacts_au = 12/4
       contacts_wt = 11/4
-      daycare_sp = 0.75000
-      daycare_sm = 1.00000
-      daycare_au = 0.90000
-      daycare_wt = 1.0000
     }
     if ((age > 30.41*48) & (age <= 30.41*54)){
       contacts_sp = 29/4
       contacts_sm = 25/1
       contacts_au = 12/4  # NB: no children born in autumn are aged 48-54 months
       contacts_wt = 21/4
-      daycare_sp = 0.11111
-      daycare_sm = 0.33333
-      daycare_au = 0.00000
-      daycare_wt = 0.50000
     }
     if (age > 30.41*54){
       contacts_sp = 25/4
       contacts_sm = 13/1
       contacts_au = 11.5/4
       contacts_wt = 26.5/4
-      daycare_sp = 0.00000
-      daycare_sm = 0.00000
-      daycare_au = 0.00000
-      daycare_wt = 0.50000
     }
     
     # FOI for each birth cohort
@@ -298,63 +262,50 @@ model <- function(theta, age, inits, data) {
     lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + 
       param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt +
       param[["C"]]*contacts_wt
-    #participants attending daycare
-   '*# lambda_sp_d = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp +
-      param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp +
-      param[["C"]]*contacts_sp + param[["D"]]
-    lambda_sm_d = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
-      param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm +
-      param[["C"]]*contacts_sm + param[["D"]]
-    lambda_au_d = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au +
-      param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au +
-      param[["C"]]*contacts_au + param[["D"]]
-    lambda_wt_d = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + 
-      param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt +
-      param[["C"]]*contacts_wt + param[["D"]]#'
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
     
     # states 
     # proportion with maternal immunity
-    M_sp = exp(state[1]) # born in spring
-    M_sm = exp(state[2]) # born in summer
-    M_au = exp(state[3]) # born in autumn
-    M_wt = exp(state[4]) # born in winter
+    M_wt = exp(state[1]) # born in spring
+    M_sp = exp(state[2]) # born in summer
+    M_sm = exp(state[3]) # born in autumn
+    M_au = exp(state[4]) # born in winter
     # Susceptible
-    S_sp = exp(state[5]) # susceptible born in spring 
-    S_sm = exp(state[6]) # susceptible born in summer 
-    S_au = exp(state[7]) # susceptible born in autumn
-    S_wt = exp(state[8]) # susceptible born in winter
+    S_wt = exp(state[5]) # susceptible born in spring 
+    S_sp = exp(state[6]) # susceptible born in summer 
+    S_sm = exp(state[7]) # susceptible born in autumn
+    S_au = exp(state[8]) # susceptible born in winter
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in spring
-    Z_sm = exp(state[10]) # seroconverted after infection born in summer
-    Z_au = exp(state[11]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[12]) # seroconverted after infection born in winter
+    Z_wt = exp(state[9]) # seroconverted after infection born in spring
+    Z_sp = exp(state[10]) # seroconverted after infection born in summer
+    Z_sm = exp(state[11]) # seroconverted after infection born in autumn
+    Z_au = exp(state[12]) # seroconverted after infection born in winter
     Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
+    dM_wt = -mu*M_wt
     dM_sp = -mu*M_sp
     dM_sm = -mu*M_sm
     dM_au = -mu*M_au
-    dM_wt = -mu*M_wt
-    dS_sp = + mu*M_sp - (1-daycare_sp)*lambda_sp*S_sp - daycare_sp*param[["D"]]*lambda_sp*S_sp
-    dS_sm = + mu*M_sm - (1-daycare_sm)*lambda_sm*S_sm - daycare_sm*param[["D"]]*lambda_sm*S_sm
-    dS_au = + mu*M_au - (1-daycare_au)*lambda_au*S_au - daycare_au*param[["D"]]*lambda_au*S_au 
-    dS_wt = + mu*M_wt - (1-daycare_wt)*lambda_wt*S_wt - daycare_wt*param[["D"]]*lambda_wt*S_wt
-    dZ_sp = + (1-daycare_sp)*lambda_sp*S_sp + daycare_sp*param[["D"]]*lambda_sp*S_sp
-    dZ_sm = + (1-daycare_sm)*lambda_sm*S_sm + daycare_sm*param[["D"]]*lambda_sm*S_sm
-    dZ_au = + (1-daycare_au)*lambda_au*S_au + daycare_au*param[["D"]]*lambda_au*S_au
-    dZ_wt = + (1-daycare_wt)*lambda_wt*S_wt + daycare_wt*param[["D"]]*lambda_wt*S_wt
-    dZ_all = + (1-daycare_sp)*lambda_sp*S_sp + (1-daycare_sm)*lambda_sm*S_sm +
-               (1-daycare_au)*lambda_au*S_au + (1-daycare_sp)*lambda_wt*S_wt +
-              daycare_sp*param[["D"]]*lambda_sp*S_sp + daycare_sm*param[["D"]]*lambda_sm*S_sm + 
-              daycare_au*param[["D"]]*lambda_au*S_au + daycare_wt*param[["D"]]*lambda_wt*S_wt
+    dS_wt = + mu*M_wt - (1-daycare)*lambda_wt*S_wt - daycare*param[["D"]]*lambda_wt*S_wt
+    dS_sp = + mu*M_sp - (1-daycare)*lambda_sp*S_sp - daycare*param[["D"]]*lambda_sp*S_sp
+    dS_sm = + mu*M_sm - (1-daycare)*lambda_sm*S_sm - daycare*param[["D"]]*lambda_sm*S_sm
+    dS_au = + mu*M_au - (1-daycare)*lambda_au*S_au - daycare*param[["D"]]*lambda_au*S_au 
+    dZ_wt = + (1-daycare)*lambda_wt*S_wt + daycare*param[["D"]]*lambda_wt*S_wt
+    dZ_sp = + (1-daycare)*lambda_sp*S_sp + daycare*param[["D"]]*lambda_sp*S_sp
+    dZ_sm = + (1-daycare)*lambda_sm*S_sm + daycare*param[["D"]]*lambda_sm*S_sm
+    dZ_au = + (1-daycare)*lambda_au*S_au + daycare*param[["D"]]*lambda_au*S_au
+    dZ_all = + (1-daycare)*lambda_sp*S_sp + (1-daycare)*lambda_sm*S_sm +
+               (1-daycare)*lambda_au*S_au + (1-daycare)*lambda_wt*S_wt +
+              daycare*param[["D"]]*lambda_sp*S_sp + daycare*param[["D"]]*lambda_sm*S_sm + 
+              daycare*param[["D"]]*lambda_au*S_au + daycare*param[["D"]]*lambda_wt*S_wt
     
     
-    return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
-                  dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, dS_wt/S_wt,
-                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt,
+    return(list(c(dM_wt/M_wt,dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,
+                  dS_wt/S_wt,dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, 
+                  dZ_wt/Z_wt,dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, 
                   dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
@@ -425,7 +376,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # C = contact parameter
 # D = daycare parameter
 theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01, 
-           C = 0.01, D = 0.01) # these are just random values, to be fitted
+           C = 0.01, D = 2) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -510,7 +461,7 @@ index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
 lower = c(P=0, M=0, A=0, W=0, B = 0, C = 0, D = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2, C = 0.2, D = 0.2)
+upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2, C = 0.2, D = 10)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -519,7 +470,7 @@ nchains <- 2
 cpus <- 1 # or 2 if you want parallel, but it does not seem to be faster?
 mcmc_settings <- list(iterations = 2*80000, 
                       nrChains = nchains)
-sampler <- "Metropolis"
+sampler <- "DEzs"
 
 if (cpus == 1) {
   bayesianSetup <- createBayesianSetup(prior = prior,
@@ -555,7 +506,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
+saveRDS(trace, "trace_seasonal_FOI_contacts_one_daycare_and_w5.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -585,6 +536,24 @@ colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambda_wtquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
+
+Pquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"P"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Pquantiles) <- c("agemid", "low95", "median", "up95")
+
+Mquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"M"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Mquantiles) <- c("agemid", "low95", "median", "up95")
+
+Aquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"A"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Aquantiles) <- c("agemid", "low95", "median", "up95")
+
+Wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"W"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
+
+Cquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"C"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Cquantiles) <- c("agemid", "low95", "median", "up95")
+
+Dquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"D"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Dquantiles) <- c("agemid", "low95", "median", "up95")
 
 #lambda_wtdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 #colnames(lambda_wtdquantiles) <- c("agemid", "low95", "median", "up95")
@@ -713,9 +682,18 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 
 w
 
-write.csv(lambda_spquantiles, "lambda_sp.csv")
-write.csv(lambda_smquantiles, "lambda_sm.csv")
-write.csv(lambda_auquantiles, "lambda_au.csv")
-write.csv(lambda_auquantiles, "lambda_wt.csv")
-write.csv(trajquantiles, "trajquantiles.csv")
-write.csv(trajsim, "trajsim.csv")
+write.csv(lambda_spquantiles, "lambda_sp5.csv")
+write.csv(lambda_smquantiles, "lambda_sm5.csv")
+write.csv(lambda_auquantiles, "lambda_au5.csv")
+write.csv(lambda_auquantiles, "lambda_wt5.csv")
+
+write.csv(Pquantiles, "Pquantiles5.csv")
+write.csv(Mquantiles, "Mquantiles5.csv")
+write.csv(Aquantiles, "Aquantiles5.csv")
+write.csv(Wquantiles, "Wquantiles5.csv")
+write.csv(Cquantiles, "Cquantiles5.csv")
+write.csv(Dquantiles, "Dquantiles5.csv")
+write.csv(wquantiles, "Immunity_quantiles5.csv")
+
+write.csv(trajquantiles, "trajquantiles5.csv")
+write.csv(trajsim, "trajsim5.csv")

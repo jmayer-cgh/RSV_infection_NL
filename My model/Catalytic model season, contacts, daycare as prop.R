@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding daycare attendance
 # Author: Julia Mayer
-# Last updated: 25.07.2022
+# Last updated: 02.08.2022
 ################################################################
 
 
@@ -594,7 +594,23 @@ colnames(lambda_wtdquantiles) <- c("agemid", "low95", "median", "up95")
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
+Pquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"P"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Pquantiles) <- c("agemid", "low95", "median", "up95")
 
+Mquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"M"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Mquantiles) <- c("agemid", "low95", "median", "up95")
+
+Aquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"A"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Aquantiles) <- c("agemid", "low95", "median", "up95")
+
+Wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"W"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
+
+Cquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"C"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Cquantiles) <- c("agemid", "low95", "median", "up95")
+
+Dquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"D"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Dquantiles) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
@@ -707,5 +723,11 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
 
 w
 
-write.csv(lambda_audquantiles, "lambda_au_d.csv")
-write.csv(lambda_auquantiles, "lambda_au_no_d.csv")
+write.csv(Pquantiles, "Pquantiles.csv")
+write.csv(Mquantiles, "Mquantiles.csv")
+write.csv(Aquantiles, "Aquantiles.csv")
+write.csv(Wquantiles, "Wquantiles.csv")
+write.csv(Cquantiles, "Cquantiles.csv")
+write.csv(Dquantiles, "Dquantiles.csv")
+write.csv(trajquantiles, "trajquantiles2.csv")
+write.csv(trajsim, "trajsim2.csv")
