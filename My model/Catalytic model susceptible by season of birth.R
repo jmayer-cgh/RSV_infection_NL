@@ -188,41 +188,42 @@ model <- function(theta, age, inits, data) {
     
     # states 
     # proportion with maternal immunity
-    M_sp = exp(state[1]) # born in spring
-    M_sm = exp(state[2]) # born in summer
-    M_au = exp(state[3]) # born in autumn
-    M_wt = exp(state[4]) # born in winter
+    M_sp = exp(state[2]) # born in spring
+    M_sm = exp(state[3]) # born in summer
+    M_au = exp(state[4]) # born in autumn
+    M_wt = exp(state[1]) # born in winter
     # Susceptible
-    S_sp = exp(state[5]) # susceptible born in spring
-    S_sm = exp(state[6]) # susceptible born in summer
-    S_au = exp(state[7]) # susceptible born in autumn
-    S_wt = exp(state[8]) # susceptible born in winter
+    S_sp = exp(state[6]) # susceptible born in spring
+    S_sm = exp(state[7]) # susceptible born in summer
+    S_au = exp(state[8]) # susceptible born in autumn
+    S_wt = exp(state[5]) # susceptible born in winter
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in spring
-    Z_sm = exp(state[10]) # seroconverted after infection born in summer
-    Z_au = exp(state[11]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[12]) # seroconverted after infection born in winter
+    Z_sp = exp(state[10]) # seroconverted after infection born in spring
+    Z_sm = exp(state[11]) # seroconverted after infection born in summer
+    Z_au = exp(state[12]) # seroconverted after infection born in autumn
+    Z_wt = exp(state[9]) # seroconverted after infection born in winter
     Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
+    dM_wt = -mu*M_wt
     dM_sp = -mu*M_sp
     dM_sm = -mu*M_sm
     dM_au = -mu*M_au
-    dM_wt = -mu*M_wt
+    dS_wt = + mu*M_wt - lambda_wt*S_wt
     dS_sp = + mu*M_sp - lambda_sp*S_sp 
     dS_sm = + mu*M_sm - lambda_sm*S_sm 
     dS_au = + mu*M_au - lambda_au*S_au 
-    dS_wt = + mu*M_wt - lambda_wt*S_wt
+    dZ_wt = + lambda_wt*S_wt
     dZ_sp = + lambda_sp*S_sp
     dZ_sm = + lambda_sm*S_sm 
     dZ_au = + lambda_au*S_au
-    dZ_wt = + lambda_wt*S_wt
+    
     dZ_all = + lambda_sp*S_sp + lambda_sm*S_sm + lambda_au*S_au + lambda_wt*S_wt
     
     
-    return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
-                  dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, dS_wt/S_wt, 
-                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt,
+    return(list(c(dM_wt/M_wt, dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,
+                  dS_wt/S_wt, dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au,  
+                  dZ_wt/Z_wt, dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, 
                   dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
@@ -434,7 +435,17 @@ colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
+Pquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"P"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Pquantiles) <- c("agemid", "low95", "median", "up95")
 
+Mquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"M"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Mquantiles) <- c("agemid", "low95", "median", "up95")
+
+Aquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"A"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Aquantiles) <- c("agemid", "low95", "median", "up95")
+
+Wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"W"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
@@ -522,3 +533,17 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
 
 
 w
+
+write.csv(lambda_spquantiles, "S_lambda_sp.csv")
+write.csv(lambda_smquantiles, "S_lambda_sm.csv")
+write.csv(lambda_auquantiles, "S_lambda_au.csv")
+write.csv(lambda_auquantiles, "S_lambda_wt.csv")
+
+write.csv(Pquantiles, "S_Pquantiles.csv")
+write.csv(Mquantiles, "S_Mquantiles.csv")
+write.csv(Aquantiles, "S_Aquantiles.csv")
+write.csv(Wquantiles, "S_Wquantiles.csv")
+write.csv(wquantiles, "S_Immunity_quantiles.csv")
+
+write.csv(trajquantiles, "S_trajquantiles.csv")
+write.csv(trajsim, "S_trajsim.csv")
