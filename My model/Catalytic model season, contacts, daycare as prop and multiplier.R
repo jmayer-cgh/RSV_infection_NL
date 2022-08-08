@@ -336,6 +336,14 @@ model <- function(theta, age, inits, data) {
   
   traj$conv <- exp(traj$Z_all) # cumulative seroconversion (=observed state)
   traj$inc <- c(inits[["Z_all"]], diff(exp(traj$Z_all))) # incident seroconversion
+  traj$conv_spring <- exp(traj$Z_sp) # cumulative seroconversion in spring cohort (=observed state)
+  traj$inc_spring <- c(inits[["Z_sp"]], diff(exp(traj$Z_sp))) # incident seroconversion
+  traj$conv_summer <- exp(traj$Z_sm) # cumulative seroconversion in summer cohort (=observed state)
+  traj$inc_summer <- c(inits[["Z_sm"]], diff(exp(traj$Z_sm))) # incident seroconversion
+  traj$conv_autumn <- exp(traj$Z_au) # cumulative seroconversion in autumn cohort (=observed state)
+  traj$inc_autumn <- c(inits[["Z_au"]], diff(exp(traj$Z_au))) # incident seroconversion
+  traj$conv_winter <- exp(traj$Z_wt) # cumulative seroconversion in winter cohort (=observed state)
+  traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion
   return(traj)
   
 }
@@ -423,14 +431,61 @@ loglik <- function(theta, age, data, model, inits) {
   
   traj <- match.fun(model)(theta, age, inits)
   
+  # Whole data
   nconv <- data$nconv[!is.na(data$nconv)] # n seroconverted at each age point  (data)
   N <- data$N[!is.na(data$nconv)] # total N at each age point  (data) 
   prob <- traj$conv[traj$time %in% data$agemid] # proportion seroconverted at each age point (model output)
   
-  ll <- sum(dbinom(x=nconv,
+  ll_all <- sum(dbinom(x=nconv,
                    size=N,
                    prob=prob,
                    log=TRUE), na.rm=TRUE)
+  
+  # Spring birth cohort
+  spring_cohort <- subset(data, season_birth == "Spring")
+  nconv_sp <- spring_cohort$nconv[!is.na(spring_cohort$nconv)] # n seroconverted at each age point  (data)
+  N_sp <- spring_cohort$N[!is.na(spring_cohort$nconv)] # total N at each age point  (data) 
+  prob_sp <- traj$conv_spring[traj$time %in% spring_cohort$agemid] # proportion seroconverted at each age point (model output)
+  
+  ll_sp <- sum(dbinom(x=nconv_sp,
+                      size=N_sp,
+                      prob=prob_sp,
+                      log=TRUE), na.rm=TRUE)
+  
+  #Summer birth cohort
+  summer_cohort <- subset(data, season_birth == "Summer")
+  nconv_sm <- summer_cohort$nconv[!is.na(summer_cohort$nconv)] # n seroconverted at each age point  (data)
+  N_sm <- summer_cohort$N[!is.na(summer_cohort$nconv)] # total N at each age point  (data) 
+  prob_sm <- traj$conv_summer[traj$time %in% summer_cohort$agemid] # proportion seroconverted at each age point (model output)
+  
+  ll_sm <- sum(dbinom(x=nconv_sm,
+                      size=N_sm,
+                      prob=prob_sm,
+                      log=TRUE), na.rm=TRUE)
+  
+  #Autumn birth cohort
+  autumn_cohort <- subset(data, season_birth == "Autumn")
+  nconv_au <- autumn_cohort$nconv[!is.na(autumn_cohort$nconv)] # n seroconverted at each age point  (data)
+  N_au <- autumn_cohort$N[!is.na(autumn_cohort$nconv)] # total N at each age point  (data) 
+  prob_au <- traj$conv_autumn[traj$time %in% autumn_cohort$agemid] # proportion seroconverted at each age point (model output)
+  
+  ll_au <- sum(dbinom(x=nconv_au,
+                      size=N_au,
+                      prob=prob_au,
+                      log=TRUE), na.rm=TRUE)
+  
+  # Winter birth cohort
+  winter_cohort <- subset(data, season_birth == "Winter")
+  nconv_wt <- winter_cohort$nconv[!is.na(winter_cohort$nconv)] # n seroconverted at each age point  (data)
+  N_wt <- winter_cohort$N[!is.na(winter_cohort$nconv)] # total N at each age point  (data) 
+  prob_wt <- traj$conv_winter[traj$time %in% winter_cohort$agemid] # proportion seroconverted at each age point (model output)
+  
+  ll_wt <- sum(dbinom(x=nconv_wt,
+                      size=N_wt,
+                      prob=prob_wt,
+                      log=TRUE), na.rm=TRUE)
+  
+  ll = c(ll_all, ll_sp, ll_sm, ll_au, ll_wt)
   
   return(ll)
   
