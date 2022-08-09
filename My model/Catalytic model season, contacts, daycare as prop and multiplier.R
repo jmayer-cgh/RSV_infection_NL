@@ -31,8 +31,8 @@ data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
 data$agegrp <- cut(data$age_days,
-                   breaks=c(seq(0,730, by=30.41*2),
-                            seq(909,2000, by=30.41*6)), 
+                   breaks=c(seq(0,730, by=30.25*2),
+                            seq(909,2000, by=30.25*6)), 
                    include.lowest = T, right=F)
 # Divide by season of birth
 spring <- c(3, 4, 5)
@@ -137,7 +137,7 @@ model <- function(theta, age, inits, data) {
     
     # Baseline percentage of daycare attendance 
     daycare = 0
-    if (age >= 30.41*9){
+    if (age >= 30.41*9){ # assume that all children who go to day-care start at 9 months
       daycare = 0.4075758
     }
     
@@ -268,20 +268,20 @@ model <- function(theta, age, inits, data) {
     
     # states 
     # proportion with maternal immunity
-    M_sp = exp(state[1]) # born in summer
-    M_sm = exp(state[2]) # born in autumn
-    M_au = exp(state[3]) # born in winter
-    M_wt = exp(state[4]) # born in spring
+    M_sp = exp(state[1]) # born in spring
+    M_sm = exp(state[2]) # born in summer
+    M_au = exp(state[3]) # born in autumn
+    M_wt = exp(state[4]) # born in winter
     # Susceptible
-    S_sp = exp(state[5]) # susceptible born in summer 
-    S_sm = exp(state[6]) # susceptible born in autumn
-    S_au = exp(state[7]) # susceptible born in winter
-    S_wt = exp(state[8]) # susceptible born in spring 
+    S_sp = exp(state[5]) # susceptible born in spring 
+    S_sm = exp(state[6]) # susceptible born in summer
+    S_au = exp(state[7]) # susceptible born in autumn
+    S_wt = exp(state[8]) # susceptible born in winter 
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in summer
-    Z_sm = exp(state[10]) # seroconverted after infection born in autumn
-    Z_au = exp(state[11]) # seroconverted after infection born in winter
-    Z_wt = exp(state[12]) # seroconverted after infection born in spring
+    Z_sp = exp(state[9]) # seroconverted after infection born in spring
+    Z_sm = exp(state[10]) # seroconverted after infection born in summer
+    Z_au = exp(state[11]) # seroconverted after infection born in autumn
+    Z_wt = exp(state[12]) # seroconverted after infection born in winter
     #Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
@@ -491,7 +491,7 @@ loglik <- function(theta, age, data, model, inits) {
   
   ll = sum(ll_sp, ll_sm, ll_au, ll_wt)
   
-  return(ll_all)
+  return(ll)
   
 } 
 
@@ -565,7 +565,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "new_eq_DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
+saveRDS(trace, "new_eq_and_log_DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -763,22 +763,22 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 
 w
 
-write.csv(lambda_spquantiles, "right_DEzs_lambda_sp.csv")
-write.csv(lambda_smquantiles, "right_DEzs_lambda_sm.csv")
-write.csv(lambda_auquantiles, "right_DEzs_lambda_au.csv")
-write.csv(lambda_auquantiles, "right_DEzs_lambda_wt.csv")
+write.csv(lambda_spquantiles, "right_DEzs_lambda_sp_ll.csv")
+write.csv(lambda_smquantiles, "right_DEzs_lambda_sm_ll.csv")
+write.csv(lambda_auquantiles, "right_DEzs_lambda_au_ll.csv")
+write.csv(lambda_auquantiles, "right_DEzs_lambda_wt_ll.csv")
 
-write.csv(Pquantiles, "right_DEzs_Pquantiles.csv")
-write.csv(Mquantiles, "right_DEzs_Mquantiles.csv")
-write.csv(Aquantiles, "right_DEzs_Aquantiles.csv")
-write.csv(Wquantiles, "right_DEzs_Wquantiles.csv")
-write.csv(Cquantiles, "right_DEzs_Cquantiles.csv")
-write.csv(Dquantiles, "right_DEzs_Dquantiles.csv")
-write.csv(wquantiles, "right_DEzs_Immunity_quantiles.csv")
+write.csv(Pquantiles, "right_DEzs_Pquantiles_ll.csv")
+write.csv(Mquantiles, "right_DEzs_Mquantiles_ll.csv")
+write.csv(Aquantiles, "right_DEzs_Aquantiles_ll.csv")
+write.csv(Wquantiles, "right_DEzs_Wquantiles_ll.csv")
+write.csv(Cquantiles, "right_DEzs_Cquantiles_ll.csv")
+write.csv(Dquantiles, "right_DEzs_Dquantiles_ll.csv")
+write.csv(wquantiles, "right_DEzs_Immunity_quantiles_ll.csv")
 
-write.csv(trajquantiles, "right_DEzs_trajquantiles.csv")
-write.csv(trajsim, "right_DEzs_trajsim.csv")
-write.csv(spring_conv_quantiles, "right_DEzs_spring_conv.csv")
-write.csv(summer_conv_quantiles, "right_DEzs_summer_conv.csv")
-write.csv(autumn_conv_quantiles, "right_DEzs_autumn_conv.csv")
-write.csv(winter_conv_quantiles, "right_DEzs_winter_conv.csv")
+write.csv(trajquantiles, "right_DEzs_trajquantiles_ll.csv")
+write.csv(trajsim, "right_DEzs_trajsim_ll.csv")
+write.csv(spring_conv_quantiles, "right_DEzs_spring_conv_ll.csv")
+write.csv(summer_conv_quantiles, "right_DEzs_summer_conv_ll.csv")
+write.csv(autumn_conv_quantiles, "right_DEzs_autumn_conv_ll.csv")
+write.csv(winter_conv_quantiles, "right_DEzs_winter_conv_ll.csv")
