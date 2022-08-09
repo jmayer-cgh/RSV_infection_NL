@@ -268,45 +268,45 @@ model <- function(theta, age, inits, data) {
     
     # states 
     # proportion with maternal immunity
-    M_wt = exp(state[1]) # born in spring
-    M_sp = exp(state[2]) # born in summer
-    M_sm = exp(state[3]) # born in autumn
-    M_au = exp(state[4]) # born in winter
+    M_sp = exp(state[1]) # born in summer
+    M_sm = exp(state[2]) # born in autumn
+    M_au = exp(state[3]) # born in winter
+    M_wt = exp(state[4]) # born in spring
     # Susceptible
-    S_wt = exp(state[5]) # susceptible born in spring 
-    S_sp = exp(state[6]) # susceptible born in summer 
-    S_sm = exp(state[7]) # susceptible born in autumn
-    S_au = exp(state[8]) # susceptible born in winter
+    S_sp = exp(state[5]) # susceptible born in summer 
+    S_sm = exp(state[6]) # susceptible born in autumn
+    S_au = exp(state[7]) # susceptible born in winter
+    S_wt = exp(state[8]) # susceptible born in spring 
     #Seroconverted
-    Z_wt = exp(state[9]) # seroconverted after infection born in spring
-    Z_sp = exp(state[10]) # seroconverted after infection born in summer
-    Z_sm = exp(state[11]) # seroconverted after infection born in autumn
-    Z_au = exp(state[12]) # seroconverted after infection born in winter
-    Z_all = exp(state[13]) # all seroconverted
+    Z_sp = exp(state[9]) # seroconverted after infection born in summer
+    Z_sm = exp(state[10]) # seroconverted after infection born in autumn
+    Z_au = exp(state[11]) # seroconverted after infection born in winter
+    Z_wt = exp(state[12]) # seroconverted after infection born in spring
+    #Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
-    dM_wt = -mu*M_wt
     dM_sp = -mu*M_sp
     dM_sm = -mu*M_sm
     dM_au = -mu*M_au
-    dS_wt = + mu*M_wt - (1-daycare)*lambda_wt*S_wt - daycare*param[["D"]]*lambda_wt*S_wt
+    dM_wt = -mu*M_wt
     dS_sp = + mu*M_sp - (1-daycare)*lambda_sp*S_sp - daycare*param[["D"]]*lambda_sp*S_sp
     dS_sm = + mu*M_sm - (1-daycare)*lambda_sm*S_sm - daycare*param[["D"]]*lambda_sm*S_sm
     dS_au = + mu*M_au - (1-daycare)*lambda_au*S_au - daycare*param[["D"]]*lambda_au*S_au 
-    dZ_wt = + (1-daycare)*lambda_wt*S_wt + daycare*param[["D"]]*lambda_wt*S_wt
+    dS_wt = + mu*M_wt - (1-daycare)*lambda_wt*S_wt - daycare*param[["D"]]*lambda_wt*S_wt
     dZ_sp = + (1-daycare)*lambda_sp*S_sp + daycare*param[["D"]]*lambda_sp*S_sp
     dZ_sm = + (1-daycare)*lambda_sm*S_sm + daycare*param[["D"]]*lambda_sm*S_sm
     dZ_au = + (1-daycare)*lambda_au*S_au + daycare*param[["D"]]*lambda_au*S_au
-    dZ_all = + (1-daycare)*lambda_sp*S_sp + (1-daycare)*lambda_sm*S_sm +
+    dZ_wt = + (1-daycare)*lambda_wt*S_wt + daycare*param[["D"]]*lambda_wt*S_wt
+    '#dZ_all = + (1-daycare)*lambda_sp*S_sp + (1-daycare)*lambda_sm*S_sm +
                (1-daycare)*lambda_au*S_au + (1-daycare)*lambda_wt*S_wt +
               daycare*param[["D"]]*lambda_sp*S_sp + daycare*param[["D"]]*lambda_sm*S_sm + 
-              daycare*param[["D"]]*lambda_au*S_au + daycare*param[["D"]]*lambda_wt*S_wt
+              daycare*param[["D"]]*lambda_au*S_au + daycare*param[["D"]]*lambda_wt*S_wt#'
     
     
-    return(list(c(dM_wt/M_wt,dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,
-                  dS_wt/S_wt,dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au, 
-                  dZ_wt/Z_wt,dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, 
-                  dZ_all/Z_all), 
+    return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
+                  dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au,dS_wt/S_wt,
+                  dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt),
+                  #dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
                 mu=mu))
@@ -325,8 +325,8 @@ model <- function(theta, age, inits, data) {
                              Z_sp=log(inits[["Z_sp"]]),
                              Z_sm=log(inits[["Z_sm"]]),
                              Z_au=log(inits[["Z_au"]]),
-                             Z_wt=log(inits[["Z_wt"]]),
-                             Z_all = log(inits[["Z_all"]])),
+                             Z_wt=log(inits[["Z_wt"]])),
+                             #Z_all = log(inits[["Z_all"]])),
                          times=age, 
                          func=catalytic, 
                          parms=theta, 
@@ -334,8 +334,8 @@ model <- function(theta, age, inits, data) {
                          method="lsoda",
                          verbose=F))
   
-  traj$conv <- exp(traj$Z_all) # cumulative seroconversion (=observed state)
-  traj$inc <- c(inits[["Z_all"]], diff(exp(traj$Z_all))) # incident seroconversion
+  #traj$conv <- exp(traj$Z_all) # cumulative seroconversion (=observed state)
+  #traj$inc <- c(inits[["Z_all"]], diff(exp(traj$Z_all))) # incident seroconversion
   traj$conv_spring <- exp(traj$Z_sp) # cumulative seroconversion in spring cohort (=observed state)
   traj$inc_spring <- c(inits[["Z_sp"]], diff(exp(traj$Z_sp))) # incident seroconversion
   traj$conv_summer <- exp(traj$Z_sm) # cumulative seroconversion in summer cohort (=observed state)
@@ -344,6 +344,10 @@ model <- function(theta, age, inits, data) {
   traj$inc_autumn <- c(inits[["Z_au"]], diff(exp(traj$Z_au))) # incident seroconversion
   traj$conv_winter <- exp(traj$Z_wt) # cumulative seroconversion in winter cohort (=observed state)
   traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion
+  
+  traj$Z_all = 0.26*traj$Z_sp + 0.29*traj$Z_wt + 0.24*traj$Z_au + 0.20*traj$Z_wt
+  traj$conv <- exp(traj$Z_all)
+  
   return(traj)
   
 }
@@ -389,10 +393,10 @@ theta <- c(P=0.02001, M=0.02002, A=0.02003, W=0.02004, B = 0.01,
 # INITS ---------------------------------------------------------
 
 #Should this add up to 1?
-inits <- c(M_sp=0.26*(1-9*1e-12), M_sm = 0.29*(1-9*1e-12), M_au= 0.24*(1-9*1e-12), M_wt = 0.20*(1-9*1e-12),
+inits <- c(M_sp=(1-2*1e-12), M_sm = (1-2*1e-12), M_au= (1-2*1e-12), M_wt = (1-2*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
-           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12,
-           Z_all = 1e-12) # initial conditions for the states (as proportions)
+           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12)
+           #Z_all = 1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
 # SIMULATION TIME  ---------------------------------------------------------
@@ -485,9 +489,9 @@ loglik <- function(theta, age, data, model, inits) {
                       prob=prob_wt,
                       log=TRUE), na.rm=TRUE)
   
-  ll = c(ll_all, ll_sp, ll_sm, ll_au, ll_wt)
+  ll = sum(ll_sp, ll_sm, ll_au, ll_wt)
   
-  return(ll)
+  return(ll_all)
   
 } 
 
@@ -544,7 +548,7 @@ if (cpus == 1) {
 plot(trace) 
 
 # burn-in
-nburn <- 20000
+nburn <- 10000
 plot(trace, parametersOnly = TRUE, start =nburn)
 
 # check convergence and correlations
@@ -561,7 +565,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
+saveRDS(trace, "new_eq_DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -616,7 +620,29 @@ colnames(Dquantiles) <- c("agemid", "low95", "median", "up95")
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
+trajquantiles_sp <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_sp) <- c("agemid", "low95", "median", "up95")
 
+trajquantiles_sm <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_sm) <- c("agemid", "low95", "median", "up95")
+
+trajquantiles_au <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_au) <- c("agemid", "low95", "median", "up95")
+
+trajquantiles_wt <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_wt) <- c("agemid", "low95", "median", "up95")
+
+spring_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+summer_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(summer_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+autumn_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(autumn_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+winter_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
@@ -640,8 +666,8 @@ fit_season
 fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
   geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  geom_ribbon(data=trajquantiles_sp, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_sp, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit_sp
@@ -649,8 +675,8 @@ fit_sp
 fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
   geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  geom_ribbon(data=trajquantiles_sm, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_sm, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit_sm
@@ -658,8 +684,8 @@ fit_sm
 fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
   geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  geom_ribbon(data=trajquantiles_au, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_au, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit_au
@@ -667,8 +693,8 @@ fit_au
 fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
   geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
+  geom_ribbon(data=trajquantiles_wt, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_wt, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit_wt
@@ -737,18 +763,22 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 
 w
 
-write.csv(lambda_spquantiles, "DEzs_lambda_sp.csv")
-write.csv(lambda_smquantiles, "DEzs_lambda_sm.csv")
-write.csv(lambda_auquantiles, "DEzs_lambda_au.csv")
-write.csv(lambda_auquantiles, "DEzs_lambda_wt.csv")
+write.csv(lambda_spquantiles, "right_DEzs_lambda_sp.csv")
+write.csv(lambda_smquantiles, "right_DEzs_lambda_sm.csv")
+write.csv(lambda_auquantiles, "right_DEzs_lambda_au.csv")
+write.csv(lambda_auquantiles, "right_DEzs_lambda_wt.csv")
 
-write.csv(Pquantiles, "DEzs_Pquantiles.csv")
-write.csv(Mquantiles, "DEzs_Mquantiles.csv")
-write.csv(Aquantiles, "DEzs_Aquantiles.csv")
-write.csv(Wquantiles, "DEzs_Wquantiles.csv")
-write.csv(Cquantiles, "DEzs_Cquantiles.csv")
-write.csv(Dquantiles, "DEzs_Dquantiles.csv")
-write.csv(wquantiles, "DEzs_Immunity_quantiles.csv")
+write.csv(Pquantiles, "right_DEzs_Pquantiles.csv")
+write.csv(Mquantiles, "right_DEzs_Mquantiles.csv")
+write.csv(Aquantiles, "right_DEzs_Aquantiles.csv")
+write.csv(Wquantiles, "right_DEzs_Wquantiles.csv")
+write.csv(Cquantiles, "right_DEzs_Cquantiles.csv")
+write.csv(Dquantiles, "right_DEzs_Dquantiles.csv")
+write.csv(wquantiles, "right_DEzs_Immunity_quantiles.csv")
 
-write.csv(trajquantiles, "DEzs_trajquantiles.csv")
-write.csv(trajsim, "DEzs_trajsim.csv")
+write.csv(trajquantiles, "right_DEzs_trajquantiles.csv")
+write.csv(trajsim, "right_DEzs_trajsim.csv")
+write.csv(spring_conv_quantiles, "right_DEzs_spring_conv.csv")
+write.csv(summer_conv_quantiles, "right_DEzs_summer_conv.csv")
+write.csv(autumn_conv_quantiles, "right_DEzs_autumn_conv.csv")
+write.csv(winter_conv_quantiles, "right_DEzs_winter_conv.csv")
