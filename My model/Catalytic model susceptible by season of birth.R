@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding season of birth
 # Author: Julia Mayer
-# Last updated: 08.08.2022
+# Last updated: 10.08.2022
 ################################################################
 
 
@@ -189,10 +189,10 @@ model <- function(theta, age, inits, data) {
       } 
     
       # FOI for each birth cohort
-      lambda_sp = param[["P"]]*spring_FOI_sp + param[["M"]]*summer_FOI_sp + param[["A"]]*autumn_FOI_sp + param[["W"]]*winter_FOI_sp
-      lambda_sm = param[["P"]]*spring_FOI_sm + param[["M"]]*summer_FOI_sm + param[["A"]]*autumn_FOI_sm + param[["W"]]*winter_FOI_sm
-      lambda_au = param[["P"]]*spring_FOI_au + param[["M"]]*summer_FOI_au + param[["A"]]*autumn_FOI_au + param[["W"]]*winter_FOI_au
-      lambda_wt = param[["P"]]*spring_FOI_wt + param[["M"]]*summer_FOI_wt + param[["A"]]*autumn_FOI_wt + param[["W"]]*winter_FOI_wt
+      lambda_sp = (param[["M"]]+param[["P"]])*spring_FOI_sp + param[["M"]]*summer_FOI_sp + (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp
+      lambda_sm = (param[["M"]]+param[["P"]])*spring_FOI_sm + param[["M"]]*summer_FOI_sm + (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm
+      lambda_au = (param[["M"]]+param[["P"]])*spring_FOI_au + param[["M"]]*summer_FOI_au + (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au
+      lambda_wt = (param[["M"]]+param[["P"]])*spring_FOI_wt + param[["M"]]*summer_FOI_wt + (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -313,7 +313,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # A = mean FOI for children born in autumn
 # W = mean FOI for children born in winter
 # B = rate of waning maternal immunity
-theta <- c(P=0.02002, M=0.02001, A=0.02003, W=0.02004, B = 0.01) # these are just random values, to be fitted
+theta <- c(P=0.00002, M=0.02001, A=0.00003, W=0.00004, B = 0.01) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -438,7 +438,7 @@ index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
 lower = c(P=0, M=0, A=0, W=0, B = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2)
+upper = c(P=0.01, M=0.1, A=0.01, W = 0.01, B = 0.2)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -466,7 +466,7 @@ if (cpus == 1) {
 plot(trace) 
 
 # burn-in
-nburn <- 20000
+nburn <- 15000
 plot(trace, parametersOnly = TRUE, start =nburn)
 
 # check convergence and correlations
@@ -635,23 +635,23 @@ w <- ggplot() + theme_bw() + ggtitle("Waning maternal immunity") +
 
 w
 
-write.csv(lambda_spquantiles, "new_S_lambda_sp.csv")
-write.csv(lambda_smquantiles, "new_S_lambda_sm.csv")
-write.csv(lambda_auquantiles, "new_S_lambda_au.csv")
-write.csv(lambda_auquantiles, "new_S_lambda_wt.csv")
+write.csv(lambda_spquantiles, "add_S_lambda_sp_ll_all.csv")
+write.csv(lambda_smquantiles, "add_S_lambda_sm_ll_all.csv")
+write.csv(lambda_auquantiles, "add_S_lambda_au_ll_all.csv")
+write.csv(lambda_auquantiles, "add_S_lambda_wt_ll_all.csv")
 
-write.csv(Pquantiles, "new_S_Pquantiles.csv")
-write.csv(Mquantiles, "new_S_Mquantiles.csv")
-write.csv(Aquantiles, "new_S_Aquantiles.csv")
-write.csv(Wquantiles, "new_S_Wquantiles.csv")
-write.csv(wquantiles, "new_S_Immunity_quantiles.csv")
+write.csv(Pquantiles, "add_S_Pquantiles_ll_all.csv")
+write.csv(Mquantiles, "add_S_Mquantiles_ll_all.csv")
+write.csv(Aquantiles, "add_S_Aquantiles_ll_all.csv")
+write.csv(Wquantiles, "add_S_Wquantiles_ll_all.csv")
+write.csv(wquantiles, "add_S_Immunity_quantiles_ll_all.csv")
 
-write.csv(trajquantiles, "new_S_trajquantiles.csv")
-write.csv(trajsim, "new_S_trajsim.csv")
+write.csv(trajquantiles, "add_S_trajquantiles_ll_all.csv")
+write.csv(trajsim, "add_S_trajsim_ll_all.csv")
 
-write.csv(spring_conv_quantiles, "new_S_spring_conv.csv")
-write.csv(summer_conv_quantiles, "new_S_summer_conv.csv")
-write.csv(autumn_conv_quantiles, "new_S_autumn_conv.csv")
-write.csv(winter_conv_quantiles, "new_S_winter_conv.csv")
-write.csv(total_conv_quantiles, "new_S_total_conv.csv")
+write.csv(spring_conv_quantiles, "add_S_spring_conv_ll_all.csv")
+write.csv(summer_conv_quantiles, "add_S_summer_conv_ll_all.csv")
+write.csv(autumn_conv_quantiles, "add_S_autumn_conv_ll_all.csv")
+write.csv(winter_conv_quantiles, "add_S_winter_conv_ll_all.csv")
+write.csv(total_conv_quantiles, "add_S_total_conv_ll_all.csv")
 
