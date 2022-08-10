@@ -199,42 +199,42 @@ model <- function(theta, age, inits, data) {
     
     # states 
     # proportion with maternal immunity
-    M_sp = exp(state[2]) # born in spring
-    M_sm = exp(state[3]) # born in summer
-    M_au = exp(state[4]) # born in autumn
-    M_wt = exp(state[1]) # born in winter
+    M_sp = exp(state[3]) # born in spring
+    M_sm = exp(state[1]) # born in summer
+    M_au = exp(state[2]) # born in autumn
+    M_wt = exp(state[4]) # born in winter
     # Susceptible
-    S_sp = exp(state[6]) # susceptible born in spring
-    S_sm = exp(state[7]) # susceptible born in summer
-    S_au = exp(state[8]) # susceptible born in autumn
-    S_wt = exp(state[5]) # susceptible born in winter
+    S_sp = exp(state[7]) # susceptible born in spring
+    S_sm = exp(state[5]) # susceptible born in summer
+    S_au = exp(state[6]) # susceptible born in autumn
+    S_wt = exp(state[8]) # susceptible born in winter
     #Seroconverted
-    Z_sp = exp(state[10]) # seroconverted after infection born in spring
-    Z_sm = exp(state[11]) # seroconverted after infection born in summer
-    Z_au = exp(state[12]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[9]) # seroconverted after infection born in winter
+    Z_sp = exp(state[11]) # seroconverted after infection born in spring
+    Z_sm = exp(state[9]) # seroconverted after infection born in summer
+    Z_au = exp(state[10]) # seroconverted after infection born in autumn
+    Z_wt = exp(state[12]) # seroconverted after infection born in winter
     #Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
-    dM_wt = -mu*M_wt
-    dM_sp = -mu*M_sp
     dM_sm = -mu*M_sm
     dM_au = -mu*M_au
-    dS_wt = + mu*M_wt - lambda_wt*S_wt
-    dS_sp = + mu*M_sp - lambda_sp*S_sp 
+    dM_sp = -mu*M_sp
+    dM_wt = -mu*M_wt
     dS_sm = + mu*M_sm - lambda_sm*S_sm 
     dS_au = + mu*M_au - lambda_au*S_au 
-    dZ_wt = + lambda_wt*S_wt
-    dZ_sp = + lambda_sp*S_sp
+    dS_sp = + mu*M_sp - lambda_sp*S_sp
+    dS_wt = + mu*M_wt - lambda_wt*S_wt
     dZ_sm = + lambda_sm*S_sm 
     dZ_au = + lambda_au*S_au
-    
+    dZ_sp = + lambda_sp*S_sp
+    dZ_wt = + lambda_wt*S_wt
+   
     #dZ_all = + lambda_sp*S_sp + lambda_sm*S_sm + lambda_au*S_au + lambda_wt*S_wt
     
     
-    return(list(c(dM_wt/M_wt, dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,
-                  dS_wt/S_wt, dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au,  
-                  dZ_wt/Z_wt, dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au), 
+    return(list(c(dM_sm/M_sm, dM_au/M_au, dM_sp/M_sp, dM_wt/M_wt, 
+                  dS_sm/S_sm, dS_au/S_au,dS_sp/S_sp, dS_wt/S_wt,   
+                  dZ_sm/Z_sm, dZ_au/Z_au,dZ_sp/Z_sp, dZ_wt/Z_wt), 
                   #dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
@@ -243,17 +243,17 @@ model <- function(theta, age, inits, data) {
     
   }
   
-traj <- data.frame(ode(y=c(M_sp=log(inits[["M_sp"]]),
-                             M_sm=log(inits[["M_sm"]]),
+traj <- data.frame(ode(y=c(M_sm=log(inits[["M_sm"]]),
                              M_au=log(inits[["M_au"]]),
+                             M_sp=log(inits[["M_sp"]]),
                              M_wt=log(inits[["M_wt"]]),
-                             S_sp=log(inits[["S_sp"]]),
                              S_sm=log(inits[["S_sm"]]),
                              S_au=log(inits[["S_au"]]),
+                             S_sp=log(inits[["S_sp"]]),
                              S_wt=log(inits[["S_wt"]]),
-                             Z_sp=log(inits[["Z_sp"]]),
                              Z_sm=log(inits[["Z_sm"]]),
                              Z_au=log(inits[["Z_au"]]),
+                             Z_sp=log(inits[["Z_sp"]]),
                              Z_wt=log(inits[["Z_wt"]])),
                              #Z_all = log(inits[["Z_all"]])),
                          times=age, 
@@ -318,9 +318,9 @@ theta <- c(P=0.02002, M=0.02001, A=0.02003, W=0.02004, B = 0.01) # these are jus
 # INITS ---------------------------------------------------------
 
 #Should this add up to 1?
-inits <- c(M_sp=(1-9*1e-12), M_sm = (1-9*1e-12), M_au= (1-9*1e-12), M_wt = (1-9*1e-12),
-           S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
-           Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12)
+inits <- c(M_sm=(1-2*1e-12), M_au = (1-2*1e-12), M_sp= (1-2*1e-12), M_wt = (1-2*1e-12),
+           S_sm=1e-12, S_au=1e-12, S_sp=1e-12, S_wt=1e-12, 
+           Z_sm = 1e-12, Z_au=1e-12, Z_sp=1e-12, Z_wt=1e-12)
            #Z_all = 1e-12) # initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
@@ -409,7 +409,7 @@ loglik <- function(theta, age, data, model, inits) {
   
   ll = sum(ll_sp, ll_sm, ll_au, ll_wt)
   
-  return(ll)
+  return(ll_all)
   
 } 
 # Test function
