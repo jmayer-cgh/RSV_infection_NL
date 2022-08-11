@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding daycare attendance as a multiplication
 # Author: Julia Mayer
-# Last updated: 04.08.2022
+# Last updated: 10.08.2022
 ################################################################
 
 
@@ -50,12 +50,24 @@ data <- data %>%
       Birth_mo %in% summer ~ "Summer",
       Birth_mo %in% autumn ~ "Autumn",
       Birth_mo %in% winter ~ "Winter")
+  ) %>%
+  mutate(
+    visitnursery_child = case_when(
+      visitnursery_child == 0 ~ FALSE,
+      visitnursery_child == 1 ~ TRUE
+    )
   )
 
 data_no_season <- data %>% dplyr::group_by(agegrp) %>% 
   dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
                    N=n(), # Total N in age group
                    nconv=sum(infection))
+
+data_no_daycare <- data %>% dplyr::group_by(agegrp, season_birth) %>% 
+  dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
+                   N=n(), # Total N in age group
+                   nconv=sum(infection)) # n seroconverted in age group
+
 data <- subset(data, !is.na(visitnursery_child))
 data <- data %>% dplyr::group_by(agegrp, season_birth, visitnursery_child) %>% 
   dplyr::summarise(agemid=round(median(age_days)), # Age midpoint in age group
@@ -68,9 +80,13 @@ data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.co
 
 # Plot the whole data frame (difficult to read)
 ggplot(data) +
-  geom_point(aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
-  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = season_birth)) +
-  ylab("Proportion seroconverted") + xlab("age (days)") + labs(colour = "season of birth")
+  geom_point(aes(x=agemid, y=seroprev_mean, colour = season_birth, 
+                 shape = factor(visitnursery_child))) +
+                 geom_errorbar(aes(x=agemid, ymin=seroprev_low95, 
+                                   ymax=seroprev_up95, colour = season_birth,
+                                   linetype = factor(visitnursery_child))) +
+  ylab("Proportion seroconverted") + xlab("age (days)") + 
+  labs(colour = "season of birth", shape = "Day-care attendance", linetype = "Day-care attendance")
 
 ggplot(data_no_season) +
   geom_point(aes(x=agemid, y=seroprev_mean)) +
@@ -79,6 +95,7 @@ ggplot(data_no_season) +
 
 #Plot by season
 spring.df <- subset(data, season_birth == 'Spring')
+spring_no_daycare <- subset(data_no_daycare, season_birth == 'Spring')
 ggplot(spring.df) +
   geom_point(aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
   geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
@@ -86,22 +103,28 @@ ggplot(spring.df) +
   labs(title ="Proportion seroconverted born in spring", colour = "Day-care")
 
 summer.df <- subset(data, season_birth == 'Summer')
+summer_no_daycare <- subset(data_no_daycare, season_birth == 'Summer')
 ggplot(summer.df) +
-  geom_point(aes(x=agemid, y=seroprev_mean), color = 'black') +
-  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95),colour ='black') +
-  ylab("Proportion seroconverted") + xlab("age (days)") + labs(title ="Proportion seroconverted born in summer")
+  geom_point(aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  ylab("Proportion seroconverted") + xlab("age (days)") + 
+  labs(title ="Proportion seroconverted born in summer", colour = "Day-care attendance")
 
 autumn.df <- subset(data, season_birth == 'Autumn')
+autumn_no_daycare <- subset(data_no_daycare, season_birth == 'Autumn')
 ggplot(autumn.df) +
-  geom_point(aes(x=agemid, y=seroprev_mean), color = 'black') +
-  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95),colour ='black') +
-  ylab("Proportion seroconverted") + xlab("age (days)") + labs(title ="Proportion seroconverted born in autumn")
+  geom_point(aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  ylab("Proportion seroconverted") + xlab("age (days)") + 
+  labs(title ="Proportion seroconverted born in autumn", colour = "Day-care attendance")
 
 winter.df <- subset(data, season_birth == 'Winter')
+winter_no_daycare <- subset(data_no_daycare, season_birth == 'Winter')
 ggplot(winter.df) +
-  geom_point(aes(x=agemid, y=seroprev_mean), color = 'black') +
-  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95),colour ='black') +
-  ylab("Proportion seroconverted") + xlab("age (days)") + labs(title ="Proportion seroconverted born in winter")
+  geom_point(aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  ylab("Proportion seroconverted") + xlab("age (days)") + 
+  labs(title ="Proportion seroconverted born in winter", colour = "Day-care attendance")
 
 # MODEL EQUATION  ------------------------------------------------------------
 # Notes:
@@ -284,7 +307,6 @@ model <- function(theta, age, inits, data) {
     Z_sm = exp(state[10]) # seroconverted after infection born in summer
     Z_au = exp(state[11]) # seroconverted after infection born in autumn
     Z_wt = exp(state[12]) # seroconverted after infection born in winter
-    #Z_all = exp(state[13]) # all seroconverted
     
     # changes in states
     dM_sp = -mu*M_sp
@@ -299,16 +321,11 @@ model <- function(theta, age, inits, data) {
     dZ_sm = + (1-daycare)*lambda_sm*S_sm + daycare*param[["D"]]*lambda_sm*S_sm
     dZ_au = + (1-daycare)*lambda_au*S_au + daycare*param[["D"]]*lambda_au*S_au
     dZ_wt = + (1-daycare)*lambda_wt*S_wt + daycare*param[["D"]]*lambda_wt*S_wt
-    '#dZ_all = + (1-daycare)*lambda_sp*S_sp + (1-daycare)*lambda_sm*S_sm +
-               (1-daycare)*lambda_au*S_au + (1-daycare)*lambda_wt*S_wt +
-              daycare*param[["D"]]*lambda_sp*S_sp + daycare*param[["D"]]*lambda_sm*S_sm + 
-              daycare*param[["D"]]*lambda_au*S_au + daycare*param[["D"]]*lambda_wt*S_wt#'
     
     
     return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
                   dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au,dS_wt/S_wt,
                   dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt),
-                  #dZ_all/Z_all), 
                 lambda_sp=lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
                 mu=mu))
@@ -336,8 +353,6 @@ model <- function(theta, age, inits, data) {
                          method="lsoda",
                          verbose=F))
   
-  #traj$conv <- exp(traj$Z_all) # cumulative seroconversion (=observed state)
-  #traj$inc <- c(inits[["Z_all"]], diff(exp(traj$Z_all))) # incident seroconversion
   traj$conv_spring <- exp(traj$Z_sp) # cumulative seroconversion in spring cohort (=observed state)
   traj$inc_spring <- c(inits[["Z_sp"]], diff(exp(traj$Z_sp))) # incident seroconversion
   traj$conv_summer <- exp(traj$Z_sm) # cumulative seroconversion in summer cohort (=observed state)
@@ -409,23 +424,19 @@ agepred <- data$agemid
 # Notes: lambda should vary over time, mu shouldn't
 test <- model(theta, agepred, inits, data)
 ggplot(test) + geom_line(aes(x=time, y=conv))
-ggplot(test) + geom_line(aes(x=time, y=lambda_sp, color = 'Not attending daycare')) + 
-               #geom_line(aes(x=time, y=lambda_sp_d, color = 'Attending daycare')) + 
+ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) + 
                xlab("Age (days)") + ylab("FOI") + labs(color = 'Daycare') + ggtitle("FOI for the spring birth cohort") 
 
-ggplot(test) + geom_line(aes(x=time, y=lambda_sm, color = 'Not attending daycare'))+ 
-              #geom_line(aes(x=time, y=lambda_sm_d, color = 'Attending daycare'))+
+ggplot(test) + geom_line(aes(x=time, y=lambda_sm))+ 
               xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the summer birth cohort") +
               labs(color = 'Daycare')
              
 
-ggplot(test) + geom_line(aes(x=time, y=lambda_au, color = 'Not attending daycare')) +
-               #geom_line(aes(x=time, y=lambda_au_d, color = 'Attending daycare'))+ 
+ggplot(test) + geom_line(aes(x=time, y=lambda_au)) +
                xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the autumn birth cohort ") +
               labs (color = 'Daycare')
 
-ggplot(test) + geom_line(aes(x=time, y=lambda_wt, color = 'Not attending daycare')) +
-               #geom_line(aes(x=time, y=lambda_wt_d, color = 'Attending daycare'))+
+ggplot(test) + geom_line(aes(x=time, y=lambda_wt)) +
                xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort") + 
               labs(color = 'Daycare')
 
@@ -580,20 +591,11 @@ colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 lambda_spquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
 
-#lambda_spdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sp_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-#colnames(lambda_spdquantiles) <- c("agemid", "low95", "median", "up95")
-
 lambda_smquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
 
-#lambda_smdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_sm_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-#colnames(lambda_smdquantiles) <- c("agemid", "low95", "median", "up95")
-
 lambda_auquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_au"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
-
-#lambda_audquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_au_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-#colnames(lambda_audquantiles) <- c("agemid", "low95", "median", "up95")
 
 lambda_wtquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
@@ -615,9 +617,6 @@ colnames(Cquantiles) <- c("agemid", "low95", "median", "up95")
 
 Dquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"D"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Dquantiles) <- c("agemid", "low95", "median", "up95")
-
-#lambda_wtdquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"lambda_wt_d"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-#colnames(lambda_wtdquantiles) <- c("agemid", "low95", "median", "up95")
 
 wquantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
@@ -657,49 +656,86 @@ fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
 fit
 
 fit_season <- ggplot() + theme_bw() + ggtitle("Model fit on data stratified by season") +
-  geom_point(data=data, aes(x=agemid, y=seroprev_mean, color = season_birth)) +
-  geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_point(data=data, aes(x=agemid, y=seroprev_mean, color = season_birth, shape = factor(visitnursery_child))) +
+  geom_linerange(data=data, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, color = season_birth, linetype = factor(visitnursery_child))) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("proportion seroconverted") + labs(color = "Season of birth")
+  xlab("age (days)") + ylab("proportion seroconverted") + 
+  labs(color = "Season of birth", shape = "Day-care attendance", linetype = "Day-care attendance")
 
 fit_season
 
 fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
-  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_point(data=spring.df, aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_linerange(data=spring.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_ribbon(data=trajquantiles_sp, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_sp, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs (colour = "Day-care attendance")
+
+fit_sp
+
+fit_sp2 <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
+  geom_point(data=spring_no_daycare, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=spring_no_daycare, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles_sp, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles_sp, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
-fit_sp
+fit_sp2
 
 fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
-  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_point(data=summer.df, aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_linerange(data=summer.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_ribbon(data=trajquantiles_sm, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_sm, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+
+fit_sm
+
+fit_sm2 <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
+  geom_point(data=summer_no_daycare, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=summer_no_daycare, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles_sm, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles_sm, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
-fit_sm
+fit_sm2
 
 fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
-  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_point(data=autumn.df, aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_linerange(data=autumn.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_ribbon(data=trajquantiles_au, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_au, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+
+fit_au
+
+fit_au2 <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
+  geom_point(data=autumn_no_daycare, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=autumn_no_daycare, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles_au, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles_au, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
-fit_au
+fit_au2
 
 fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
-  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean)) +
-  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
+  geom_point(data=winter.df, aes(x=agemid, y=seroprev_mean, colour = factor(visitnursery_child))) +
+  geom_linerange(data=winter.df, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_ribbon(data=trajquantiles_wt, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=trajquantiles_wt, aes(x=agemid, y=median), color="red") +
+  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+
+fit_wt
+
+fit_wt2 <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
+  geom_point(data=winter_no_daycare, aes(x=agemid, y=seroprev_mean)) +
+  geom_linerange(data=winter_no_daycare, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles_wt, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=trajquantiles_wt, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
-fit_wt
+fit_wt2
 
 lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (no daycare)") +
   geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -707,27 +743,11 @@ lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (n
   xlab("age (days)") + ylab("FOI") 
 lambda_sp
 
-'#
-lambda_sp_d <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (daycare)") +
-  geom_ribbon(data=lambda_spdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_spdquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_sp_d
-#'
-
 lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort (no daycare)") +
   geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_sm
-
-'#
-lambda_sm_d <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort (daycare)") +
-  geom_ribbon(data=lambda_smdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_smdquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_sm_d
-#'
 
 lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (no daycare)") +
   geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -735,34 +755,16 @@ lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (n
   xlab("age (days)") + ylab("FOI") 
 lambda_au
 
-'#
-lambda_au_d <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (daycare)") +
-  geom_ribbon(data=lambda_audquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_audquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_au_d
-#'
-
 lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (no daycare)") +
   geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_wtquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("FOI") 
 lambda_wt
 
-'#
-lambda_wt_d <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (daycare)") +
-  geom_ribbon(data=lambda_wtdquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=lambda_wtdquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
-lambda_wt_d
-#' 
-
 w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
   geom_ribbon(data=wquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=wquantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (days)") + ylab("Maternal immunity waning rate") 
-
-
 w
 
 write.csv(lambda_spquantiles, "add_DEzs_lambda_sp_ll.csv")
