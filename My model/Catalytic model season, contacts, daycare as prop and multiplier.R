@@ -77,6 +77,7 @@ data <- data %>% dplyr::group_by(agegrp, season_birth, visitnursery_child) %>%
 # Calculate seroprevalence and binomial confidence intervals
 data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data$nconv, data$N, method="exact")[,c("mean","lower","upper")]
 data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_season$nconv, data_no_season$N, method="exact")[,c("mean","lower","upper")]
+data_no_daycare[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_daycare$nconv, data_no_daycare$N, method="exact")[,c("mean","lower","upper")]
 
 # Plot the whole data frame (difficult to read)
 ggplot(data) +
@@ -92,6 +93,11 @@ ggplot(data_no_season) +
   geom_point(aes(x=agemid, y=seroprev_mean)) +
   geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   ylab("Proportion seroconverted") + xlab("age (days)") 
+
+ggplot(data_no_daycare) +
+  geom_point(aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
+  geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95, colour = season_birth)) +
+  ylab("Proportion seroconverted") + xlab("age (days)")  + labs (colour = "Season of birth")
 
 #Plot by season
 spring.df <- subset(data, season_birth == 'Spring')
@@ -223,54 +229,31 @@ model <- function(theta, age, inits, data) {
       contacts_au = 3/4
       contacts_wt = 4/4
     } 
-    if ((age > 30.41*12) & (age <= 30.41*18)){
+    if ((age > 30.41*12) & (age <= 30.41*24)){
       contacts_sp = 5/4
-      contacts_sm = 3.5/1
-      contacts_au = 5/4
+      contacts_sm = 6/1
+      contacts_au = 4.5/4
       contacts_wt = 4/4
     }
-    if ((age > 30.41*18) & (age <= 30.41*24)){
-      contacts_sp = 4.5/4
-      contacts_sm = 7/1
-      contacts_au = 4/4
-      contacts_wt = 4.5/4
-    }
-    if ((age > 30.41*24) & (age <= 30.41*30)){
-      contacts_sp = 6/4
-      contacts_sm = 7.5/1
-      contacts_au = 6/4
-      contacts_wt = 6/4
-    }
-    if ((age > 30.41*30) & (age <= 30.41*36)){
-      contacts_sp = 8/4
+    if ((age > 30.41*24) & (age <= 30.41*36)){
+      contacts_sp = 7/4
       contacts_sm = 6/1
       contacts_au = 6/4
       contacts_wt = 6/4
     }
-    if ((age > 30.41*36) & (age <= 30.41*42)){
-      contacts_sp = 20/4
-      contacts_sm = 9/1
+    if ((age > 30.41*36) & (age <= 30.41*48)){
+      contacts_sp = 18/4
+      contacts_sm = 10/1
+      contacts_au = 10/4
+      contacts_wt = 9.5/4
+    }
+    if ((age > 30.41*48)){
+      contacts_sp = 28/4
+      contacts_sm = 18.5/1
       contacts_au = 9/4
-      contacts_wt = 7.5/4
+      contacts_wt = 27/4
     }
-    if ((age > 30.41*42) & (age <= 30.41*48)){
-      contacts_sp = 14/4
-      contacts_sm = 11/1
-      contacts_au = 12/4
-      contacts_wt = 11/4
-    }
-    if ((age > 30.41*48) & (age <= 30.41*54)){
-      contacts_sp = 29/4
-      contacts_sm = 25/1
-      contacts_au = 12/4  # NB: no children born in autumn are aged 48-54 months
-      contacts_wt = 21/4
-    }
-    if (age > 30.41*54){
-      contacts_sp = 25/4
-      contacts_sm = 13/1
-      contacts_au = 11.5/4
-      contacts_wt = 26.5/4
-    }
+    
     
     # FOI for each birth cohort
     # participants not attending daycare
@@ -440,7 +423,7 @@ ggplot(test) + geom_line(aes(x=time, y=lambda_wt)) +
                xlab("Age (days)") + ylab("FOI") + ggtitle("FOI for the winter birth cohort") + 
               labs(color = 'Daycare')
 
-ggplot(test) + geom_line(aes(x=time, y=mu)) + xlab("Age (days)") + ylab("Waining rate")
+ggplot(test) + geom_line(aes(x=time, y=mu)) + xlab("Age (days)") + ylab("Waning rate of maternal immunity")
 
 # LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
 
