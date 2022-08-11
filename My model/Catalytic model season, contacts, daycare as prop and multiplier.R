@@ -259,17 +259,17 @@ model <- function(theta, age, inits, data) {
     # participants not attending daycare
     # FOI for each birth cohort
     lambda_sp = (param[["M"]]+param[["P"]])*spring_FOI_sp + param[["M"]]*summer_FOI_sp + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp +
-                 param[["C"]]*contacts_sp
+                (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp 
+                 #param[["C"]]*contacts_sp
     lambda_sm = (param[["M"]]+param[["P"]])*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm +
-                param[["C"]]*contacts_sm
+                (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm 
+                #param[["C"]]*contacts_sm
     lambda_au = (param[["M"]]+param[["P"]])*spring_FOI_au + param[["M"]]*summer_FOI_au + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au +
-                param[["C"]]*contacts_au
+                (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au 
+                #param[["C"]]*contacts_au
     lambda_wt = (param[["M"]]+param[["P"]])*spring_FOI_wt + param[["M"]]*summer_FOI_wt +
-                 (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt +
-                param[["C"]]*contacts_wt
+                 (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt 
+                #param[["C"]]*contacts_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -388,7 +388,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # C = contact parameter
 # D = daycare parameter
 theta <- c(P=0.00001, M=0.02002, A=0.00003, W=0.00004, B = 0.01, 
-           C = 0.01, D = 2) # these are just random values, to be fitted
+            D = 2) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -510,13 +510,13 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "B", "C", "D") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "B", "D") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P=0, M=0, A=0, W=0, B = 0, C = 0, D = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2, C = 0.2, D = 10)
+lower = c(P=0, M=0, A=0, W=0, B = 0 , D = 0)
+upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2 , D = 10)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -750,22 +750,22 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
   xlab("age (days)") + ylab("Maternal immunity waning rate") 
 w
 
-write.csv(lambda_spquantiles, "add_DEzs_lambda_sp_ll.csv")
-write.csv(lambda_smquantiles, "add_DEzs_lambda_sm_ll.csv")
-write.csv(lambda_auquantiles, "add_DEzs_lambda_au_ll.csv")
-write.csv(lambda_auquantiles, "add_DEzs_lambda_wt_ll.csv")
+write.csv(lambda_spquantiles, "add_DEzs_lambda_sp_ll_noc.csv")
+write.csv(lambda_smquantiles, "add_DEzs_lambda_sm_ll_noc.csv")
+write.csv(lambda_auquantiles, "add_DEzs_lambda_au_ll_noc.csv")
+write.csv(lambda_auquantiles, "add_DEzs_lambda_wt_ll_noc.csv")
 
-write.csv(Pquantiles, "add_DEzs_Pquantiles_ll.csv")
-write.csv(Mquantiles, "add_DEzs_Mquantiles_ll.csv")
-write.csv(Aquantiles, "add_DEzs_Aquantiles_ll.csv")
-write.csv(Wquantiles, "add_DEzs_Wquantiles_ll.csv")
-write.csv(Cquantiles, "add_DEzs_Cquantiles_ll.csv")
-write.csv(Dquantiles, "add_DEzs_Dquantiles_ll.csv")
-write.csv(wquantiles, "add_DEzs_Immunity_quantiles_ll.csv")
+write.csv(Pquantiles, "add_DEzs_Pquantiles_ll_noc.csv")
+write.csv(Mquantiles, "add_DEzs_Mquantiles_ll_noc.csv")
+write.csv(Aquantiles, "add_DEzs_Aquantiles_ll_noc.csv")
+write.csv(Wquantiles, "add_DEzs_Wquantiles_ll_noc.csv")
+write.csv(Cquantiles, "add_DEzs_Cquantiles_ll_noc.csv")
+write.csv(Dquantiles, "add_DEzs_Dquantiles_ll_noc.csv")
+write.csv(wquantiles, "add_DEzs_Immunity_quantiles_ll_noc.csv")
 
-write.csv(trajquantiles, "add_DEzs_trajquantiles_ll.csv")
-write.csv(trajsim, "add_DEzs_trajsim_ll.csv")
-write.csv(spring_conv_quantiles, "add_DEzs_spring_conv_ll.csv")
-write.csv(summer_conv_quantiles, "add_DEzs_summer_conv_ll.csv")
-write.csv(autumn_conv_quantiles, "add_DEzs_autumn_conv_ll.csv")
-write.csv(winter_conv_quantiles, "add_DEzs_winter_conv_ll.csv")
+write.csv(trajquantiles, "add_DEzs_trajquantiles_ll_noc.csv")
+write.csv(trajsim, "add_DEzs_trajsim_ll_noc.csv")
+write.csv(spring_conv_quantiles, "add_DEzs_spring_conv_ll_noc.csv")
+write.csv(summer_conv_quantiles, "add_DEzs_summer_conv_ll_noc.csv")
+write.csv(autumn_conv_quantiles, "add_DEzs_autumn_conv_ll_noc.csv")
+write.csv(winter_conv_quantiles, "add_DEzs_winter_conv_ll_noc.csv")
