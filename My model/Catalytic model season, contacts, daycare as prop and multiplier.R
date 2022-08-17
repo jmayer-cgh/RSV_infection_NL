@@ -259,17 +259,17 @@ model <- function(theta, age, inits, data) {
     # participants not attending daycare
     # FOI for each birth cohort
     lambda_sp = (param[["M"]]+param[["P"]])*spring_FOI_sp + param[["M"]]*summer_FOI_sp + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp 
-                 #param[["C"]]*contacts_sp
+                (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp +
+                 param[["C"]]*contacts_sp
     lambda_sm = (param[["M"]]+param[["P"]])*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm 
-                #param[["C"]]*contacts_sm
+                (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm +
+                param[["C"]]*contacts_sm
     lambda_au = (param[["M"]]+param[["P"]])*spring_FOI_au + param[["M"]]*summer_FOI_au + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au 
-                #param[["C"]]*contacts_au
+                (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au +
+                param[["C"]]*contacts_au
     lambda_wt = (param[["M"]]+param[["P"]])*spring_FOI_wt + param[["M"]]*summer_FOI_wt +
-                 (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt 
-                #param[["C"]]*contacts_wt
+                 (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt +
+                param[["C"]]*contacts_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -388,7 +388,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # C = contact parameter
 # D = daycare parameter
 theta <- c(P=0.00001, M=0.02002, A=0.00003, W=0.00004, B = 0.01, 
-            D = 2) # these are just random values, to be fitted
+            C = 0.02, D = 2) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 
@@ -515,8 +515,8 @@ index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P=0, M=0, A=0, W=0, B = 0 , D = 0)
-upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2 , D = 10)
+lower = c(P=0, M=0, A=0, W=0, B = 0 , C = 0, D = 0)
+upper = c(P=0.1, M=0.1, A=0.1, W = 0.1, B = 0.2 , C = 0.1, D = 10)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
