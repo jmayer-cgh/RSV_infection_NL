@@ -92,7 +92,8 @@ ggplot(data) +
 ggplot(data_no_season) +
   geom_point(aes(x=agemid, y=seroprev_mean)) +
   geom_errorbar(aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  ylab("Proportion seroconverted") + xlab("age (days)") 
+  ylab("Proportion seroconverted") + xlab("age (years)") +
+  scale_x_continuous(breaks=c(0,365,730,1095,1460,1825), labels = c(0, 1, 2, 3, 4 ,5))
 
 ggplot(data_no_daycare) +
   geom_point(aes(x=agemid, y=seroprev_mean, colour = season_birth)) +
@@ -510,7 +511,7 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "B", "D") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "B", "C", "D") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
@@ -550,7 +551,7 @@ plot(trace, parametersOnly = TRUE, start =nburn)
 # check convergence and correlations
 gelmanDiagnostics(trace, plot=TRUE, start=nburn)
 correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
-marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
+marginalPlot(trace, prior=F, singlePanel=T, start=nburn, nDrawsPrior = 1000)
 
 # remove burn-in for trajsim simulation
 tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
