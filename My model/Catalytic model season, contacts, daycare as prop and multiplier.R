@@ -230,29 +230,53 @@ model <- function(theta, age, inits, data) {
       contacts_au = 3/4
       contacts_wt = 4/4
     } 
-    if ((age > 30.41*12) & (age <= 30.41*24)){
+    if ((age > 30.41*12) & (age <= 30.41*18)){
       contacts_sp = 5/4
-      contacts_sm = 6/1
-      contacts_au = 4.5/4
+      contacts_sm = 3.5/1
+      contacts_au = 5/4
       contacts_wt = 4/4
     }
-    if ((age > 30.41*24) & (age <= 30.41*36)){
-      contacts_sp = 7/4
+    if ((age > 30.41*18) & (age <= 30.41*24)){
+      contacts_sp = 4.5/4
+      contacts_sm = 7/1
+      contacts_au = 4/4
+      contacts_wt = 4.5/4
+    }
+    if ((age > 30.41*24) & (age <= 30.41*30)){
+      contacts_sp = 6/4
+      contacts_sm = 7.5/1
+      contacts_au = 6/4
+      contacts_wt = 6/4
+    }
+    if ((age > 30.41*30) & (age <= 30.41*36)){
+      contacts_sp = 8/4
       contacts_sm = 6/1
       contacts_au = 6/4
       contacts_wt = 6/4
     }
-    if ((age > 30.41*36) & (age <= 30.41*48)){
-      contacts_sp = 18/4
-      contacts_sm = 10/1
-      contacts_au = 10/4
-      contacts_wt = 9.5/4
-    }
-    if ((age > 30.41*48)){
-      contacts_sp = 28/4
-      contacts_sm = 18.5/1
+    if ((age > 30.41*36) & (age <= 30.41*42)){
+      contacts_sp = 20/4
+      contacts_sm = 9/1
       contacts_au = 9/4
-      contacts_wt = 27/4
+      contacts_wt = 7.5/4
+    }
+    if ((age > 30.41*42) & (age <= 30.41*48)){
+      contacts_sp = 14/4
+      contacts_sm = 11/1
+      contacts_au = 12/4
+      contacts_wt = 11/4
+    }
+    if ((age > 30.41*48) & (age <= 30.41*54)){
+      contacts_sp = 29/4
+      contacts_sm = 25/1
+      contacts_au = 12/4  # NB: no children born in autumn are aged 48-54 months
+      contacts_wt = 21/4
+    }
+    if (age > 30.41*54){
+      contacts_sp = 25/4
+      contacts_sm = 13/1
+      contacts_au = 11.5/4
+      contacts_wt = 26.5/4
     }
     
     
