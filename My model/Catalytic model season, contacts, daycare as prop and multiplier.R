@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding daycare attendance as a multiplication
 # Author: Julia Mayer
-# Last updated: 10.08.2022
+# Last updated: 21.08.2022
 ################################################################
 
 
@@ -284,17 +284,17 @@ model <- function(theta, age, inits, data) {
     # participants not attending daycare
     # FOI for each birth cohort
     lambda_sp = (param[["M"]]+param[["P"]])*spring_FOI_sp + param[["M"]]*summer_FOI_sp + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp +
-                 param[["C"]]*contacts_sp
+      (param[["M"]]+param[["A"]])*autumn_FOI_sp + (param[["M"]]+param[["W"]])*winter_FOI_sp +
+      param[["C"]]*contacts_sp
     lambda_sm = (param[["M"]]+param[["P"]])*spring_FOI_sm + param[["M"]]*summer_FOI_sm + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm +
-                param[["C"]]*contacts_sm
+      (param[["M"]]+param[["A"]])*autumn_FOI_sm + (param[["M"]]+param[["W"]])*winter_FOI_sm +
+      param[["C"]]*contacts_sm
     lambda_au = (param[["M"]]+param[["P"]])*spring_FOI_au + param[["M"]]*summer_FOI_au + 
-                (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au +
-                param[["C"]]*contacts_au
+      (param[["M"]]+param[["A"]])*autumn_FOI_au + (param[["M"]]+param[["W"]])*winter_FOI_au +
+      param[["C"]]*contacts_au
     lambda_wt = (param[["M"]]+param[["P"]])*spring_FOI_wt + param[["M"]]*summer_FOI_wt +
-                 (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt +
-                param[["C"]]*contacts_wt
+      (param[["M"]]+param[["A"]])*autumn_FOI_wt + (param[["M"]]+param[["W"]])*winter_FOI_wt +
+      param[["C"]]*contacts_wt
     
     # waning maternal immunity, same for all children
     mu = param[["B"]] 
@@ -311,10 +311,11 @@ model <- function(theta, age, inits, data) {
     S_au = exp(state[7]) # susceptible born in autumn
     S_wt = exp(state[8]) # susceptible born in winter 
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in spring
-    Z_sm = exp(state[10]) # seroconverted after infection born in summer
-    Z_au = exp(state[11]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[12]) # seroconverted after infection born in winter
+    Z_sp = exp(state[9]) # seroconverted after infection born in spring attending day-care
+    Z_sm = exp(state[10]) # seroconverted after infection born in summer attending day-care
+    Z_au = exp(state[11]) # seroconverted after infection born in autumn attending day-care
+    Z_wt = exp(state[12]) # seroconverted after infection born in winter attending day-care
+    
     
     # changes in states
     dM_sp = -mu*M_sp
@@ -353,7 +354,6 @@ model <- function(theta, age, inits, data) {
                              Z_sm=log(inits[["Z_sm"]]),
                              Z_au=log(inits[["Z_au"]]),
                              Z_wt=log(inits[["Z_wt"]])),
-                             #Z_all = log(inits[["Z_all"]])),
                          times=age, 
                          func=catalytic, 
                          parms=theta, 
@@ -370,7 +370,7 @@ model <- function(theta, age, inits, data) {
   traj$conv_winter <- exp(traj$Z_wt) # cumulative seroconversion in winter cohort (=observed state)
   traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion
   
-  traj$Z_all = 0.26*traj$Z_sp + 0.29*traj$Z_wt + 0.24*traj$Z_au + 0.20*traj$Z_wt
+  traj$Z_all = 0.26*traj$Z_sp + 0.29*traj$Z_sm + 0.24*traj$Z_au + 0.20*traj$Z_wt
   traj$conv <- exp(traj$Z_all)
   
   return(traj)
@@ -416,12 +416,10 @@ theta <- c(P=0.00001, M=0.02002, A=0.00003, W=0.00004, B = 0.01,
             C = 0.02, D = 2) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
-
-#Should this add up to 1?
-inits <- c(M_sp=(1-2*1e-12), M_sm = (1-2*1e-12), M_au= (1-2*1e-12), M_wt = (1-2*1e-12),
+inits <- c(M_sp=(1-2*1e-12), M_sm = (1-2*1e-12), M_au= (1-2*1e-12), M_wt = (1-3*1e-12),
            S_sp=1e-12, S_sm=1e-12, S_au=1e-12, S_wt=1e-12, 
            Z_sp = 1e-12, Z_sm=1e-12, Z_au=1e-12, Z_wt=1e-12)
-           #Z_all = 1e-12) # initial conditions for the states (as proportions)
+# initial conditions for the states (as proportions)
 # --> since we integrate on a log-scale, the initial conditions cannot be 0 (not defined on a log-scale)
 
 # SIMULATION TIME  ---------------------------------------------------------
@@ -431,7 +429,9 @@ agepred <- data$agemid
 # TEST MODEL  --------------------------------------------------------
 # Notes: lambda should vary over time, mu shouldn't
 test <- model(theta, agepred, inits, data)
-ggplot(test) + geom_line(aes(x=time, y=conv))
+#ggplot(test) + geom_line(aes(x=time, y=conv_n))
+#ggplot(test) + geom_line(aes(x=time, y=conv_d))
+ggplot(test) + geom_line(aes(x=time, y = conv))
 ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) + 
                xlab("Age (days)") + ylab("FOI") + labs(color = 'Daycare') + ggtitle("FOI for the spring birth cohort") 
 
@@ -575,7 +575,7 @@ plot(trace, parametersOnly = TRUE, start =nburn)
 # check convergence and correlations
 gelmanDiagnostics(trace, plot=TRUE, start=nburn)
 correlationPlot(getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn), density="smooth", thin=50)
-marginalPlot(trace, prior=F, singlePanel=T, start=nburn, nDrawsPrior = 1000)
+marginalPlot(trace, prior=T, singlePanel=T, start=nburn, nDrawsPrior = 1000)
 
 # remove burn-in for trajsim simulation
 tracefinal <- getSample(trace, parametersOnly = TRUE, coda=TRUE, start=nburn)
@@ -586,7 +586,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "new_eq_and_log_DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
+saveRDS(trace, "no_typo_addition_DEzs_trace_seasonal_FOI_contacts_one_daycare_and_w.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -654,7 +654,7 @@ winter_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(
 colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
 # Plot fit and FOI
-fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
+fit <- ggplot() + theme_bw() + ggtitle("Overall model fit") +
   geom_point(data=data_no_season, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=data_no_season, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
   geom_ribbon(data=trajquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
@@ -748,25 +748,33 @@ fit_wt2
 lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (no daycare)") +
   geom_ribbon(data=lambda_spquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_spquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
+  xlab("age (years)") + ylab("FOI") + 
+  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
+                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
 lambda_sp
 
 lambda_sm <- ggplot() + theme_bw() + ggtitle("FOI for the summer birth cohort (no daycare)") +
   geom_ribbon(data=lambda_smquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_smquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
+  xlab("age (years)") + ylab("FOI") +
+  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
+                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
 lambda_sm
 
 lambda_au <- ggplot() + theme_bw() + ggtitle("FOI for the autumn birth cohort (no daycare)") +
   geom_ribbon(data=lambda_auquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_auquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
+  xlab("age (years)") + ylab("FOI") +
+  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
+                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
 lambda_au
 
 lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (no daycare)") +
   geom_ribbon(data=lambda_wtquantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
   geom_line(data=lambda_wtquantiles, aes(x=agemid, y=median), color="red") +
-  xlab("age (days)") + ylab("FOI") 
+  xlab("age (years)") + ylab("FOI") +
+  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
+                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
 lambda_wt
 
 w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
@@ -775,22 +783,22 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
   xlab("age (days)") + ylab("Maternal immunity waning rate") 
 w
 
-write.csv(lambda_spquantiles, "add_DEzs_lambda_sp_ll_noc.csv")
-write.csv(lambda_smquantiles, "add_DEzs_lambda_sm_ll_noc.csv")
-write.csv(lambda_auquantiles, "add_DEzs_lambda_au_ll_noc.csv")
-write.csv(lambda_auquantiles, "add_DEzs_lambda_wt_ll_noc.csv")
+write.csv(lambda_spquantiles, "add_DEzs_lambda_sp_ll_not.csv")
+write.csv(lambda_smquantiles, "add_DEzs_lambda_sm_ll_not.csv")
+write.csv(lambda_auquantiles, "add_DEzs_lambda_au_ll_not.csv")
+write.csv(lambda_auquantiles, "add_DEzs_lambda_wt_ll_not.csv")
 
-write.csv(Pquantiles, "add_DEzs_Pquantiles_ll_noc.csv")
-write.csv(Mquantiles, "add_DEzs_Mquantiles_ll_noc.csv")
-write.csv(Aquantiles, "add_DEzs_Aquantiles_ll_noc.csv")
-write.csv(Wquantiles, "add_DEzs_Wquantiles_ll_noc.csv")
-write.csv(Cquantiles, "add_DEzs_Cquantiles_ll_noc.csv")
-write.csv(Dquantiles, "add_DEzs_Dquantiles_ll_noc.csv")
-write.csv(wquantiles, "add_DEzs_Immunity_quantiles_ll_noc.csv")
+write.csv(Pquantiles, "add_DEzs_Pquantiles_ll_not.csv")
+write.csv(Mquantiles, "add_DEzs_Mquantiles_ll_not.csv")
+write.csv(Aquantiles, "add_DEzs_Aquantiles_ll_not.csv")
+write.csv(Wquantiles, "add_DEzs_Wquantiles_ll_not.csv")
+write.csv(Cquantiles, "add_DEzs_Cquantiles_ll_not.csv")
+write.csv(Dquantiles, "add_DEzs_Dquantiles_ll_not.csv")
+write.csv(wquantiles, "add_DEzs_Immunity_quantiles_ll_not.csv")
 
-write.csv(trajquantiles, "add_DEzs_trajquantiles_ll_noc.csv")
-write.csv(trajsim, "add_DEzs_trajsim_ll_noc.csv")
-write.csv(spring_conv_quantiles, "add_DEzs_spring_conv_ll_noc.csv")
-write.csv(summer_conv_quantiles, "add_DEzs_summer_conv_ll_noc.csv")
-write.csv(autumn_conv_quantiles, "add_DEzs_autumn_conv_ll_noc.csv")
-write.csv(winter_conv_quantiles, "add_DEzs_winter_conv_ll_noc.csv")
+write.csv(trajquantiles, "add_DEzs_trajquantiles_ll_not.csv")
+write.csv(trajsim, "add_DEzs_trajsim_ll_not.csv")
+write.csv(spring_conv_quantiles, "add_DEzs_spring_conv_ll_not.csv")
+write.csv(summer_conv_quantiles, "add_DEzs_summer_conv_ll_not.csv")
+write.csv(autumn_conv_quantiles, "add_DEzs_autumn_conv_ll_not.csv")
+write.csv(winter_conv_quantiles, "add_DEzs_winter_conv_ll_not.csv")
