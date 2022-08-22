@@ -31,8 +31,8 @@ fit
 fit_sp2 <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
   geom_point(data=spring_no_daycare, aes(x=agemid, y=seroprev_mean)) +
   geom_linerange(data=spring_no_daycare, aes(x=agemid, ymin=seroprev_low95, ymax=seroprev_up95)) +
-  geom_ribbon(data=trajquantiles_sp, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
-  geom_line(data=trajquantiles_sp, aes(x=agemid, y=median), color="red") +
+  geom_ribbon(data=spring_conv_quantiles, aes(x=agemid, ymin=low95, ymax=up95), fill="red", alpha=0.3) +
+  geom_line(data=spring_conv_quantiles, aes(x=agemid, y=median), color="red") +
   xlab("age (years)") + ylab("proportion seroconverted") +
   scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
                      labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
