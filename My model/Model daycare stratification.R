@@ -2,7 +2,7 @@
 # RSV seroconversion MSc project
 # Adding daycare attendance as a multiplication
 # Author: Julia Mayer
-# Last updated: 22.08.2022
+# Last updated: 23.08.2022
 ################################################################
 
 
@@ -417,7 +417,7 @@ model <- function(theta, age, inits, data) {
   traj$conv_winter_d <- exp(traj$Z_wt_d) # cumulative seroconversion in winter cohort (=observed state)
   traj$inc_winter_d <- c(inits[["Z_wt_d"]], diff(exp(traj$Z_wt_d))) # incident seroconversion
   
-  traj$Z_all_d = 0.26*traj$Z_sp_d + 0.29*traj$Z_sm_d + 0.24*traj$Z_au_d + 0.20*traj$Z_wt_d
+  traj$Z_all_d <- 0.26*traj$Z_sp_d + 0.29*traj$Z_sm_d + 0.24*traj$Z_au_d + 0.20*traj$Z_wt_d
   traj$conv_d <- exp(traj$Z_all_d)
   
   # Cumulative seroconversion if day-care == False
@@ -430,12 +430,20 @@ model <- function(theta, age, inits, data) {
   traj$conv_winter_n <- exp(traj$Z_wt_n) # cumulative seroconversion in winter cohort (=observed state)
   traj$inc_winter_n <- c(inits[["Z_wt_n"]], diff(exp(traj$Z_wt_d))) # incident seroconversion
   
-  traj$Z_all_n = 0.26*traj$Z_sp_n + 0.29*traj$Z_sm_n + 0.24*traj$Z_au_n + 0.20*traj$Z_wt_n
+  traj$Z_all_n <- 0.26*traj$Z_sp_n + 0.29*traj$Z_sm_n + 0.24*traj$Z_au_n + 0.20*traj$Z_wt_n
   traj$conv_n <- exp(traj$Z_all_n)
   
-  # Overall cumulative seroconversion (0.4075758 go to day-care)
-  traj$Z_all_tot = 0.4075758*traj$Z_all_d + (1-0.4075758)*traj$Z_all_n
-  traj$conv_tot <- exp(traj$Z_all_tot)
+  # Overall cumulative seroconversion (0.3944 go to day-care)
+  traj$Z_sp_tot <- 0.3944*traj$Z_sp_d + (1-0.3944)*traj$Z_sp_n
+  traj$spring_conv <- exp(traj$Z_sp_tot)
+  traj$Z_sm_tot <- 0.3944*traj$Z_sm_d + (1-0.3944)*traj$Z_sm_n
+  traj$conv_summer <- exp(traj$Z_sm_tot)
+  traj$Z_au_tot <- 0.3944*traj$Z_au_d + (1-0.3944)*traj$Z_au_n
+  traj$conv_autumn <- exp(traj$Z_au_tot)
+  traj$Z_wt_tot <- 0.3944*traj$Z_wt_d + (1-0.3944)*traj$Z_wt_n
+  traj$conv_winter <- exp(traj$Z_wt_tot)
+  traj$Z_all_tot <- 0.3944*traj$Z_all_d + (1-0.3944)*traj$Z_all_n
+  traj$conv_tot <- exp(traj$Z_all_tot) 
   
   return(traj)
   
@@ -680,23 +688,15 @@ trajquantiles_wt_n <- plyr::ddply(.data=trajsim, .variables="time", function(x) 
 colnames(trajquantiles_wt_n) <- c("agemid", "low95", "median", "up95")
 
 # Proportion seroconverted by season of birth not accounting for day-care attendance
-spring_conv <- 0.4075758*log(trajsim$conv_spring_d) + (1-0.4075758)*log(trajsim$conv_spring_n)
-trajsim$spring_conv <- exp(spring_conv)
 spring_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"spring_conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
-summer_conv <- 0.4075758*log(trajsim$conv_summer_d) + (1-0.4075758)*log(trajsim$conv_summer_n)
-trajsim$conv_summer <- exp(summer_conv)
 summer_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(summer_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
-autumn_conv <- 0.4075758*log(trajsim$conv_autumn_d) + (1-0.4075758)*log(trajsim$conv_autumn_n)
-trajsim$conv_autumn <- exp(autumn_conv)
 autumn_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(autumn_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
-winter_conv <- 0.4075758*log(trajsim$conv_winter_d) + (1-0.4075758)*log(trajsim$conv_winter_n)
-trajsim$conv_winter <- exp(winter_conv)
 winter_conv_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
