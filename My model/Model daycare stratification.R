@@ -841,7 +841,7 @@ w
 write.csv(lambda_spquantiles, "strat_lambda_sp.csv")
 write.csv(lambda_smquantiles, "strat_lambda_sm.csv")
 write.csv(lambda_auquantiles, "strat_lambda_au.csv")
-write.csv(lambda_auquantiles, "strat_lambda_wt.csv")
+write.csv(lambda_wtquantiles, "strat_lambda_wt.csv")
 
 write.csv(Pquantiles, "strat_Pquantiles.csv")
 write.csv(Mquantiles, "strat_Mquantiles.csv")
