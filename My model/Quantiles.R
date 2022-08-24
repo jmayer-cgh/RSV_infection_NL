@@ -27,7 +27,7 @@ immunity_quantiles <- 1/immunity_quantiles
 #Looking for D>1
 Daycare_quantiles <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"D"], prob = c(0.035, 0.5, 0.965), na.rm=T)) 
 
-#Seasonal risk ratios
+#Seasonal risk ratios, 95% CrI
 trajsim$ratiowp <- trajsim$FOI_winter/trajsim$FOI_spring
 ratio_winter_spring <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiowp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 
@@ -45,6 +45,25 @@ ratio_spring_autumn <- plyr::ddply(.data=trajsim, .variables="time", function(x)
 
 trajsim$ratioam <- trajsim$FOI_summer/trajsim$FOI_autumn
 ratio_autumn_summer <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratioam"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+
+#Seasonal risk ratios, 50% CrI
+trajsim$ratiowp <- trajsim$FOI_winter/trajsim$FOI_spring
+ratio_winter_spring <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiowp"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
+
+trajsim$ratiowm <- trajsim$FOI_summer/trajsim$FOI_winter
+ratio_winter_summer <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiowm"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
+
+trajsim$ratiowa <- trajsim$FOI_winter/trajsim$FOI_autumn
+ratio_winter_autumn <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiowa"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
+
+trajsim$ratiopm <- trajsim$FOI_summer/trajsim$FOI_spring
+ratio_spring_summer <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiopm"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
+
+trajsim$ratiopa <- trajsim$FOI_spring/trajsim$FOI_autumn
+ratio_spring_autumn <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratiopa"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
+
+trajsim$ratioam <- trajsim$FOI_summer/trajsim$FOI_autumn
+ratio_autumn_summer <- plyr::ddply(.data=trajsim, .variables="time", function(x) quantile(x[,"ratioam"], prob = c(0.25, 0.5, 0.75), na.rm=T)) 
 
 # Risk ratios comparing cohorts
 trajsim$lambdawp <- trajsim$lambda_wt/trajsim$lambda_sp
