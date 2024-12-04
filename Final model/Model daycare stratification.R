@@ -303,8 +303,8 @@ model <- function(theta, age, inits, data) {
       (param[["M"]] + param[["W"]]) * winter_FOI_wt +
       param[["C"]] * contacts_wt
     
-    # waning maternal immunity, same for all children
-    mu = param[["B"]] 
+    # waning maternal immunity, same for all children (6 months)
+    mu = 1/182.5 #param[["B"]] 
     
     # states 
     # proportion with maternal immunity
@@ -499,7 +499,7 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # B = rate of waning maternal immunity
 # C = contact parameter
 # D = daycare parameter
-theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, B = 0.01, 
+theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, #B = 0.01, 
            C = 0.02, D = 2) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
@@ -579,13 +579,16 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "B", "C", "D") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", #"B", 
+             "C", "D") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P = 0, M = 0, A = 0, W = 0, B = 0 , C = 0, D = 0)
-upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, B = 0.2 , C = 0.1, D = 10)
+lower = c(P = 0, M = 0, A = 0, W = 0, #B = 0 , 
+          C = 0, D = 0)
+upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, #B = 0.2 , 
+          C = 0.1, D = 10)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
