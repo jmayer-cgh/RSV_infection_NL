@@ -307,7 +307,7 @@ model <- function(theta, age, inits, data) {
     dM_sm = -mu*M_sm
     dM_au = -mu*M_au
     dM_wt = -mu*M_wt
-
+    
     dS_sp = + mu*M_sp - lambda_sp*S_sp
     dS_sm = + mu*M_sm - lambda_sm*S_sm
     dS_au = + mu*M_au - lambda_au*S_au
@@ -359,9 +359,9 @@ model <- function(theta, age, inits, data) {
   traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion
   
   traj$Z_all <- 0.26*traj$Z_sp + # total seroconverted is the sum by birth cohort
-                0.29*traj$Z_sm + # we scale by the proportion of children born in each season
-                0.24*traj$Z_au + 
-                0.20*traj$Z_wt
+    0.29*traj$Z_sm + # we scale by the proportion of children born in each season
+    0.24*traj$Z_au + 
+    0.20*traj$Z_wt
   traj$conv <- exp(traj$Z_all)
   
   return(traj)
@@ -527,7 +527,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "strat_model_trace_seasonal_FOI_contacts_mat_vaccine.rds")
+saveRDS(trace, "strat_model_trace_seasonal_FOI_contacts_mat_vaccine_no_daycare.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -537,7 +537,7 @@ trajsim <- maketrajsim(tracefinal, theta, agepred, model, inits, 1000)
 
 # Proportion converted overall
 trajquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                             function(x) quantile(x[,"conv_tot"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                             function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
 # FOI per birth cohort
@@ -578,49 +578,13 @@ Cquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
                           function(x) quantile(x[,"C"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Cquantiles) <- c("agemid", "low95", "median", "up95")
 
-Dquantiles <- plyr::ddply(.data = trajsim, .variables = "time", function(x) quantile(x[,"D"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(Dquantiles) <- c("agemid", "low95", "median", "up95")
-
 wquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
                           function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
-# Proportion seroconverted by season of birth and day-care attendance
-trajquantiles_sp_d <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sp_d) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_sp_n <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_spring_n"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sp_n) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_sm_d <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sm_d) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_sm_n <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_summer_n"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_sm_n) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_au_d <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_au_d) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_au_n <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_autumn_n"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_au_n) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_wt_d <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_wt_d) <- c("agemid", "low95", "median", "up95")
-
-trajquantiles_wt_n <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                  function(x) quantile(x[,"conv_winter_n"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(trajquantiles_wt_n) <- c("agemid", "low95", "median", "up95")
-
-# Proportion seroconverted by season of birth not accounting for day-care attendance
+# Proportion seroconverted by season of birth
 spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                                     function(x) quantile(x[,"spring_conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                                     function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
 summer_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
@@ -648,101 +612,54 @@ fit
 
 # Stratified by season of birth
 fit_season <- ggplot() + theme_bw() + ggtitle("Model fit on data stratified by season") +
-  geom_point(data = data, aes(x = agemid, y = seroprev_mean, color = season_birth, shape = factor(visitnursery_child))) +
-  geom_linerange(data = data, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, color = season_birth, linetype = factor(visitnursery_child))) +
+  geom_point(data = data_season, aes(x = agemid, y = seroprev_mean, color = season_birth)) +
+  geom_linerange(data = data_season, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, color = season_birth)) +
   geom_ribbon(data = trajquantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = trajquantiles, aes(x = agemid, y = median), color = "red") +
   xlab("age (days)") + ylab("proportion seroconverted") + 
-  labs(color = "Season of birth", shape = "Day-care attendance", linetype = "Day-care attendance")
+  labs(color = "Season of birth")
 
 fit_season
 
-#Spring birth cohort by day-care attendance
+#Spring birth cohort
 fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
-  geom_point(data = spring_df, aes(x = agemid, y = seroprev_mean, colour = factor(visitnursery_child))) +
-  geom_linerange(data = spring_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_point(data = spring_df, aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = spring_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
   geom_ribbon(data = spring_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = spring_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (days)") + ylab("proportion seroconverted") + labs (colour = "Day-care attendance")
+  xlab("age (days)") + ylab("proportion seroconverted")
 
 fit_sp
 
-#Spring birth cohort w/o day-care attendance
-fit_sp2 <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
-  geom_point(data = spring_no_daycare, aes(x = agemid, y = seroprev_mean)) +
-  geom_linerange(data = spring_no_daycare, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
-  geom_ribbon(data = spring_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = spring_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (years)") + ylab("proportion seroconverted") +
-  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
-                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
-fit_sp2
-
-#Summmer birth cohort by day-care attendance
+#Summmer birth cohort 
 fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
-  geom_point(data = summer_df, aes(x = agemid, y = seroprev_mean, colour = factor(visitnursery_child))) +
-  geom_linerange(data = summer_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_point(data = summer_df, aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = summer_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
   geom_ribbon(data = summer_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = summer_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+  xlab("age (days)") + ylab("proportion seroconverted")
 
 fit_sm
 
-#Summer birth cohort w/o day-care attendance
-fit_sm2 <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
-  geom_point(data = summer_no_daycare, aes(x = agemid, y = seroprev_mean)) +
-  geom_linerange(data = summer_no_daycare, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
-  geom_ribbon(data = summer_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = summer_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (years)") + ylab("proportion seroconverted") +
-  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
-                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
-
-fit_sm2
-
-#Autumn birth cohort by day-care attendance
+#Autumn birth cohort
 fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
-  geom_point(data = autumn_df, aes(x = agemid, y = seroprev_mean, colour = factor(visitnursery_child))) +
-  geom_linerange(data = autumn_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_point(data = autumn_df, aes(x = agemid, y = seroprev_mean,)) +
+  geom_linerange(data = autumn_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
   geom_ribbon(data = autumn_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = autumn_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+  xlab("age (days)") + ylab("proportion seroconverted")
 
 fit_au
 
-#Autumn birth cohort w/o day-care attendance
-fit_au2 <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
-  geom_point(data = autumn_no_daycare, aes(x = agemid, y = seroprev_mean)) +
-  geom_linerange(data = autumn_no_daycare, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
-  geom_ribbon(data = autumn_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = autumn_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (years)") + ylab("proportion seroconverted") +
-  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
-                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
-
-fit_au2
-
-#Winter birth cohort by day-care attendance
+#Winter birth cohort
 fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
-  geom_point(data = winter.df, aes(x = agemid, y = seroprev_mean, colour = factor(visitnursery_child))) +
-  geom_linerange(data = winter.df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95, colour = factor(visitnursery_child))) +
+  geom_point(data = winter_df, aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = winter_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
   geom_ribbon(data = winter_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = winter_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (days)") + ylab("proportion seroconverted") + labs(colour = "Day-care attendance")
+  xlab("age (days)") + ylab("proportion seroconverted")
 
 fit_wt
-
-#Winter birth cohort w/o day-care attendance
-fit_wt2 <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
-  geom_point(data = winter_no_daycare, aes(x = agemid, y = seroprev_mean)) +
-  geom_linerange(data = winter_no_daycare, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
-  geom_ribbon(data = winter_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = winter_conv_quantiles, aes(x = agemid, y = median), color = "red") +
-  xlab("age (years)") + ylab("proportion seroconverted") +
-  scale_x_continuous(breaks=c(0,182.5, 365, 547.5, 730, 912.5, 1095, 1277.5, 1460, 1642.5, 1825), 
-                     labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
-
-fit_wt2
 
 # FOI for spring birth cohort
 lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (no daycare)") +
@@ -788,22 +705,22 @@ w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 w
 
 # Saving the useful files ------------------------------------------------------------
-write.csv(lambda_spquantiles, "strat_lambda_sp.csv")
-write.csv(lambda_smquantiles, "strat_lambda_sm.csv")
-write.csv(lambda_auquantiles, "strat_lambda_au.csv")
-write.csv(lambda_wtquantiles, "strat_lambda_wt.csv")
+path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/CSV files/Vaccination/")
+write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
+write.csv(lambda_smquantiles, paste0(path, "strat_lambda_sm.csv"))
+write.csv(lambda_auquantiles, paste0(path, "strat_lambda_au.csv"))
+write.csv(lambda_wtquantiles, paste0(path, "strat_lambda_wt.csv"))
 
-write.csv(Pquantiles, "strat_Pquantiles.csv")
-write.csv(Mquantiles, "strat_Mquantiles.csv")
-write.csv(Aquantiles, "strat_Aquantiles.csv")
-write.csv(Wquantiles, "strat_Wquantiles.csv")
-write.csv(Cquantiles, "strat_Cquantiles.csv")
-write.csv(Dquantiles, "strat_Dquantiles.csv")
-write.csv(wquantiles, "strat_Immunity_quantiles.csv")
+write.csv(Pquantiles, paste0(path, "strat_Pquantiles.csv"))
+write.csv(Mquantiles, paste0(path, "strat_Mquantiles.csv"))
+write.csv(Aquantiles, paste0(path, "strat_Aquantiles.csv"))
+write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
+write.csv(Cquantiles, paste0(path, "strat_Cquantiles.csv"))
+write.csv(wquantiles, paste0(path, "strat_Immunity_quantiles.csv"))
 
-write.csv(trajquantiles, "strat_trajquantiles.csv")
-write.csv(trajsim, "strat_trajsim.csv")
-write.csv(spring_conv_quantiles, "strat_spring_conv_tot.csv")
-write.csv(summer_conv_quantiles, "strat_summer_conv_tot.csv")
-write.csv(autumn_conv_quantiles, "strat_autumn_conv_tot.csv")
-write.csv(winter_conv_quantiles, "strat_winter_conv_tot.csv")
+write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
+write.csv(trajsim, paste0(path, "strat_trajsim.csv"))
+write.csv(spring_conv_quantiles, paste0(path, "strat_spring_conv_tot.csv"))
+write.csv(summer_conv_quantiles, paste0(path, "strat_summer_conv_tot.csv"))
+write.csv(autumn_conv_quantiles, paste0(path, "strat_autumn_conv_tot.csv"))
+write.csv(winter_conv_quantiles, paste0(path, "strat_winter_conv_tot.csv"))
