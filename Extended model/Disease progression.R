@@ -1,6 +1,7 @@
 # Load libraries
 library(dplyr)
 library(readxl)
+library(ggplot2)
 
 # Define useful paths
 path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
@@ -49,7 +50,7 @@ conversion_formated <- conversion_formated %>%
                                  age_months > 59 ~ "≥60",
                                  TRUE ~ as.character(age_months)))
 
-# Convert illness rates to proportions (prop = 1-exp(/rate*T))
+# Convert illness rates to proportions (prop = 1-exp(1/rate*T))
 mild_illness_prop <- mild_illness_rate %>%
   mutate(total_MI_prop = 1-exp(-`Total mild illness rate`/100000),
          total_MI_prop_low = 1-exp(-`Total mild illness lower CI`/100000),
@@ -108,3 +109,50 @@ severe_illness_progression <- conversion_formated %>%
          total_nonMA_severe_cases = median*total_nMA_SI_prop) %>%
   select(age_bracket, age_months, agemid, season, median, total_severe_cases,
          total_MA_severe_cases, total_nonMA_severe_cases)
+
+# Plots
+mild_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_mild_cases, colour = season)) +
+  labs(title = "Proportion of all mild illness", x = "Age (days)",
+        y = "Proportion of mild illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() 
+
+mild_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_MA_mild_cases, colour = season)) +
+  labs(title = "Proportion of medically assisted mild illness", x = "Age (days)",
+       y = "Proportion of mild illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+mild_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_nonMA_mild_cases, colour = season)) +
+  labs(title = "Proportion of non-medically-assisted mild illness", x = "Age (days)",
+       y = "Proportion of mild illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+severe_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_severe_cases, colour = season)) +
+  labs(title = "Proportion of all severe illness", x = "Age (days)",
+       y = "Proportion of severe illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() 
+
+severe_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_MA_severe_cases, colour = season)) +
+  labs(title = "Proportion of medically assisted severe illness", x = "Age (days)",
+       y = "Proportion of severe illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+severe_illness_progression %>% ggplot() +
+  geom_point(aes(x = agemid, y = total_nonMA_severe_cases, colour = season)) +
+  labs(title = "Proportion of non-medically-assisted severe illness", x = "Age (days)",
+       y = "Proportion of severe illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+# Save outputs
+mild_illness_progression %>% write.csv(paste0(path_model, "Proportion mild illness by age.csv"))
+severe_illness_progression %>% write.csv(paste0(path_model, "Proportion severe illness by age.csv"))
