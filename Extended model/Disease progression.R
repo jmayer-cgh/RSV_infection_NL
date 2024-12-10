@@ -154,5 +154,5 @@ severe_illness_progression %>% ggplot() +
   theme_light()
 
 # Save outputs
-mild_illness_progression %>% write.csv(paste0(path_model, "Proportion mild illness by age.csv"))
-severe_illness_progression %>% write.csv(paste0(path_model, "Proportion severe illness by age.csv"))
+mild_illness_progression %>% write.csv(paste0(path_model, "Proportion mild illness by age.csv"), row.names = F)
+severe_illness_progression %>% write.csv(paste0(path_model, "Proportion severe illness by age.csv"), row.names = F)
