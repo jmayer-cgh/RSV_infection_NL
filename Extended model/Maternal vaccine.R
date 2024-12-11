@@ -555,7 +555,7 @@ effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "strat_model_trace_seasonal_FOI_contacts_mat_vaccine_no_daycare.rds")
+saveRDS(trace, "strat_model_trace_seasonal_FOI_contacts_mat_vaccine_no_daycare_Erlang.rds")
 
 
 # POSTPROCESSING AND RESULTS -----------------------------------
@@ -612,9 +612,15 @@ Cquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
                           function(x) quantile(x[,"C"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Cquantiles) <- c("agemid", "low95", "median", "up95")
 
-wquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+Vquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                          function(x) quantile(x[,"V"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(vquantiles) <- c("agemid", "low95", "median", "up95")
+
+# Waning rate
+mu_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
                           function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
+colnames(mu_quantiles) <- c("agemid", "low95", "median", "up95")
+
 
 # Cumulative proportion seroconverted by season of birth
 spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
@@ -756,12 +762,12 @@ lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (n
                      labels = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5 ,5))
 lambda_wt
 
-# Waning rate of maternal immunity (should be constant)
-w <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
-  geom_ribbon(data = wquantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = wquantiles, aes(x = agemid, y = median), color = "red") +
+# Waning rate of maternal immunity (should not be constant)
+mu <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
+  geom_ribbon(data = mu_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = mu_quantiles, aes(x = agemid, y = median), color = "red") +
   xlab("age (days)") + ylab("Maternal immunity waning rate") 
-w
+mu
 
 # Saving the useful files ------------------------------------------------------------
 path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/CSV files/Vaccination/")
