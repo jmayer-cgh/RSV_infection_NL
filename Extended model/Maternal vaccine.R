@@ -40,15 +40,14 @@ summer <- c(6, 7, 8)
 autumn <- c (9, 10, 11)
 winter <- c(1, 2, 12)
 
-data <- data %>%
-  mutate(
-    Birth_mo = birthday %>% month(),
-    season_birth = case_when (Birth_mo %in% spring ~ "Spring",
-                              Birth_mo %in% summer ~ "Summer",
-                              Birth_mo %in% autumn ~ "Autumn",
-                              Birth_mo %in% winter ~ "Winter"),
-    visitnursery_child = case_when (visitnursery_child == 0 ~ FALSE,
-                                    visitnursery_child == 1 ~ TRUE))
+data <- data %>% 
+  mutate(Birth_mo = birthday %>% month(),
+         season_birth = case_when (Birth_mo %in% spring ~ "Spring",
+                                   Birth_mo %in% summer ~ "Summer",
+                                   Birth_mo %in% autumn ~ "Autumn",
+                                   Birth_mo %in% winter ~ "Winter"),
+         visitnursery_child = case_when (visitnursery_child == 0 ~ FALSE,
+                                         visitnursery_child == 1 ~ TRUE))
 
 #different groupings to plot different things
 # only grouped by age
@@ -152,14 +151,14 @@ model <- function(theta, age, inits, data) {
          || ((age >= 2*365) & (age <= (2*365+30.41*3))) 
          || ((age >= 3*365) & (age <= (3*365+30.41*3))) 
          || ((age >= 4*365) & (age <= (4*365+30.41*3))) 
-         || ((age >= 5*365) & (age <= (5*365+30.41*3))) ){
+         || ((age >= 5*365) & (age <= (5*365+30.41*3)))){
       spring_FOI_sp = 1
       summer_FOI_sm = 1
       autumn_FOI_au = 1
       winter_FOI_wt = 1
     } 
     
-    if ( (age>30.41*3 & age <=30.41*6 )                       # FOI of the season after the children were born
+    if ( (age > 30.41*3 & age <= 30.41*6 )                       # FOI of the season after the children were born
          || ((age > 365 + 30.41*3) & (age <= (365+30.41*6))) 
          || ((age > 2*365 + 30.41*3) & (age <= (2*365+30.41*6))) 
          || ((age > 3*365 + 30.41*3) & (age <= (3*365+30.41*6))) 
@@ -303,10 +302,10 @@ model <- function(theta, age, inits, data) {
     Z_wt = exp(state[12]) # seroconverted after infection born in winter
     
     # changes in states
-    dM_sp = -mu*M_sp
-    dM_sm = -mu*M_sm
-    dM_au = -mu*M_au
-    dM_wt = -mu*M_wt
+    dM_sp = - mu*M_sp
+    dM_sm = - mu*M_sm
+    dM_au = - mu*M_au
+    dM_wt = - mu*M_wt
     
     dS_sp = + mu*M_sp - lambda_sp*S_sp
     dS_sm = + mu*M_sm - lambda_sm*S_sm
@@ -324,7 +323,7 @@ model <- function(theta, age, inits, data) {
                   dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt),
                 lambda_sp = lambda_sp, lambda_sm = lambda_sm, 
                 lambda_au = lambda_au, lambda_wt = lambda_wt,
-                mu=mu))
+                mu = mu))
     
     
   }
@@ -350,19 +349,32 @@ model <- function(theta, age, inits, data) {
   
   # Cumulative seroconversion
   traj$conv_spring <- exp(traj$Z_sp) # cumulative seroconversion in spring cohort (=observed state)
-  traj$inc_spring <- c(inits[["Z_sp"]], diff(exp(traj$Z_sp))) # incident seroconversion
   traj$conv_summer <- exp(traj$Z_sm) # cumulative seroconversion in summer cohort (=observed state)
-  traj$inc_summer <- c(inits[["Z_sm"]], diff(exp(traj$Z_sm))) # incident seroconversion
   traj$conv_autumn <- exp(traj$Z_au) # cumulative seroconversion in autumn cohort (=observed state)
-  traj$inc_autumn <- c(inits[["Z_au"]], diff(exp(traj$Z_au))) # incident seroconversion
   traj$conv_winter <- exp(traj$Z_wt) # cumulative seroconversion in winter cohort (=observed state)
-  traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion
   
   traj$Z_all <- 0.26*traj$Z_sp + # total seroconverted is the sum by birth cohort
     0.29*traj$Z_sm + # we scale by the proportion of children born in each season
     0.24*traj$Z_au + 
     0.20*traj$Z_wt
   traj$conv <- exp(traj$Z_all)
+  
+  # Incident seroconversion
+  traj$inc_spring <- c(inits[["Z_sp"]], diff(exp(traj$Z_sp))) # incident seroconversion in spring cohort
+  traj$inc_summer <- c(inits[["Z_sm"]], diff(exp(traj$Z_sm))) # incident seroconversion in summer cohort
+  traj$inc_autumn <- c(inits[["Z_au"]], diff(exp(traj$Z_au))) # incident seroconversion in autumn cohort
+  traj$inc_winter <- c(inits[["Z_wt"]], diff(exp(traj$Z_wt))) # incident seroconversion in winter cohort
+  
+  inc_all <- 0.26*diff(exp(traj$Z_sp)) + # total incident seroconversion is the sum by birth cohort
+    0.29*diff(exp(traj$Z_sm)) + # we scale by the proportion of children born in each season
+    0.24*diff(exp(traj$Z_au)) + 
+    0.20*diff(exp(traj$Z_wt))
+  inc_all_inits <- 0.26*inits[["Z_sp"]] + # initial incident seroconversion
+    0.29*inits[["Z_sm"]] + 
+    0.24*inits[["Z_au"]] +
+    0.20*inits[["Z_wt"]]
+  traj$inc_all <- c(inc_all_inits, inc_all) # total incident seroconversion at all time points
+  
   
   return(traj)
   
@@ -418,7 +430,14 @@ agepred <- data_season$agemid
 # TEST MODEL  --------------------------------------------------------
 # Notes: lambda should vary over time, mu shouldn't
 test <- model(theta, agepred, inits, data_season)
-ggplot(test) + geom_line(aes(x=time, y = conv))
+ggplot(test) + geom_line(aes(x=time, y = conv)) # cumulative conversion
+
+# Incident seroconversion
+ggplot(test) + geom_line(aes(x=time, y = inc_spring), colour = "red") +
+  geom_line(aes(x=time, y = inc_summer), colour = "yellow") +
+  geom_line(aes(x=time, y = inc_autumn), colour = "green") +
+  geom_line(aes(x=time, y = inc_winter), colour = "blue")
+ggplot(test) + geom_line(aes(x=time, y = inc_all))
 
 ggplot(test) + geom_line(aes(x=time, y=lambda_sp)) + 
   xlab("Age (days)") + ylab("FOI") + labs(color = 'Daycare') + ggtitle("FOI for the spring birth cohort") 
