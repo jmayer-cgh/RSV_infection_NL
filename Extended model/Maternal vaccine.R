@@ -559,6 +559,12 @@ trajquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
                              function(x) quantile(x[,"conv"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
 
+# Overall incidence overtime
+trajquantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                             function(x) quantile(x[,"inc_all"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+
 # FOI per birth cohort
 lambda_spquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
                                   function(x) quantile(x[,"lambda_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
@@ -601,7 +607,7 @@ wquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
                           function(x) quantile(x[,"mu"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(wquantiles) <- c("agemid", "low95", "median", "up95")
 
-# Proportion seroconverted by season of birth
+# Cumulative proportion seroconverted by season of birth
 spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
                                      function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
@@ -618,6 +624,23 @@ winter_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time",
                                      function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
+# Incident proportion seroconverted by season of birth
+spring_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"inc_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(spring_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+summer_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"inc_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(summer_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+autumn_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"inc_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(autumn_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+winter_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"inc_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(winter_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
 # Plot fit and FOI
 # Whole dataset
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
@@ -628,6 +651,14 @@ fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit
+
+# Incidence
+ggplot() + theme_bw() + ggtitle("Modelled incidence") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = trajquantiles_inc, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = trajquantiles_inc, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("Proportion seroconverted") 
 
 # Stratified by season of birth
 fit_season <- ggplot() + theme_bw() + ggtitle("Model fit on data stratified by season") +
@@ -640,7 +671,7 @@ fit_season <- ggplot() + theme_bw() + ggtitle("Model fit on data stratified by s
 
 fit_season
 
-#Spring birth cohort
+# Spring birth cohort
 fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
   geom_point(data = spring_df, aes(x = agemid, y = seroprev_mean)) +
   geom_linerange(data = spring_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
@@ -650,7 +681,7 @@ fit_sp <- ggplot() + theme_bw() + ggtitle("Model fit on spring birth cohort") +
 
 fit_sp
 
-#Summmer birth cohort 
+# Summmer birth cohort 
 fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
   geom_point(data = summer_df, aes(x = agemid, y = seroprev_mean)) +
   geom_linerange(data = summer_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
@@ -660,7 +691,7 @@ fit_sm <- ggplot() + theme_bw() + ggtitle("Model fit on summer birth cohort") +
 
 fit_sm
 
-#Autumn birth cohort
+# Autumn birth cohort
 fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
   geom_point(data = autumn_df, aes(x = agemid, y = seroprev_mean,)) +
   geom_linerange(data = autumn_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
@@ -670,7 +701,7 @@ fit_au <- ggplot() + theme_bw() + ggtitle("Model fit on autumn birth cohort") +
 
 fit_au
 
-#Winter birth cohort
+# Winter birth cohort
 fit_wt <- ggplot() + theme_bw() + ggtitle("Model fit on winter birth cohort") +
   geom_point(data = winter_df, aes(x = agemid, y = seroprev_mean)) +
   geom_linerange(data = winter_df, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
@@ -737,9 +768,18 @@ write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
 write.csv(Cquantiles, paste0(path, "strat_Cquantiles.csv"))
 write.csv(wquantiles, paste0(path, "strat_Immunity_quantiles.csv"))
 
+# Cumulative seroconversion
 write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
 write.csv(trajsim, paste0(path, "strat_trajsim.csv"))
 write.csv(spring_conv_quantiles, paste0(path, "strat_spring_conv_tot.csv"))
 write.csv(summer_conv_quantiles, paste0(path, "strat_summer_conv_tot.csv"))
 write.csv(autumn_conv_quantiles, paste0(path, "strat_autumn_conv_tot.csv"))
 write.csv(winter_conv_quantiles, paste0(path, "strat_winter_conv_tot.csv"))
+
+# Incident seroconversion
+write.csv(trajquantiles_inc, paste0(path, "Incidence/strat_trajquantiles_inc.csv"))
+write.csv(trajsim, paste0(path, "Incidence/strat_trajsim.csv"))
+write.csv(spring_conv_quantiles_inc, paste0(path, "Incidence/strat_spring_conv_inc.csv"))
+write.csv(summer_conv_quantiles_inc, paste0(path, "Incidence/strat_summer_conv_inc.csv"))
+write.csv(autumn_conv_quantiles_inc, paste0(path, "Incidence/strat_autumn_conv_inc.csv"))
+write.csv(winter_conv_quantiles_inc, paste0(path, "Incidence/strat_winter_conv_inc.csv"))
