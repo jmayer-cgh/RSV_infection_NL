@@ -12,13 +12,13 @@ mild_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), 
 severe_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Severe illness")
 
 # Read in model estimate
-conversion_rate_summer <- read.csv(paste0(path_model, "strat_summer_conv_tot.csv")) %>% 
+conversion_rate_summer <- read.csv(paste0(path_model, "Incidence/strat_summer_conv_inc.csv")) %>% 
   subset(select = -X)
-conversion_rate_autumn <- read.csv(paste0(path_model, "strat_autumn_conv_tot.csv")) %>% 
+conversion_rate_autumn <- read.csv(paste0(path_model, "Incidence/strat_autumn_conv_inc.csv")) %>% 
   subset(select = -X)
-conversion_rate_winter <- read.csv(paste0(path_model, "strat_winter_conv_tot.csv")) %>% 
+conversion_rate_winter <- read.csv(paste0(path_model, "Incidence/strat_winter_conv_inc.csv")) %>% 
   subset(select = -X)
-conversion_rate_spring <- read.csv(paste0(path_model, "strat_spring_conv_tot.csv")) %>% 
+conversion_rate_spring <- read.csv(paste0(path_model, "Incidence/strat_spring_conv_inc.csv")) %>% 
   subset(select = -X)
 
 # Combine all estimates into one DF
