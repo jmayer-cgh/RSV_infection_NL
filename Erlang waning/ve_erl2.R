@@ -71,10 +71,10 @@ LL_freq = function(x) -LL(x)
 
 #### run fitting ####
 # frequentist check
-out_freq <- optim(c(.5,.5,1/365), LL_freq, lower = c(0.001,0.001,0.001), upper = c(1,1,1), method= 'L-BFGS-B')
+out_freq <- optim(c(.5,.5,1/365), LL_freq, lower = c(0.001,0.001,0.001), upper = c(1,1,1), method= 'L-BFGS-B') # check with initial values VE0_s = VE0_l = 0.5, T = 1/365 and prior limits = [0.001; 0.99]
 
 # Bayesian
-bayesianSetup = createBayesianSetup(likelihood = LL, lower = c(0.001,0.001,0.001), upper = c(.99,.99,.99))
+bayesianSetup = createBayesianSetup(likelihood = LL, lower = c(0.001,0.001,0.001), upper = c(.99,.99,.99)) # Limits for priors for VE0_s, VE0_l, T are 0.001 and 0.99
 #iter = 10000
 iter = 100000
 settings = list(iterations = iter, message = FALSE, nrChains = 2)
