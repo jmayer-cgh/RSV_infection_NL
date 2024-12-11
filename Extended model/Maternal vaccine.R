@@ -111,6 +111,15 @@ winter_df %>% ggplot() +
   labs(title = "Proportion seroconverted born in winter")
 
 # MODEL EQUATION  ------------------------------------------------------------
+# Define function for waning following the Erlang distribution
+# We will use it to model the waning of maternal immunity
+erlang.decay = function(immunity_init, T, k=2, t) {
+  res = 0
+  for(n in 0:(k-1)){
+    res = res + 1/factorial(n)*exp(-T*t)*(T*t)^n } # T is the rate, t is the age
+  return(immunity_init * res)
+}
+
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is 
 # why we log-transform them when in the model input and exponentiate them inside the model
@@ -281,8 +290,8 @@ model <- function(theta, age, inits, data) {
       (param[["M"]] + param[["W"]]) * winter_FOI_wt +
       param[["C"]] * contacts_wt
     
-    # waning maternal immunity, same for all children (6 months)
-    mu = 1/182.5
+    # waning maternal immunity, follows an Erlang distribution
+    mu = erlang.decay(immunity_init = 1, T =  param[["V"]], k = 2, t = age) # test with rate set to 1/6 months. We probbaly want to estimate it later
     
     # states 
     # proportion with maternal immunity
@@ -412,9 +421,9 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # M = mean FOI for children in summer
 # A = mean FOI for children in autumn
 # W = mean FOI for children in winter
-# B = rate of waning maternal immunity
+# V = waning rate of protection offered by maternal immunity from the vaccine
 # C = contact parameter
-theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, C = 0.02) # these are just random values, to be fitted
+theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, C = 0.02, V = 1/180) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
 inits <- c(M_sp = (1-2*1e-12), M_sm = (1-2*1e-12), M_au= (1-2*1e-12), M_wt = (1-2*1e-12),
@@ -495,13 +504,13 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "C") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "C", "V") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P = 0, M = 0, A = 0, W = 0, C = 0)
-upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, C = 0.1)
+lower = c(P = 0, M = 0, A = 0, W = 0, C = 0, V = 0.001)
+upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, C = 0.1, V= 0.99)
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
