@@ -5,7 +5,7 @@ library(ggplot2)
 
 # Define useful paths
 path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
-path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/CSV files/Vaccination/" #Where model outputs are stored
+path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/ExtensioL/CSV files/Vaccination/" #Where model outputs are stored
   
 # Read in RSV-illness rates
 mild_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Mild illness")
@@ -34,8 +34,8 @@ conversion <- conversion_rate_summer %>% mutate(season = "summer") %>%
   )
 
 # Convert ages to the same units
-conversion_formated <- conversion %>% mutate(age_months = trunc(agemid/30.4375)) %>%
-  arrange(agemid)
+conversion_formated <- conversion %>% mutate(age_months = trunc(agemid/30.4375)) %>% # turn age into months
+  arrange(agemid) # arrange by age instead of by season of birth
 
 # Put ages in the same categories as the disease progression data
 conversion_formated <- conversion_formated %>% 
@@ -156,3 +156,13 @@ severe_illness_progression %>% ggplot() +
 # Save outputs
 mild_illness_progression %>% write.csv(paste0(path_model, "Proportion mild illness by age.csv"), row.names = F)
 severe_illness_progression %>% write.csv(paste0(path_model, "Proportion severe illness by age.csv"), row.names = F)
+
+# Check by season of birth
+mild_illness_progression %>% filter (agemid <= 365) %>%
+  ggplot() +
+  geom_point(aes(x = agemid, y = total_mild_cases, colour = season)) +
+  labs(title = "Proportion of all mild illness", x = "Age (days)",
+       y = "Proportion of mild illness", colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season)
