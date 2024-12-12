@@ -113,12 +113,12 @@ winter_df %>% ggplot() +
 # MODEL EQUATION  ------------------------------------------------------------
 # Define function for waning following the Erlang distribution
 # We will use it to model the waning of maternal immunity
-erlang.decay = function(immunity_init, T, k=2, t) {
-  res = 0
-  for(n in 0:(k-1)){
-    res = res + 1/factorial(n)*exp(-T*t)*(T*t)^n } # T is the rate, t is the age
-  return(immunity_init * res)
-}
+# erlang.decay = function(immunity_init, T, k=2, t) {
+#   res = 0
+#   for(n in 0:(k-1)){
+#     res = res + 1/factorial(n)*exp(-T*t)*(T*t)^n } # T is the rate, t is the age
+#   return(immunity_init * res)
+# }
 
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is 
@@ -291,35 +291,44 @@ model <- function(theta, age, inits, data) {
       param[["C"]] * contacts_wt
     
     # waning maternal immunity, follows an Erlang distribution
-    mu = erlang.decay(immunity_init = 1, T =  param[["V"]], k = 2, t = age) # test with rate set to 1/6 months. We probbaly want to estimate it later
+    mu = 1/182.5 # take half-life of 6 months
     
     # states 
-    # proportion with maternal immunity
-    M_sp = exp(state[1]) # born in spring
-    M_sm = exp(state[2]) # born in summer
-    M_au = exp(state[3]) # born in autumn
-    M_wt = exp(state[4]) # born in winter
+    # proportion with maternal immunity. we have two compartments to simuate an Erlang distribution
+    M1_sp = exp(state[1]) # born in spring
+    M1_sm = exp(state[2]) # born in summer
+    M1_au = exp(state[3]) # born in autumn
+    M1_wt = exp(state[4]) # born in winter
+    M2_sp = exp(state[5]) # born in spring
+    M2_sm = exp(state[6]) # born in summer
+    M2_au = exp(state[7]) # born in autumn
+    M2_wt = exp(state[8]) # born in winter
     # Susceptible
-    S_sp = exp(state[5]) # susceptible born in spring
-    S_sm = exp(state[6]) # susceptible born in summer
-    S_au = exp(state[7]) # susceptible born in autumn
-    S_wt = exp(state[8]) # susceptible born in winter
+    S_sp = exp(state[9]) # susceptible born in spring
+    S_sm = exp(state[10]) # susceptible born in summer
+    S_au = exp(state[11]) # susceptible born in autumn
+    S_wt = exp(state[12]) # susceptible born in winter
     #Seroconverted
-    Z_sp = exp(state[9]) # seroconverted after infection born in spring
-    Z_sm = exp(state[10]) # seroconverted after infection born in summer
-    Z_au = exp(state[11]) # seroconverted after infection born in autumn
-    Z_wt = exp(state[12]) # seroconverted after infection born in winter
+    Z_sp = exp(state[13]) # seroconverted after infection born in spring
+    Z_sm = exp(state[14]) # seroconverted after infection born in summer
+    Z_au = exp(state[15]) # seroconverted after infection born in autumn
+    Z_wt = exp(state[16]) # seroconverted after infection born in winter
     
     # changes in states
-    dM_sp = - mu*M_sp
-    dM_sm = - mu*M_sm
-    dM_au = - mu*M_au
-    dM_wt = - mu*M_wt
+    dM1_sp = - mu/2 * M1_sp
+    dM1_sm = - mu/2 * M1_sm
+    dM1_au = - mu/2 * M1_au
+    dM1_wt = - mu/2 * M1_wt
     
-    dS_sp = + mu*M_sp - lambda_sp*S_sp
-    dS_sm = + mu*M_sm - lambda_sm*S_sm
-    dS_au = + mu*M_au - lambda_au*S_au
-    dS_wt = + mu*M_wt - lambda_wt*S_wt
+    dM2_sp = + mu/2 * M1_sp - mu/2 * M2_sp
+    dM2_sm = + mu/2 * M1_sm - mu/2 * M2_sm
+    dM2_au = + mu/2 * M1_au - mu/2 * M2_au
+    dM2_wt = + mu/2 * M1_wt - mu/2 * M2_wt
+    
+    dS_sp = + mu/2 * M2_sp - lambda_sp*S_sp
+    dS_sm = + mu/2 * M2_sm - lambda_sm*S_sm
+    dS_au = + mu/2 * M2_au - lambda_au*S_au
+    dS_wt = + mu/2 * M2_wt - lambda_wt*S_wt
     
     dZ_sp = + lambda_sp*S_sp
     dZ_sm = + lambda_sm*S_sm
@@ -327,7 +336,8 @@ model <- function(theta, age, inits, data) {
     dZ_wt = + lambda_wt*S_wt
     
     
-    return(list(c(dM_sp/M_sp,dM_sm/M_sm, dM_au/M_au,dM_wt/M_wt,
+    return(list(c(dM1_sp/M1_sp,dM1_sm/M1_sm, dM1_au/M1_au,dM1_wt/M1_wt,
+                  dM2_sp/M2_sp,dM2_sm/M2_sm, dM2_au/M2_au,dM2_wt/M2_wt,
                   dS_sp/S_sp, dS_sm/S_sm, dS_au/S_au,dS_wt/S_wt,
                   dZ_sp/Z_sp, dZ_sm/Z_sm, dZ_au/Z_au, dZ_wt/Z_wt),
                 lambda_sp = lambda_sp, lambda_sm = lambda_sm, 
@@ -337,10 +347,14 @@ model <- function(theta, age, inits, data) {
     
   }
   
-  traj <- data.frame(ode(y=c(M_sp = log(inits[["M_sp"]]),
-                             M_sm = log(inits[["M_sm"]]),
-                             M_au = log(inits[["M_au"]]),
-                             M_wt = log(inits[["M_wt"]]),
+  traj <- data.frame(ode(y=c(M1_sp = log(inits[["M1_sp"]]),
+                             M1_sm = log(inits[["M1_sm"]]),
+                             M1_au = log(inits[["M1_au"]]),
+                             M1_wt = log(inits[["M1_wt"]]),
+                             M2_sp = log(inits[["M2_sp"]]),
+                             M2_sm = log(inits[["M2_sm"]]),
+                             M2_au = log(inits[["M2_au"]]),
+                             M2_wt = log(inits[["M2_wt"]]),
                              S_sp = log(inits[["S_sp"]]),
                              S_sm = log(inits[["S_sm"]]),
                              S_au = log(inits[["S_au"]]),
@@ -423,10 +437,12 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # W = mean FOI for children in winter
 # V = waning rate of protection offered by maternal immunity from the vaccine
 # C = contact parameter
-theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, C = 0.02, V = 1/180) # these are just random values, to be fitted
+theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004, C = 0.02#, V = 1/180
+           ) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
-inits <- c(M_sp = (1-2*1e-12), M_sm = (1-2*1e-12), M_au= (1-2*1e-12), M_wt = (1-2*1e-12),
+inits <- c(M1_sp = (1-2*1e-12), M1_sm = (1-2*1e-12), M1_au= (1-2*1e-12), M1_wt = (1-2*1e-12),
+           M2_sp = 1e-12, M2_sm = 1e-12, M2_au = 1e-12, M2_wt = 1e-12,
            S_sp = 1e-12, S_sm = 1e-12, S_au = 1e-12, S_wt = 1e-12,
            Z_sp = 1e-12, Z_sm = 1e-12, Z_au = 1e-12, Z_wt = 1e-12)
 # initial conditions for the states (as proportions)
@@ -504,13 +520,16 @@ loglik_wrapper <- function(par) {
 # FITTING -------------------------------------------
 
 # Estimated params
-estpars <- c("P", "M", "A", "W", "C", "V") # parameters to estimate, can be modified
+estpars <- c("P", "M", "A", "W", "C"#, "V"
+             ) # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 
 # Priors
-lower = c(P = 0, M = 0, A = 0, W = 0, C = 0, V = 0.001)
-upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, C = 0.1, V= 0.99)
+lower = c(P = 0, M = 0, A = 0, W = 0, C = 0#, V = 0.001)
+)
+upper = c(P = 0.1, M = 0.1, A = 0.1, W = 0.1, C = 0.1#, V= 0.99
+          )
 
 prior <- createUniformPrior(lower=lower[estpars], 
                             upper=upper[estpars])
@@ -770,7 +789,7 @@ mu <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 mu
 
 # Saving the useful files ------------------------------------------------------------
-path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/CSV files/Vaccination/")
+path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/ExtensioL/CSV files/Vaccination/")
 write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
 write.csv(lambda_smquantiles, paste0(path, "strat_lambda_sm.csv"))
 write.csv(lambda_auquantiles, paste0(path, "strat_lambda_au.csv"))
@@ -781,7 +800,7 @@ write.csv(Mquantiles, paste0(path, "strat_Mquantiles.csv"))
 write.csv(Aquantiles, paste0(path, "strat_Aquantiles.csv"))
 write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
 write.csv(Cquantiles, paste0(path, "strat_Cquantiles.csv"))
-write.csv(wquantiles, paste0(path, "strat_Immunity_quantiles.csv"))
+write.csv(Vquantiles, paste0(path, "strat_Immunity_quantiles.csv"))
 
 # Cumulative seroconversion
 write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
