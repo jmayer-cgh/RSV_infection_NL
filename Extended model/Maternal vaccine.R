@@ -789,7 +789,7 @@ mu <- ggplot() + theme_bw() + ggtitle("Rate of maternal immunity waning ") +
 mu
 
 # Saving the useful files ------------------------------------------------------------
-path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/ExtensioL/CSV files/Vaccination/")
+path <- ("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/Vaccination/Erlang/")
 write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
 write.csv(lambda_smquantiles, paste0(path, "strat_lambda_sm.csv"))
 write.csv(lambda_auquantiles, paste0(path, "strat_lambda_au.csv"))
