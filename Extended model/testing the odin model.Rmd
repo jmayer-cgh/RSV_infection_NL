@@ -1,0 +1,42 @@
+Trying to build an MSR model with odin.dust 
+
+```{r}
+# Load libraries
+library(odin.dust)
+```
+
+```{r}
+# Load model
+gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+```
+
+# Running the MSIR model with dust
+```{r}
+msr_model <- gen_msir$new(pars = list(dt = 1),
+                         time = 1,
+                         n_particles = 10L,
+                         n_threads = 4L,
+                         seed = 1L)
+
+#res <- msir_model$run(365)
+```
+
+```{r}
+n_times <- 2000
+x <- array(NA, dim = c(msr_model$info()$len, n_particles, n_times))
+
+for (t in seq_len(n_times)) {
+  x[ , , t] <- msr_model$run(t)
+}
+time <- x[1, 1, ]
+x <- x[-1, , ]
+
+par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+cols <- c(M = "#F2862C", S = "#8c8cd9", R = "#999966")
+matplot(time, t(x[1, , ]), type = "l",
+         xlab = "Time", ylab = "Number of individuals",
+         col = cols[["M"]], lty = 1, ylim = range(x))
+matlines(time, t(x[2, , ]), col = cols[["S"]], lty = 1)
+matlines(time, t(x[3, , ]), col = cols[["R"]], lty = 1)
+legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+```
