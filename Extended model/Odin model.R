@@ -45,7 +45,7 @@ n_M2S_au <- mu/2 * dt # M2 to S
 n_SR_au <- lambda_au * dt # S to R
 
 # winter birth cohort
-n_M1M2_wt <- mu * dt # M1 to M2
+n_M1M2_wt <- mu/2 * dt # M1 to M2
 n_M2S_wt <- mu/2 * dt # M2 to S
 n_SR_wt <- lambda_wt * dt # S to R
 

@@ -16,11 +16,11 @@ gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-Universitätsme
 # Running the MSIR model with dust
 ```{r}
 p_new <- list(dt = 1, 
-              M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
-              M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
-              S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
-              R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, # beta = 0.4, gamma = 0.1, 
-              winter_comp = 0.03, mu = 0.1)
+              # M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
+              # M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
+              # S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
+              # R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, # beta = 0.4, gamma = 0.1, mu = 0.1 
+              winter_comp = 0.03)
 msr_model <- gen_msr$new(pars = p_new ,
                          time = 1,
                          n_particles = 1L,
@@ -150,5 +150,96 @@ x_transp <- x_transp %>% ungroup() %>%
   select(!c(prev_totalcases, prev_totalcases_sp, prev_totalcases_sm,
             prev_totalcases_au, prev_totalcases_wt))
 
+```
+
+```{r}
+# Same thing but using odin instead of odin.dust
+msr_test <- odin::odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+
+test <- msr_test$new(M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, 
+                     M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
+                     winter_comp = 0.03,  mu = 0.1)
+
+sir_col <- c("#8c8cd9", "#cc0044", "#999966", "turquoise")
+x_res <- test$run(0:2000)
+par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+matplot(x_res[, 1], x_res[, 3:6], xlab = "Time", ylab = "Number of individuals",
+        type = "l", col = sir_col, lty = 1)
+legend("topright", lwd = 1, col = sir_col, legend = c("M1", "M2", "S", "R"), bty = "n")
+```
+
+```{r}
+# Trying to read in and the data and put it in the right format
+library (mcstate)
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
+                 sep=",")
+
+# Get number of cases by age
+incidence_data <- data %>% select (age_days, infection) %>%
+  group_by(age_days) %>%
+  summarise(infection = sum(infection)) %>%
+  ungroup() %>%
+  mutate(cum_infection = cumsum(infection))
+  arrange(age_days)
+
+# Put it in the right format?
+model_data <- particle_filter_data(data = incidence_data,
+                                 time = "age_days",
+                                 rate = 1)
+rmarkdown::paged_table(model_data)
+```
+
+```{r}
+# Comparison function
+case_compare <- function(state, observed, pars = NULL){
+  exp_noise <- 1e6
+  
+  R_sp <- state[4, , drop = T]
+  R_sm <- state[8, , drop = T]
+  R_au <- state[12, , drop = T]
+  R_wt <- state[16, , drop = T]
+  total_sero_modelled <- sum(R_sp, R_sm, R_au, R_wt)
+  seroprevalence_observed <- observed$cum_infection
+  lambda <- total_sero_modelled  +
+    rexp(n = length(total_sero_modelled ), rate = exp_noise)
+  dpois(x = seroprevalence_observed, lambda = lambda, log = T)
+}
+
+```
+
+```{r}
+# Set up a particle filter
+filter <- particle_filter$new(data = model_data,
+                              model = gen_msr, 
+                              n_particles = n_particles,
+                              compare = case_compare,
+                              seed = 1L)
+```
+
+```{r}
+# Run the filter
+filter$run(save_history = T, pars = list(dt=dt))
+```
+
+```{r}
+plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
+  if (is.null(obs_end)) {
+    obs_end <- max(times)
+  }
+
+  par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+  cols <- c(M1 = "#8c8cd9", M2 = "turquoise", S = "#cc0044", R = "#999966")
+  matplot(times, t(history[1, , -1]), type = "l",
+          xlab = "Time", ylab = "Number of individuals",
+          col = cols[["M1_sp"]], lty = 1, ylim = range(history))
+  matlines(times, t(history[2, , -1]), col = cols[["M2_sp"]], lty = 1)
+  matlines(times, t(history[3, , -1]), col = cols[["S_sp"]], lty = 1)
+  matlines(times, t(history[4, , -1]), col = cols[["R_sp"]], lty = 1)
+  matpoints(times[1:obs_end], t(true_history[1:3, , -1]), pch = 19,
+            col = cols)
+  legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+}
+
+plot_particle_filter(filter$history(), true_history, incidence_data$age_days)
 ```
 
