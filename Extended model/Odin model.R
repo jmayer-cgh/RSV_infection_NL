@@ -30,24 +30,24 @@ update(R_wt) <- R_wt + n_SR_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
-n_M1M2_sp <- - mu/2 * dt # M1 to M2
-n_M2S_sp <- - mu/2 * dt # M2 to S
-n_SR_sp <- - lambda_sp * dt # S to R
+n_M1M2_sp <- mu/2 * dt # M1 to M2
+n_M2S_sp <- mu/2 * dt # M2 to S
+n_SR_sp <- lambda_sp * dt # S to R
 
 # summer birth cohort
-n_M1M2_sm <- - mu/2 * dt # M1 to M2
-n_M2S_sm <- - mu/2 * dt # M2 to S
-n_SR_sm <- - lambda_sm * dt # S to R
+n_M1M2_sm <- mu/2 * dt # M1 to M2
+n_M2S_sm <- mu/2 * dt # M2 to S
+n_SR_sm <- lambda_sm * dt # S to R
 
 # autumn birth cohort
-n_M1M2_au <- - mu/2 * dt # M1 to M2
-n_M2S_au <- - mu/2 * dt # M2 to S
-n_SR_au <- - lambda_au * dt # S to R
+n_M1M2_au <- mu/2 * dt # M1 to M2
+n_M2S_au <- mu/2 * dt # M2 to S
+n_SR_au <- lambda_au * dt # S to R
 
 # winter birth cohort
-n_M1M2_wt <- - mu/2 * dt # M1 to M2
-n_M2S_wt <- - mu/2 * dt # M2 to S
-n_SR_wt <- - lambda_wt * dt # S to R
+n_M1M2_wt <- mu/2 * dt # M1 to M2
+n_M2S_wt <- mu/2 * dt # M2 to S
+n_SR_wt <- lambda_wt * dt # S to R
 
 ## Building the FOI
 # Define booleans to know which season the cohort is in
