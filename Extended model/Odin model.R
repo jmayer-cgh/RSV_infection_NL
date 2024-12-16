@@ -1,6 +1,6 @@
 ## Definition of the time-step and output as "time"
 dt <- user(1)
-initial(time) <- 0
+initial(time) <- 1
 update(time) <- (step + 1) * dt
 
 ## Core equations for transitions between compartments:
@@ -30,7 +30,7 @@ update(R_wt) <- R_wt + n_SR_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
-n_M1M2_sp <- mu/2 * dt # M1 to M2
+n_M1M2_sp <- mu * dt # M1 to M2
 n_M2S_sp <- mu/2 * dt # M2 to S
 n_SR_sp <- lambda_sp * dt # S to R
 
@@ -45,7 +45,7 @@ n_M2S_au <- mu/2 * dt # M2 to S
 n_SR_au <- lambda_au * dt # S to R
 
 # winter birth cohort
-n_M1M2_wt <- mu/2 * dt # M1 to M2
+n_M1M2_wt <- mu * dt # M1 to M2
 n_M2S_wt <- mu/2 * dt # M2 to S
 n_SR_wt <- lambda_wt * dt # S to R
 

@@ -3,6 +3,7 @@ Trying to build an MSR model with odin.dust
 ```{r}
 # Load libraries
 library(odin.dust)
+library(dplyr)
 library (tidyr)
 library(ggplot2)
 ```
@@ -18,8 +19,8 @@ p_new <- list(dt = 1,
               M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
               M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
               S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
-              R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0 #, beta = 0.4, gamma = 0.1, mu = 0.003
-              )
+              R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, # beta = 0.4, gamma = 0.1, 
+              winter_comp = 0.03, mu = 0.1)
 msr_model <- gen_msr$new(pars = p_new ,
                          time = 1,
                          n_particles = 1L,
@@ -38,7 +39,7 @@ for (t in seq_len(n_times)) {
   x[ , , t] <- msr_model$run(t)
 }
 time <- x[1, 1, ]
-x <- x[-1, , ]
+#x <- x[-1, , ]
 
 # par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
 # cols <- c(M = "#F2862C", S = "#8c8cd9", R = "#999966")
@@ -55,29 +56,26 @@ x <- x[-1, , ]
 x_df <- as.data.frame(x)
 
 # Add names
-x_df_names <- c("M1_sp_ini", "M2_sp_ini", "S_sp_ini", "R_sp_ini",
-                "M1_sm_ini", "M2_sm_ini", "S_sm_ini", "R_sm_ini",
-                "M1_au_ini", "M2_au_ini", "S_au_ini", "R_au_ini",
-                "M1_wt_ini", "M2_wt_ini", "S_wt_ini", "R_wt_ini")
+x_df_names <- c("time",
+                "M1_sp", "M2_sp", "S_sp", "R_sp",
+                "M1_sm", "M2_sm", "S_sm", "R_sm",
+                "M1_au", "M2_au", "S_au", "R_au",
+                "M1_wt", "M2_wt", "S_wt", "R_wt")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
 # Transpose and assign names
 x_transp <- data.frame(t(x_df_w_names[-1]))
 colnames(x_transp) <- x_df_w_names[, 1]
-
-# Add time as a column
-time <- 1:n_times
-x_transp <- cbind(time, x_transp)
 ```
 
 ```{r}
 palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M1_sp_ini, colour = "M1")) + 
-  geom_line(aes(y = M2_sp_ini, colour = "M2")) + 
-  geom_line(aes(y = S_sp_ini, colour = "S")) + 
-  geom_line(aes(y = R_sp_ini, colour = "R")) + 
+  geom_line(aes(y = M1_sp, colour = "M1")) + 
+  geom_line(aes(y = M2_sp, colour = "M2")) + 
+  geom_line(aes(y = S_sp, colour = "S")) + 
+  geom_line(aes(y = R_sp, colour = "R")) + 
   labs(title = "Model progression for the spring cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
@@ -87,10 +85,10 @@ x_transp %>% ggplot(aes(x = time)) +
 ```{r}
 palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M1_sm_ini, colour = "M1")) + 
-  geom_line(aes(y = M2_sm_ini, colour = "M2")) + 
-  geom_line(aes(y = S_sm_ini, colour = "S")) + 
-  geom_line(aes(y = R_sm_ini, colour = "R")) + 
+  geom_line(aes(y = M1_sm, colour = "M1")) + 
+  geom_line(aes(y = M2_sm, colour = "M2")) + 
+  geom_line(aes(y = S_sm, colour = "S")) + 
+  geom_line(aes(y = R_sm, colour = "R")) + 
   labs(title = "Model progression for the summer cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
@@ -100,10 +98,10 @@ x_transp %>% ggplot(aes(x = time)) +
 ```{r}
 palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M1_au_ini, colour = "M1")) + 
-  geom_line(aes(y = M2_au_ini, colour = "M2")) + 
-  geom_line(aes(y = S_au_ini, colour = "S")) + 
-  geom_line(aes(y = R_au_ini, colour = "R")) + 
+  geom_line(aes(y = M1_au, colour = "M1")) + 
+  geom_line(aes(y = M2_au, colour = "M2")) + 
+  geom_line(aes(y = S_au, colour = "S")) + 
+  geom_line(aes(y = R_au, colour = "R")) + 
   labs(title = "Model progression for the autumn cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
@@ -113,13 +111,44 @@ x_transp %>% ggplot(aes(x = time)) +
 ```{r}
 palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M1_wt_ini, colour = "M1")) + 
-  geom_line(aes(y = M2_wt_ini, colour = "M2")) + 
-  geom_line(aes(y = S_wt_ini, colour = "S")) + 
-  geom_line(aes(y = R_wt_ini, colour = "R")) + 
+  geom_line(aes(y = M1_wt, colour = "M1")) + 
+  geom_line(aes(y = M2_wt, colour = "M2")) + 
+  geom_line(aes(y = S_wt, colour = "S")) + 
+  geom_line(aes(y = R_wt, colour = "R")) + 
   labs(title = "Model progression for the winter cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
   scale_colour_manual(values = palette)
+```
+
+```{r}
+# Check that the total is constant
+x_transp <- x_transp %>% group_by(time) %>%
+  mutate(N = sum(M1_sp, M2_sp, S_sp, R_sp,
+                 M1_sm, M2_sm, S_sm, R_sm,
+                 M1_au, M2_au, S_au, R_au,
+                 M1_wt, M2_wt, S_wt, R_wt))
+```
+
+```{r}
+# Get total seroconverted at an age
+x_transp <- x_transp %>% group_by(time) %>%
+  mutate(total_sero = sum(R_sp, R_sm, R_au, R_wt))
+
+# Get total incident cases at an age, total and by season
+x_transp <- x_transp %>% ungroup() %>%
+  mutate(prev_totalcases = lag(total_sero),
+         daily_cases = total_sero - prev_totalcases,
+         prev_totalcases_sp = lag(R_sp),
+         daily_cases_sp = R_sp - prev_totalcases_sp,
+         prev_totalcases_sm = lag(R_sm),
+         daily_cases_sm = R_sm - prev_totalcases_sm,
+         prev_totalcases_au = lag(R_au),
+         daily_cases_au = R_au - prev_totalcases_au,
+         prev_totalcases_wt = lag(R_wt),
+         daily_cases_wt = R_wt - prev_totalcases_wt) %>%
+  select(!c(prev_totalcases, prev_totalcases_sp, prev_totalcases_sm,
+            prev_totalcases_au, prev_totalcases_wt))
+
 ```
 
