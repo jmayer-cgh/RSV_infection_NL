@@ -3,6 +3,8 @@ Trying to build an MSR model with odin.dust
 ```{r}
 # Load libraries
 library(odin.dust)
+library (tidyr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -12,9 +14,15 @@ gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-Universitätsme
 
 # Running the MSIR model with dust
 ```{r}
-msr_model <- gen_msir$new(pars = list(dt = 1),
+p_new <- list(dt = 1, 
+              M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
+              M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
+              S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
+              R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0 #, beta = 0.4, gamma = 0.1, mu = 0.003
+              )
+msr_model <- gen_msr$new(pars = p_new ,
                          time = 1,
-                         n_particles = 10L,
+                         n_particles = 1L,
                          n_threads = 4L,
                          seed = 1L)
 
@@ -22,7 +30,8 @@ msr_model <- gen_msir$new(pars = list(dt = 1),
 ```
 
 ```{r}
-n_times <- 2000
+n_times <- 2190
+n_particles <- 1L
 x <- array(NA, dim = c(msr_model$info()$len, n_particles, n_times))
 
 for (t in seq_len(n_times)) {
@@ -31,12 +40,86 @@ for (t in seq_len(n_times)) {
 time <- x[1, 1, ]
 x <- x[-1, , ]
 
-par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-cols <- c(M = "#F2862C", S = "#8c8cd9", R = "#999966")
-matplot(time, t(x[1, , ]), type = "l",
-         xlab = "Time", ylab = "Number of individuals",
-         col = cols[["M"]], lty = 1, ylim = range(x))
-matlines(time, t(x[2, , ]), col = cols[["S"]], lty = 1)
-matlines(time, t(x[3, , ]), col = cols[["R"]], lty = 1)
-legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+# par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
+# cols <- c(M = "#F2862C", S = "#8c8cd9", R = "#999966")
+# matplot(time, t(x[1, , ]), type = "l",
+#          xlab = "Time", ylab = "Number of individuals",
+#          col = cols[["M"]], lty = 1, ylim = range(x))
+# matlines(time, t(x[2, , ]), col = cols[["S"]], lty = 1)
+# matlines(time, t(x[3, , ]), col = cols[["R"]], lty = 1)
+# legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 ```
+
+```{r}
+# Turn the result into something intelligible
+x_df <- as.data.frame(x)
+
+# Add names
+x_df_names <- c("M1_sp_ini", "M2_sp_ini", "S_sp_ini", "R_sp_ini",
+                "M1_sm_ini", "M2_sm_ini", "S_sm_ini", "R_sm_ini",
+                "M1_au_ini", "M2_au_ini", "S_au_ini", "R_au_ini",
+                "M1_wt_ini", "M2_wt_ini", "S_wt_ini", "R_wt_ini")
+
+x_df_w_names <- cbind(x_df_names, x_df)
+
+# Transpose and assign names
+x_transp <- data.frame(t(x_df_w_names[-1]))
+colnames(x_transp) <- x_df_w_names[, 1]
+
+# Add time as a column
+time <- 1:n_times
+x_transp <- cbind(time, x_transp)
+```
+
+```{r}
+palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
+x_transp %>% ggplot(aes(x = time)) +
+  geom_line(aes(y = M1_sp_ini, colour = "M1")) + 
+  geom_line(aes(y = M2_sp_ini, colour = "M2")) + 
+  geom_line(aes(y = S_sp_ini, colour = "S")) + 
+  geom_line(aes(y = R_sp_ini, colour = "R")) + 
+  labs(title = "Model progression for the spring cohort", x = "Age",
+       y = "Number of individuals", colour = "State") +
+  theme_light() +
+  scale_colour_manual(values = palette)
+```
+
+```{r}
+palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
+x_transp %>% ggplot(aes(x = time)) +
+  geom_line(aes(y = M1_sm_ini, colour = "M1")) + 
+  geom_line(aes(y = M2_sm_ini, colour = "M2")) + 
+  geom_line(aes(y = S_sm_ini, colour = "S")) + 
+  geom_line(aes(y = R_sm_ini, colour = "R")) + 
+  labs(title = "Model progression for the summer cohort", x = "Age",
+       y = "Number of individuals", colour = "State") +
+  theme_light() +
+  scale_colour_manual(values = palette)
+```
+
+```{r}
+palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
+x_transp %>% ggplot(aes(x = time)) +
+  geom_line(aes(y = M1_au_ini, colour = "M1")) + 
+  geom_line(aes(y = M2_au_ini, colour = "M2")) + 
+  geom_line(aes(y = S_au_ini, colour = "S")) + 
+  geom_line(aes(y = R_au_ini, colour = "R")) + 
+  labs(title = "Model progression for the autumn cohort", x = "Age",
+       y = "Number of individuals", colour = "State") +
+  theme_light() +
+  scale_colour_manual(values = palette)
+```
+
+```{r}
+palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
+x_transp %>% ggplot(aes(x = time)) +
+  geom_line(aes(y = M1_wt_ini, colour = "M1")) + 
+  geom_line(aes(y = M2_wt_ini, colour = "M2")) + 
+  geom_line(aes(y = S_wt_ini, colour = "S")) + 
+  geom_line(aes(y = R_wt_ini, colour = "R")) + 
+  labs(title = "Model progression for the winter cohort", x = "Age",
+       y = "Number of individuals", colour = "State") +
+  theme_light() +
+  scale_colour_manual(values = palette)
+```
+
