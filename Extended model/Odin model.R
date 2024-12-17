@@ -34,7 +34,7 @@ update(R_all) <- R_sp + R_sm + R_au + R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
-n_M1M2_sp <- mu * dt # M1 to M2
+n_M1M2_sp <- mu/2 * dt # M1 to M2
 n_M2S_sp <- mu/2 * dt # M2 to S
 n_SR_sp <- lambda_sp * dt # S to R
 

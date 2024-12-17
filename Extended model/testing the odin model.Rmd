@@ -248,22 +248,22 @@ plot_particle_filter(filter$history(), model_data, incidence_data$age_days)
 ```{r}
 # True with other initial conditions to see if it's any better (it's not)
 filter$run(save_history = TRUE, pars = list(dt = dt, 
-                                            M1_sp_ini = 1191 * 0.25, 
-                                            M1_sm_ini = 1191 * 0.25,
-                                            M1_au_ini = 1191 * 0.25,
-                                            M1_wt_ini = 1191 * 0.25))
+                                            M1_sp_ini = 1191 * 0.26, 
+                                            M1_sm_ini = 1191 * 0.29,
+                                            M1_au_ini = 1191 * 0.24,
+                                            M1_wt_ini = 1191 * 0.20))
 ```
 ```{r}
 # Use MCMC to infer parameter values
 
 # Define parameters first
-spring_comp <- pmcmc_parameter("spring_comp", initial = 0.00001, max = 0.1, min = 0, prior = function(p)
+spring_comp <- pmcmc_parameter("spring_comp", initial = 0.003478, max = 0.1, min = 0, prior = function(p) # take values from old model
   dunif(p, max = 0.1, min = 0))
-summer_comp <- pmcmc_parameter("summer_comp", initial = 0.02002, max = 0.1, min = 0, prior = function(p)
+summer_comp <- pmcmc_parameter("summer_comp", initial = 0.00060, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.00003, max = 0.1, min = 0, prior = function(p)
+autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.00264, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-winter_comp <- pmcmc_parameter("winter_comp", initial = 0.00004, max = 0.1, min = 0, prior = function(p)
+winter_comp <- pmcmc_parameter("winter_comp", initial = 0.00692, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
 
 proposal_matrix <- diag(0.1, 4)
@@ -342,27 +342,39 @@ coda::effectiveSize(mcmc2)
 ```
 
 ```{r}
-1 - coda::rejectionRate(mcmc2) # Is this better????
+plot(mcmc2) # run this in the console
+```
+
+```{r}
+1 - coda::rejectionRate(mcmc2) # Is this better???? YES!
 ```
 
 ```{r}
 # Check if the chains converged using a sample from the posterior distribution
 mcmc_sample <- pmcmc_sample(pmcmc_tuned_run, n_sample = 500)
 
-par(mfrow = c(2, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
+par(mfrow = c(4, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
 plot(pmcmc_tuned_run$pars[, "winter_comp"], type = "l", xlab = "Iteration",
      ylab = "winter_comp")
+plot(pmcmc_tuned_run$pars[, "spring_comp"], type = "l", xlab = "Iteration",
+     ylab = "spring_comp")
 plot(pmcmc_tuned_run$pars[, "summer_comp"], type = "l", xlab = "Iteration",
      ylab = "summer_comp")
+plot(pmcmc_tuned_run$pars[, "autumn_comp"], type = "l", xlab = "Iteration",
+     ylab = "autumn_comp")
 hist(mcmc_sample$pars[, "winter_comp"], main = "", xlab = "winter_comp",
      freq = FALSE)
+hist(mcmc_sample$pars[, "spring_comp"], main = "", xlab = "spring_comp",
+     freq = FALSE)
 hist(mcmc_sample$pars[, "summer_comp"], main = "", xlab = "summer_comp",
+     freq = FALSE)
+hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
      freq = FALSE)
 ```
 
 ```{r}
 # Compare with the data
-times <- c(0, model_data$age_days_start)
+times <- c(0, model_data$age_days_end)
 cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
 
 state <- mcmc_sample$trajectories$state
