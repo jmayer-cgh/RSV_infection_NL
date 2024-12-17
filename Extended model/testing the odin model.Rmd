@@ -3,6 +3,7 @@ Trying to build an MSR model with odin.dust
 ```{r}
 # Load libraries
 library(odin.dust)
+library(odin)
 library(dplyr)
 library (tidyr)
 library(ggplot2)
@@ -154,7 +155,7 @@ x_transp <- x_transp %>% ungroup() %>%
 
 ```{r}
 # Same thing but using odin instead of odin.dust
-msr_test <- odin::odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+msr_test <- odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
 
 test <- msr_test$new(M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, 
                      M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
@@ -177,9 +178,10 @@ data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/
 # Get number of cases by age
 incidence_data <- data %>% select (age_days, infection) %>%
   group_by(age_days) %>%
-  summarise(infection = sum(infection)) %>%
+  summarise(infection = sum(infection),
+            N = n()) %>%
   ungroup() %>%
-  mutate(cum_infection = cumsum(infection))
+  mutate(cum_infection = cumsum(infection)) %>%
   arrange(age_days)
 
 # Put it in the right format?
@@ -192,23 +194,21 @@ rmarkdown::paged_table(model_data)
 ```{r}
 # Comparison function
 case_compare <- function(state, observed, pars = NULL){
-  exp_noise <- 1e6
+   exp_noise <- 1e6
   
-  R_sp <- state[4, , drop = T]
-  R_sm <- state[8, , drop = T]
-  R_au <- state[12, , drop = T]
-  R_wt <- state[16, , drop = T]
-  total_sero_modelled <- sum(R_sp, R_sm, R_au, R_wt)
+  total_sero_modelled <- state[17, , drop = T]
   seroprevalence_observed <- observed$cum_infection
   lambda <- total_sero_modelled  +
-    rexp(n = length(total_sero_modelled ), rate = exp_noise)
-  dpois(x = seroprevalence_observed, lambda = lambda, log = T)
+  rexp(n = length(total_sero_modelled ), rate = exp_noise)
+  dpois(x = seroprevalence_observed, lambda = lambda, log = T) # This is OK for incidence, not sure about prevalence
+  
 }
 
 ```
 
 ```{r}
 # Set up a particle filter
+n_particles <- 100
 filter <- particle_filter$new(data = model_data,
                               model = gen_msr, 
                               n_particles = n_particles,
@@ -218,7 +218,8 @@ filter <- particle_filter$new(data = model_data,
 
 ```{r}
 # Run the filter
-filter$run(save_history = T, pars = list(dt=dt))
+dt = 1
+filter$run(save_history = T, pars = list(dt=dt)) # This is so low! (-90716.07)
 ```
 
 ```{r}
@@ -228,18 +229,27 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   }
 
   par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-  cols <- c(M1 = "#8c8cd9", M2 = "turquoise", S = "#cc0044", R = "#999966")
-  matplot(times, t(history[1, , -1]), type = "l",
+  cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+  matplot(times, t(history[2, , -1]), type = "l",
           xlab = "Time", ylab = "Number of individuals",
-          col = cols[["M1_sp"]], lty = 1, ylim = range(history))
-  matlines(times, t(history[2, , -1]), col = cols[["M2_sp"]], lty = 1)
-  matlines(times, t(history[3, , -1]), col = cols[["S_sp"]], lty = 1)
-  matlines(times, t(history[4, , -1]), col = cols[["R_sp"]], lty = 1)
-  matpoints(times[1:obs_end], t(true_history[1:3, , -1]), pch = 19,
-            col = cols)
+          col = cols[["M1_sp"]], lty = 1, #ylim = range(history)
+          ylim = c(-1, 300))
+  matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
+  matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
+  matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
+  matlines(times, t(history[17, , -1]), col = cols[["R_all"]], lty = 1)
+  matpoints(t(true_history[1]), t(true_history[7]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+  
 }
 
-plot_particle_filter(filter$history(), true_history, incidence_data$age_days)
+plot_particle_filter(filter$history(), model_data, incidence_data$age_days)
 ```
-
+```{r}
+# True with other initial conditions to see if it's any better (it's not)
+filter$run(save_history = TRUE, pars = list(dt = dt, 
+                                            M1_sp_ini = 1191 * 0.25, 
+                                            M1_sm_ini = 1191 * 0.25,
+                                            M1_au_ini = 1191 * 0.25,
+                                            M1_wt_ini = 1191 * 0.25))
+```

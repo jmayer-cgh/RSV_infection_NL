@@ -3,6 +3,7 @@ dt <- user(1)
 initial(time) <- 1
 update(time) <- (step + 1) * dt
 
+
 ## Core equations for transitions between compartments:
 # spring birth cohort
 update(M1_sp) <- M1_sp - n_M1M2_sp
@@ -27,6 +28,9 @@ update(M1_wt) <- M1_wt - n_M1M2_wt
 update(M2_wt) <- M2_wt + n_M1M2_wt - n_M2S_wt
 update(S_wt) <- S_wt + n_M2S_wt - n_SR_wt
 update(R_wt) <- R_wt + n_SR_wt
+
+# Total seroprevalence
+update(R_all) <- R_sp + R_sm + R_au + R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
@@ -237,6 +241,9 @@ initial(M1_wt) <- M1_wt_ini
 initial(M2_wt) <- M2_wt_ini
 initial(S_wt) <- S_wt_ini
 initial(R_wt) <- R_wt_ini
+
+# Total
+initial(R_all) <- R_sp_ini + R_sm_ini + R_au_ini + R_wt_ini
 
 ## User defined parameters - default in parentheses:
 M1_sp_ini <- user(1-2*1e-12)
