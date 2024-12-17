@@ -253,3 +253,95 @@ filter$run(save_history = TRUE, pars = list(dt = dt,
                                             M1_au_ini = 1191 * 0.25,
                                             M1_wt_ini = 1191 * 0.25))
 ```
+```{r}
+# Use MCMC to infer parameter values
+
+# Define parameters first
+spring_comp <- pmcmc_parameter("spring_comp", initial = 0.00001, max = 0.1, min = 0, prior = function(p)
+  dunif(p, max = 0.1, min = 0))
+summer_comp <- pmcmc_parameter("summer_comp", initial = 0.02002, max = 0.1, min = 0, prior = function(p)
+  dunif(p, max = 0.1, min = 0))
+autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.00003, max = 0.1, min = 0, prior = function(p)
+  dunif(p, max = 0.1, min = 0))
+winter_comp <- pmcmc_parameter("winter_comp", initial = 0.00004, max = 0.1, min = 0, prior = function(p)
+  dunif(p, max = 0.1, min = 0))
+
+proposal_matrix <- diag(0.1, 4)
+mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
+                                       summer_comp = summer_comp,
+                                       autumn_comp = autumn_comp,
+                                       winter_comp = winter_comp),
+                                  proposal_matrix)
+# Chain parameters
+n_steps <- 500
+n_burnin <- 200
+control <- pmcmc_control(
+  n_steps, 
+  save_state = T,
+  save_trajectories = T,
+  progress = T)
+
+# Run it
+pmcmc_run <-pmcmc(mcmc_pars, filter, control = control)
+```
+
+```{r}
+# remove burn-in and thin the four chains
+processed_chains <- pmcmc_thin(pmcmc_run, burnin = n_burnin, thin = 2)
+parameter_mean_hpd <- apply(processed_chains$pars, 2, mean)
+parameter_mean_hpd
+```
+
+```{r}
+# Analyse the results
+mcmc1 <- coda::as.mcmc(cbind(pmcmc_run$probabilities, pmcmc_run$pars))
+
+summary(mcmc1)
+```
+```{r}
+coda::effectiveSize(mcmc1)
+```
+
+```{r}
+1 - coda::rejectionRate(mcmc1) # Is this good?
+```
+
+```{r}
+# Tuning the MCMC
+proposal_matrix <- cov(pmcmc_run$pars)
+mcmc_pars <- mcstate::pmcmc_parameters$new(
+  list(spring_comp = spring_comp, 
+                                       summer_comp = summer_comp,
+                                       autumn_comp = autumn_comp,
+                                       winter_comp = winter_comp),
+  proposal_matrix)
+proposal_matrix
+```
+
+Now let's run four independent chains with these proposals:
+```{r}
+control <- pmcmc_control(
+  n_steps,
+  save_state = T,
+  save_trajectories = T,
+  progress = T,
+  n_chains = 4
+)
+
+pmcmc_tuned_run <- pmcmc(mcmc_pars, filter, control = control)
+```
+
+```{r}
+mcmc2 <- coda::as.mcmc(cbind(
+  pmcmc_tuned_run$probabilities, pmcmc_tuned_run$pars))
+
+summary(mcmc2)
+```
+```{r}
+coda::effectiveSize(mcmc2)
+```
+
+```{r}
+1 - coda::rejectionRate(mcmc2) # Is this better????
+```
+
