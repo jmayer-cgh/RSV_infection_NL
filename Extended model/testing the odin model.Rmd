@@ -273,8 +273,8 @@ mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp,
                                        winter_comp = winter_comp),
                                   proposal_matrix)
 # Chain parameters
-n_steps <- 500
-n_burnin <- 200
+n_steps <- 1e4
+n_burnin <- 500
 control <- pmcmc_control(
   n_steps, 
   save_state = T,
@@ -343,5 +343,43 @@ coda::effectiveSize(mcmc2)
 
 ```{r}
 1 - coda::rejectionRate(mcmc2) # Is this better????
+```
+
+```{r}
+# Check if the chains converged using a sample from the posterior distribution
+mcmc_sample <- pmcmc_sample(pmcmc_tuned_run, n_sample = 500)
+
+par(mfrow = c(2, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
+plot(pmcmc_tuned_run$pars[, "winter_comp"], type = "l", xlab = "Iteration",
+     ylab = "winter_comp")
+plot(pmcmc_tuned_run$pars[, "summer_comp"], type = "l", xlab = "Iteration",
+     ylab = "summer_comp")
+hist(mcmc_sample$pars[, "winter_comp"], main = "", xlab = "winter_comp",
+     freq = FALSE)
+hist(mcmc_sample$pars[, "summer_comp"], main = "", xlab = "summer_comp",
+     freq = FALSE)
+```
+
+```{r}
+# Compare with the data
+times <- c(0, model_data$age_days_start)
+cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+
+state <- mcmc_sample$trajectories$state
+
+prevalence <-  t(state[17, , -1])
+
+par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
+matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
+        ylim = c(0, max(state)), xlab = "Day", ylab = "Number of individuals")
+matlines(times, t(state[3, , ]), lty = 1, col = cols["M2_sp"])
+matlines(times, t(state[4, , ]), lty = 1, col = cols["S_sp"])
+matlines(times, t(state[5, , ]), lty = 1, col = cols["R_sp"])
+matlines(times, t(state[17, , ]), lty = 1, col = cols["S_sp"])
+legend("left", lwd = 1, col = cols[-4], legend = names(cols)[-4], bty = "n")
+
+matplot(model_data$age_days_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
+        xlab = "Day", ylab = "Number of cases")
+points(model_data$age_days_start, model_data$cum_infection, pch = 20)
 ```
 
