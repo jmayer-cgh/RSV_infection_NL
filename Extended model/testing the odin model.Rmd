@@ -197,10 +197,16 @@ case_compare <- function(state, observed, pars = NULL){
    exp_noise <- 1e6
   
   total_sero_modelled <- state[17, , drop = T]
+  total_incidence_modelled <- c(0, diff(total_sero_modelled))
   seroprevalence_observed <- observed$cum_infection
-  lambda <- total_sero_modelled  +
-  rexp(n = length(total_sero_modelled ), rate = exp_noise)
-  dpois(x = seroprevalence_observed, lambda = lambda, log = T) # This is OK for incidence, not sure about prevalence
+  incidence_observed <- observed$infection
+  # lambda <- total_sero_modelled  +
+  # rexp(n = length(total_sero_modelled ), rate = exp_noise)
+  # dpois(x = seroprevalence_observed, lambda = lambda, log = T) # This is OK for incidence, not sure about prevalence
+  
+  lambda <- total_incidence_modelled  +
+  rexp(n = length(total_incidence_modelled ), rate = exp_noise)
+  dpois(x = incidence_observed, lambda = lambda, log = T)
   
 }
 
@@ -219,7 +225,7 @@ filter <- particle_filter$new(data = model_data,
 ```{r}
 # Run the filter
 dt = 1
-filter$run(save_history = T, pars = list(dt=dt)) # This is so low! (-90716.07)
+filter$run(save_history = T, pars = list(dt=dt)) # This is so low! (-90716.07 when using prevalence, -4771.088 for incidence)
 ```
 
 ```{r}
