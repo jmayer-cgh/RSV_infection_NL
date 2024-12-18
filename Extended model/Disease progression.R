@@ -52,106 +52,106 @@ conversion_formated <- conversion_formated %>%
 
 # Define which season of the year the birth cohorts are in
 conversion_formated <- conversion_formated %>% 
-  group_by(birth_season, agemid) %>%
-  mutate(current_season = case_when(birth_season == "summer" & (agemid <= 30.41*3)          # season in which the cohort was born                    
+  group_by(agemid, birth_season) %>%
+  mutate(current_season = case_when(birth_season == "summer" & ((agemid <= 30.41*3)          # season in which the cohort was born                    
                                     || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
                                     || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
                                     || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
                                     || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3))) ~ "summer",
-                                    birth_season == "autumn" & (agemid <= 30.41*3)                              
+                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "summer",
+                                    birth_season == "autumn" & ((agemid <= 30.41*3)                              
                                     || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
                                     || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
                                     || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
                                     || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3))) ~ "autumn",
-                                    birth_season == "winter" & (agemid <= 30.41*3)                              
+                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "autumn",
+                                    birth_season == "winter" & ((agemid <= 30.41*3)                              
                                     || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
                                     || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
                                     || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
                                     || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3))) ~ "winter",
-                                    birth_season == "spring" & (agemid <= 30.41*3)                              
+                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "winter",
+                                    birth_season == "spring" & ((agemid <= 30.41*3)                              
                                     || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
                                     || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
                                     || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
                                     || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3))) ~ "spring",
+                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "spring",
                                     
-                                    birth_season == "summer" & (agemid > 30.41*3 & agemid <= 30.41*6 ) # season following the one the cohort was born in
+                                    birth_season == "summer" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) # season following the one the cohort was born in
                                     || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
                                     || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
                                     || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
                                     || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6))) ~ "autumn",
-                                    birth_season == "autumn" & (agemid > 30.41*3 & agemid <= 30.41*6 ) 
+                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "autumn",
+                                    birth_season == "autumn" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
                                     || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
                                     || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
                                     || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
                                     || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6))) ~ "winter",
-                                    birth_season == "winter" & (agemid > 30.41*3 & agemid <= 30.41*6 ) 
+                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "winter",
+                                    birth_season == "winter" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
                                     || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
                                     || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
                                     || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
                                     || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6))) ~ "spring",
-                                    birth_season == "spring" & (agemid > 30.41*3 & agemid <= 30.41*6 ) 
+                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "spring",
+                                    birth_season == "spring" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
                                     || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
                                     || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
                                     || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
                                     || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6))) ~ "summer",
+                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "summer",
                                     
-                                    birth_season == "summer" & (agemid > 30.41*6 & agemid <= 30.41*9 )  # two seasons after birth
+                                    birth_season == "summer" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  # two seasons after birth
                                     || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
                                     || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
                                     || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
                                     || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9))) ~ "winter",
-                                    birth_season == "autumn" & (agemid > 30.41*6 & agemid <= 30.41*9 )  
+                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "winter",
+                                    birth_season == "autumn" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
                                     || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
                                     || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
                                     || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
                                     || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9))) ~ "spring",
-                                    birth_season == "winter" & (agemid > 30.41*6 & agemid <= 30.41*9 )  
+                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "spring",
+                                    birth_season == "winter" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
                                     || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
                                     || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
                                     || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
                                     || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9))) ~ "summer",
-                                    birth_season == "spring" & (agemid > 30.41*6 & agemid <= 30.41*9 )  
+                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "summer",
+                                    birth_season == "spring" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
                                     || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
                                     || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
                                     || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
                                     || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9))) ~ "autumn",
+                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "autumn",
                                     
-                                    birth_season == "summer" & (agemid > 30.41*9 & agemid <= 30.41*12 ) # 3 seasons after birth                    
+                                    birth_season == "summer" & ((agemid > 30.41*9 & agemid <= 30.41*12 ) # 3 seasons after birth                    
                                     || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
                                     || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
                                     || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
                                     || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12))) ~ "spring",
-                                    birth_season == "autumn" & (agemid > 30.41*9 & agemid <= 30.41*12 )                     
+                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "spring",
+                                    birth_season == "autumn" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                     
                                     || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
                                     || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
                                     || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
                                     || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12))) ~ "summer",
-                                    birth_season == "winter" & (agemid > 30.41*9 & agemid <= 30.41*12 )                     
+                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "summer",
+                                    birth_season == "winter" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                     
                                     || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
                                     || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
                                     || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
                                     || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12))) ~ "autumn",
-                                    birth_season == "spring" & (agemid > 30.41*9 & agemid <= 30.41*12 )                   
+                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "autumn",
+                                    birth_season == "spring" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                   
                                     || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
                                     || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
                                     || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
                                     || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12))) ~ "winter"
+                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "winter"
                                     
   ))
 
