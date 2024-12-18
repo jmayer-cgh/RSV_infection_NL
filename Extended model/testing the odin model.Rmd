@@ -16,12 +16,13 @@ gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-Universitätsme
 
 # Running the MSIR model with dust
 ```{r}
-p_new <- list(dt = 1, 
+p_new <- list(dt = 1 
               # M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
               # M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
               # S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
               # R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, # beta = 0.4, gamma = 0.1, mu = 0.1 
-              winter_comp = 0.03)
+              # winter_comp = 0.03
+              )
 msr_model <- gen_msr$new(pars = p_new ,
                          time = 1,
                          n_particles = 1L,
@@ -61,7 +62,7 @@ x_df_names <- c("time",
                 "M1_sp", "M2_sp", "S_sp", "R_sp",
                 "M1_sm", "M2_sm", "S_sm", "R_sm",
                 "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt")
+                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
@@ -175,19 +176,34 @@ library (mcstate)
 data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
                  sep=",")
 
+# Group age into intervals 
+# bi-monthly for 0-2 years and 6-monthly for 2-5 years
+data$age_grp <- cut(data$age_days,
+                   breaks = c(seq(0,730, by = 30.25*2),
+                              seq(909,2000, by = 30.25*6)), 
+                   include.lowest = T, right = F)
+
 # Get number of cases by age
-incidence_data <- data %>% select (age_days, infection) %>%
-  group_by(age_days) %>%
-  summarise(infection = sum(infection),
-            N = n()) %>%
-  ungroup() %>%
-  mutate(cum_infection = cumsum(infection)) %>%
-  arrange(age_days)
+incidence_data <- data %>% select (age_grp, age_days, infection) %>%
+  mutate(N_tot = n()) %>%
+  group_by(age_grp) %>%
+  summarise(age_mid = round(median(age_days)), 
+            N = n(),
+            n_infection = sum(infection),
+            p_infection = n_infection/N,
+            cum_infection = p_infection * N_tot,
+            prop_seroconv = cum_infection/N_tot) %>%
+  ungroup() %>% 
+  distinct() %>%
+  mutate(incidence = c(0,diff(cum_infection))) %>%
+  mutate(incidence = case_when(incidence >= 0 ~ round(incidence),
+                               TRUE ~ 0))
 
 # Put it in the right format?
 model_data <- particle_filter_data(data = incidence_data,
-                                 time = "age_days",
-                                 rate = 1)
+                                   initial_time = 0,
+                                   time = "age_mid",
+                                   rate = 1)
 rmarkdown::paged_table(model_data)
 ```
 
@@ -199,7 +215,7 @@ case_compare <- function(state, observed, pars = NULL){
   total_sero_modelled <- state[17, , drop = T]
   total_incidence_modelled <- c(0, diff(total_sero_modelled))
   seroprevalence_observed <- observed$cum_infection
-  incidence_observed <- observed$infection
+  incidence_observed <- observed$incidence
   # lambda <- total_sero_modelled  +
   # rexp(n = length(total_sero_modelled ), rate = exp_noise)
   # dpois(x = seroprevalence_observed, lambda = lambda, log = T) # This is OK for incidence, not sure about prevalence
@@ -238,18 +254,17 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
   matplot(times, t(history[2, , -1]), type = "l",
           xlab = "Time", ylab = "Number of individuals",
-          col = cols[["M1_sp"]], lty = 1, #ylim = range(history)
-          ylim = c(-1, 300))
+          col = cols[["M1_sp"]], lty = 1, ylim = range(history))
   matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
   matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
   matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
   matlines(times, t(history[17, , -1]), col = cols[["R_all"]], lty = 1)
-  matpoints(t(true_history[1]), t(true_history[7]), pch = 19, cols = c("black", "black"))
+  matpoints(t(true_history[1]), t(true_history[9]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
 }
 
-plot_particle_filter(filter$history(), model_data, incidence_data$age_days)
+plot_particle_filter(filter$history(), model_data, incidence_data$age_mid)
 ```
 ```{r}
 # True with other initial conditions to see if it's any better (it's not)
@@ -380,7 +395,7 @@ hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
 
 ```{r}
 # Compare with the data
-times <- c(0, model_data$age_days_end)
+times <- c(0, incidence_data$age_mid)
 cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
 
 state <- mcmc_sample$trajectories$state
@@ -394,10 +409,10 @@ matlines(times, t(state[3, , ]), lty = 1, col = cols["M2_sp"])
 matlines(times, t(state[4, , ]), lty = 1, col = cols["S_sp"])
 matlines(times, t(state[5, , ]), lty = 1, col = cols["R_sp"])
 matlines(times, t(state[17, , ]), lty = 1, col = cols["S_sp"])
-legend("left", lwd = 1, col = cols[-4], legend = names(cols)[-4], bty = "n")
+legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
-matplot(model_data$age_days_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
-        xlab = "Day", ylab = "Number of cases")
-points(model_data$age_days_start, model_data$cum_infection, pch = 20)
+matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
+        xlab = "Day", ylab = "Number of cases", ylim = c(0, 700))
+points(model_data$age_mid_start, model_data$cum_infection, pch = 20)
 ```
 

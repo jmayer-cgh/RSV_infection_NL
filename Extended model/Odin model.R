@@ -34,24 +34,24 @@ update(R_all) <- R_sp + R_sm + R_au + R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
-n_M1M2_sp <- mu/2 * dt # M1 to M2
-n_M2S_sp <- mu/2 * dt # M2 to S
-n_SR_sp <- lambda_sp * dt # S to R
+n_M1M2_sp <- mu/2 * dt * M1_sp # M1 to M2
+n_M2S_sp <- mu/2 * dt * M2_sp # M2 to S
+n_SR_sp <- lambda_sp * dt * S_sp # S to R
 
 # summer birth cohort
-n_M1M2_sm <- mu/2 * dt # M1 to M2
-n_M2S_sm <- mu/2 * dt # M2 to S
-n_SR_sm <- lambda_sm * dt # S to R
+n_M1M2_sm <- mu/2 * dt * M1_sm # M1 to M2
+n_M2S_sm <- mu/2 * dt * M2_sm # M2 to S
+n_SR_sm <- lambda_sm * dt * S_sm # S to R
 
 # autumn birth cohort
-n_M1M2_au <- mu/2 * dt # M1 to M2
-n_M2S_au <- mu/2 * dt # M2 to S
-n_SR_au <- lambda_au * dt # S to R
+n_M1M2_au <- mu/2 * dt * M1_au # M1 to M2
+n_M2S_au <- mu/2 * dt * M2_au # M2 to S
+n_SR_au <- lambda_au * dt * S_au # S to R
 
 # winter birth cohort
-n_M1M2_wt <- mu/2 * dt # M1 to M2
-n_M2S_wt <- mu/2 * dt # M2 to S
-n_SR_wt <- lambda_wt * dt # S to R
+n_M1M2_wt <- mu/2 * dt * M1_wt# M1 to M2
+n_M2S_wt <- mu/2 * dt * M2_wt # M2 to S
+n_SR_wt <- lambda_wt * dt * S_wt# S to R
 
 ## Building the FOI
 # Define booleans to know which season the cohort is in
@@ -246,25 +246,26 @@ initial(R_wt) <- R_wt_ini
 initial(R_all) <- R_sp_ini + R_sm_ini + R_au_ini + R_wt_ini
 
 ## User defined parameters - default in parentheses:
-M1_sp_ini <- user(1-2*1e-12)
+M1_sp_ini <- user (1191 * 0.26) # user(1-2*1e-12)
 M2_sp_ini <- user(1e-12)
 S_sp_ini <- user(1e-12)
 R_sp_ini <- user(1e-12)
 
-M1_sm_ini <- user(1-2*1e-12)
+M1_sm_ini <- user (1911 * 0.29) # user(1-2*1e-12)
 M2_sm_ini <- user(1e-12)
 S_sm_ini <- user(1e-12)
 R_sm_ini <- user(1e-12)
 
-M1_au_ini <- user(1-2*1e-12)
+M1_au_ini <- user (1191 * 0.24) # user(1-2*1e-12)
 M2_au_ini <- user(1e-12)
 S_au_ini <- user(1e-12)
 R_au_ini <- user(1e-12)
 
-M1_wt_ini <- user(1-2*1e-12)
+M1_wt_ini <- user (1191 * 0.20) # user(1-2*1e-12)
 M2_wt_ini <- user(1e-12)
 S_wt_ini <- user(1e-12)
 R_wt_ini <- user(1e-12)
+
 
 # transition parameters
 mu <- user (1/182.5) # half-life is 6 months
