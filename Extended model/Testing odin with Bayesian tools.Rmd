@@ -218,10 +218,37 @@ loglik(params)
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
                                     upper = upper)
-iter <- 10000
-settings <- list(iterations = iter, message = FALSE, nrChains = 2)
-out_bay <- runMCMC(bayesianSetup = bayesianSetup, 
+nchains <- 2
+mcmc_settings <- list(iterations = 2*80000, 
+                      nrChains = nchains)
+trace <- runMCMC(bayesianSetup = bayesianSetup, 
                    sampler = "Metropolis", 
-                   settings = settings)
+                   settings = mcmc_settings)
+```
+
+```{r}
+# DIAGNOSTICS -----------------------------------------------
+
+plot(trace) 
+
+# burn-in
+nburn <- 10000
+plot(trace, parametersOnly = TRUE, start = nburn)
+
+# check convergence and correlations
+gelmanDiagnostics(trace, plot = TRUE, start = nburn)
+correlationPlot(getSample(trace, parametersOnly = TRUE, coda = TRUE, start = nburn), density = "smooth", thin = 50)
+marginalPlot(trace, prior = T, singlePanel = T, start = nburn, nDrawsPrior = 1000)
+
+# remove burn-in for trajsim simulation
+tracefinal <- getSample(trace, parametersOnly = TRUE, coda = TRUE, start = nburn)
+plot(tracefinal)
+effectiveSize(tracefinal)
+
+# Posterior summary
+summary(tracefinal)
+
+# save the trace
+saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Odin model with BT.rds")
 ```
 
