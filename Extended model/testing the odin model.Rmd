@@ -72,12 +72,13 @@ colnames(x_transp) <- x_df_w_names[, 1]
 ```
 
 ```{r}
-palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966")
+palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966", "R_all" = "pink")
 x_transp %>% ggplot(aes(x = time)) +
   geom_line(aes(y = M1_sp, colour = "M1")) + 
   geom_line(aes(y = M2_sp, colour = "M2")) + 
   geom_line(aes(y = S_sp, colour = "S")) + 
   geom_line(aes(y = R_sp, colour = "R")) + 
+  geom_line(aes(y = R_all, colour = "R_all")) + 
   labs(title = "Model progression for the spring cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
@@ -212,7 +213,7 @@ rmarkdown::paged_table(model_data)
 case_compare <- function(state, observed, pars = NULL){
    exp_noise <- 1e6
   
-  total_sero_modelled <- state[17, , drop = T]
+  total_sero_modelled <- state[18, , drop = T]
   total_incidence_modelled <- c(0, diff(total_sero_modelled))
   seroprevalence_observed <- observed$cum_infection
   incidence_observed <- observed$incidence
@@ -258,7 +259,7 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
   matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
   matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
-  matlines(times, t(history[17, , -1]), col = cols[["R_all"]], lty = 1)
+  matlines(times, t(history[18, , -1]), col = cols[["R_all"]], lty = 1)
   matpoints(t(true_history[1]), t(true_history[9]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
@@ -400,15 +401,15 @@ cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999
 
 state <- mcmc_sample$trajectories$state
 
-prevalence <-  t(state[17, , -1])
+prevalence <-  t(state[18, , -1])
 
 par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
 matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
-        ylim = c(0, max(state)), xlab = "Day", ylab = "Number of individuals")
+        ylim = c(0, max(t(state[18, , ])) * 1.2), xlab = "Day", ylab = "Number of individuals")
 matlines(times, t(state[3, , ]), lty = 1, col = cols["M2_sp"])
 matlines(times, t(state[4, , ]), lty = 1, col = cols["S_sp"])
 matlines(times, t(state[5, , ]), lty = 1, col = cols["R_sp"])
-matlines(times, t(state[17, , ]), lty = 1, col = cols["S_sp"])
+matlines(times, t(state[18, , ]), lty = 1, col = cols["R_all"])
 legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
 matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
