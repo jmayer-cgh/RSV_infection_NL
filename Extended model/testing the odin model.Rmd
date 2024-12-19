@@ -191,9 +191,8 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
-            p_infection = n_infection/N,
-            cum_infection = p_infection * N_tot,
-            prop_seroconv = cum_infection/N_tot) %>%
+            prop_seroconv = n_infection/N,
+            cum_infection = prop_seroconv * N_tot) %>%
   ungroup() %>% 
   distinct() %>%
   mutate(incidence = c(0,diff(cum_infection))) %>%
@@ -211,22 +210,62 @@ rmarkdown::paged_table(model_data)
 ```{r}
 # Comparison function
 case_compare <- function(state, observed, pars = NULL){
-   exp_noise <- 1e6
-  
-  total_sero_modelled <- state[18, , drop = T]
-  total_incidence_modelled <- c(0, diff(total_sero_modelled))
-  seroprevalence_observed <- observed$cum_infection
-  incidence_observed <- observed$incidence
+  #  exp_noise <- 1e6
+  # 
+  # total_sero_modelled <- state[18, , drop = T]
+  # total_incidence_modelled <- c(0, diff(total_sero_modelled))
+  # seroprevalence_observed <- observed$cum_infection
+  # incidence_observed <- observed$incidence
   # lambda <- total_sero_modelled  +
   # rexp(n = length(total_sero_modelled ), rate = exp_noise)
   # dpois(x = seroprevalence_observed, lambda = lambda, log = T) # This is OK for incidence, not sure about prevalence
   
-  lambda <- total_incidence_modelled  +
-  rexp(n = length(total_incidence_modelled ), rate = exp_noise)
-  dpois(x = incidence_observed, lambda = lambda, log = T)
+  # lambda <- total_incidence_modelled  +
+  # rexp(n = length(total_incidence_modelled ), rate = exp_noise)
+  # dpois(x = incidence_observed, lambda = lambda, log = T)
+  
+  
+  # Whole data
+  nconv <- observed$n_infection # n seroconverted at each age point  (data)
+  N <- observed$N # total N at each age point  (data)
+  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output)
+ # prob <- observed$prop_seroconv
+
+  dbinom(x = nconv,
+                   size = N,
+                   prob = prob,
+                   log = TRUE)
+  
+  #return(ll_all)
   
 }
 
+```
+
+```{r}
+# Investigations
+
+# Based on vignette
+ exp_noise <- 1e6
+
+total_sero_modelled <- x[18, , ]
+total_incidence_modelled <- c(0, diff(total_sero_modelled))
+seroprevalence_observed <- round(model_data$cum_infection)
+incidence_observed <- round(model_data$incidence)
+lambda <- total_incidence_modelled  +
+rexp(n = length(total_incidence_modelled ), rate = exp_noise)
+poisson <- dpois(x = incidence_observed, lambda = lambda, log = T)
+
+# Based on Fabienne
+nconv <- model_data$n_infection # n seroconverted at each age point  (data)
+N <- model_data$N # total N at each age point  (data)
+prob <- x[18, , ] / colSums(x[2:17, , ]) # proportion seroconverted at each age point (model output)
+# prob <- observed$prop_seroconv
+
+sum(dbinom(x = nconv,
+           size = N,
+           prob = prob,
+           log = TRUE), na.rm = TRUE) # this returns "Expected a vector of length 100 for 'index' but given 1" --> removed sum
 ```
 
 ```{r}
@@ -410,6 +449,31 @@ matlines(times, t(state[3, , ]), lty = 1, col = cols["M2_sp"])
 matlines(times, t(state[4, , ]), lty = 1, col = cols["S_sp"])
 matlines(times, t(state[5, , ]), lty = 1, col = cols["R_sp"])
 matlines(times, t(state[18, , ]), lty = 1, col = cols["R_all"])
+legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+
+matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
+        xlab = "Day", ylab = "Number of cases", ylim = c(0, 700))
+points(model_data$age_mid_start, model_data$cum_infection, pch = 20)
+```
+```{r}
+parameters <- mcmc_sample$pars
+```
+
+```{r}
+# Look at one sample
+single_sample <- pmcmc_sample(pmcmc_tuned_run, n_sample = 1)
+
+state_single <- single_sample$trajectories$state
+
+prevalence <-  (state_single[18, , -1])
+
+par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
+matplot(times, (state_single[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
+        ylim = c(0, max(t(state[18, , ])) * 1.2), xlab = "Day", ylab = "Number of individuals")
+matlines(times, (state_single[3, , ]), lty = 1, col = cols["M2_sp"])
+matlines(times, (state_single[4, , ]), lty = 1, col = cols["S_sp"])
+matlines(times, (state_single[5, , ]), lty = 1, col = cols["R_sp"])
+matlines(times, (state_single[18, , ]), lty = 1, col = cols["R_all"])
 legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
 matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
