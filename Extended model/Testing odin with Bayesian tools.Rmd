@@ -159,7 +159,7 @@ loglik <- function(params) {
 } 
 
 # Test function
-theta <- c(0.00001, 0.02002, 0.00003, 0.00004)
+theta <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
 
 loglik(theta)
 
@@ -173,6 +173,10 @@ loglik(theta)
 estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
+# Priors
+lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0)
+upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
                                     upper = upper,
@@ -182,7 +186,7 @@ mcmc_settings <- list(iterations = 2*80000,
                       nrChains = nchains)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
                    sampler = "Metropolis", 
-                   settings = mcmc_settings)})
+                   settings = mcmc_settings)}) # takes about 3 hours
 ```
 
 ```{r}
@@ -232,7 +236,7 @@ maketrajsim <- function(trace, theta, ndraw, data) {
   
 }
 
-trajsim <- maketrajsim(tracefinal, params, ndraw = 1000)
+trajsim <- maketrajsim(tracefinal, theta, ndraw = 1000)
 ```
 
 ```{r}
@@ -266,19 +270,19 @@ colnames(trajquantiles_inc) <- c("agemid", "low95", "median", "up95")
 
 # Parameter estimates
 Pquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                          function(x) quantile(x[,"par 1"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                          function(x) quantile(x[,"spring_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Pquantiles) <- c("agemid", "low95", "median", "up95")
 
 Mquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                          function(x) quantile(x[,"par 2"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                          function(x) quantile(x[,"summer_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Mquantiles) <- c("agemid", "low95", "median", "up95")
 
 Aquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                          function(x) quantile(x[,"par 3"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                          function(x) quantile(x[,"autumn_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Aquantiles) <- c("agemid", "low95", "median", "up95")
 
 Wquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-                          function(x) quantile(x[,"par 4"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+                          function(x) quantile(x[,"winter_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
 colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
 
 
