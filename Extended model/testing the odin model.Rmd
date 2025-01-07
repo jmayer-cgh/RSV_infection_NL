@@ -11,7 +11,8 @@ library(ggplot2)
 
 ```{r}
 # Load model
-gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+# gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model 1 M comp.R")
 ```
 
 # Running the MSIR model with dust
@@ -59,10 +60,10 @@ x_df <- as.data.frame(x)
 
 # Add names
 x_df_names <- c("time",
-                "M1_sp", "M2_sp", "S_sp", "R_sp",
-                "M1_sm", "M2_sm", "S_sm", "R_sm",
-                "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
+                "M_sp", "S_sp", "R_sp",
+                "M_sm", "S_sm", "R_sm",
+                "M_au", "S_au", "R_au",
+                "M_wt", "S_wt", "R_wt", "R_all")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
@@ -72,10 +73,9 @@ colnames(x_transp) <- x_df_w_names[, 1]
 ```
 
 ```{r}
-palette <- c("M1" = "#F2862C", "M2" = "#cc0044", "S" = "#8c8cd9", "R" = "#999966", "R_all" = "pink")
+palette <- c("M" = "#F2862C",  "S" = "#8c8cd9", "R" = "#999966", "R_all" = "pink")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M1_sp, colour = "M1")) + 
-  geom_line(aes(y = M2_sp, colour = "M2")) + 
+  geom_line(aes(y = M_sp, colour = "M")) + 
   geom_line(aes(y = S_sp, colour = "S")) + 
   geom_line(aes(y = R_sp, colour = "R")) + 
   geom_line(aes(y = R_all, colour = "R_all")) + 
@@ -228,7 +228,7 @@ case_compare <- function(state, observed, pars = NULL){
   # Whole data
   nconv <- observed$n_infection # n seroconverted at each age point  (data)
   N <- observed$N # total N at each age point  (data)
-  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output)
+  prob <- state[14, , drop = T] / colSums(state[2:13, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
  # prob <- observed$prop_seroconv
 
   dbinom(x = nconv,
@@ -248,7 +248,7 @@ case_compare <- function(state, observed, pars = NULL){
 # Based on vignette
  exp_noise <- 1e6
 
-total_sero_modelled <- x[18, , ]
+total_sero_modelled <- x[14, , ]
 total_incidence_modelled <- c(0, diff(total_sero_modelled))
 seroprevalence_observed <- round(model_data$cum_infection)
 incidence_observed <- round(model_data$incidence)
@@ -259,7 +259,7 @@ poisson <- dpois(x = incidence_observed, lambda = lambda, log = T)
 # Based on Fabienne
 nconv <- model_data$n_infection # n seroconverted at each age point  (data)
 N <- model_data$N # total N at each age point  (data)
-prob <- x[18, , ] / colSums(x[2:17, , ]) # proportion seroconverted at each age point (model output)
+prob <- x[14, , ] / colSums(x[2:13, , ]) # proportion seroconverted at each age point (model output)
 # prob <- observed$prop_seroconv
 
 sum(dbinom(x = nconv,
@@ -291,14 +291,14 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   }
 
   par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-  cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+  # cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+  cols <- c(M_sp = "#8c8cd9", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
   matplot(times, t(history[2, , -1]), type = "l",
           xlab = "Time", ylab = "Number of individuals",
-          col = cols[["M1_sp"]], lty = 1, ylim = range(history))
-  matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
-  matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
-  matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
-  matlines(times, t(history[18, , -1]), col = cols[["R_all"]], lty = 1)
+          col = cols[["M_sp"]], lty = 1, ylim = range(history))
+  matlines(times, t(history[3, , -1]), col = cols[["S_sp"]], lty = 1)
+  matlines(times, t(history[4, , -1]), col = cols[["R_sp"]], lty = 1)
+  matlines(times, t(history[14, , -1]), col = cols[["R_all"]], lty = 1)
   matpoints(t(true_history[1]), t(true_history[9]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
