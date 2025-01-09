@@ -28,6 +28,17 @@ update(R_wt) <- R_wt + n_SR_wt
 # Total seroprevalence
 update(R_all) <- R_sp + R_sm + R_au + R_wt
 
+# Get FOI in output
+update(lambda_spring) <- lambda_sp # FOI for spring cohort
+update(lambda_summer) <- lambda_sm
+update(lambda_autumn) <- lambda_au
+update(lambda_winter) <- lambda_wt
+
+update(spring_component) <- spring_comp # FOI in the spring
+update(summer_component) <- summer_comp
+update(autumn_component) <- autumn_comp
+update(winter_component) <- winter_comp
+
 ## Individual probabilities of transition:
 # spring birth cohort
 n_MS_sp <- mu * dt * M_sp # M to S
@@ -192,20 +203,31 @@ initial(R_wt) <- R_wt_ini
 # Total
 initial(R_all) <- R_sp_ini + R_sm_ini + R_au_ini + R_wt_ini
 
+# FOI for the output
+initial(lambda_spring) <- 0.0001
+initial(lambda_summer) <- 0.0001
+initial(lambda_autumn) <- 0.0001
+initial(lambda_winter) <- 0.0001
+
+initial(spring_component) <- 0.00001
+initial(summer_component) <- 0.00001
+initial(autumn_component) <- 0.00001
+initial(winter_component) <- 0.00001
+
 ## User defined parameters - default in parentheses:
-M_sp_ini <- user (682 * 0.26) # user(1-2*1e-12)
+M_sp_ini <- user(1-2*1e-12) # user (682 * 0.26) # 
 S_sp_ini <- user(1e-12)
 R_sp_ini <- user(1e-12)
 
-M_sm_ini <- user (682 * 0.29) # user(1-2*1e-12)
+M_sm_ini <- user(1-2*1e-12) # user (682 * 0.29) # 
 S_sm_ini <- user(1e-12)
 R_sm_ini <- user(1e-12)
 
-M_au_ini <- user (682 * 0.24) # user(1-2*1e-12)
+M_au_ini <- user(1-2*1e-12) # user (682 * 0.24) # 
 S_au_ini <- user(1e-12)
 R_au_ini <- user(1e-12)
 
-M_wt_ini <- user (682 * 0.20) # user(1-2*1e-12)
+M_wt_ini <- user(1-2*1e-12) # user (682 * 0.20) # 
 S_wt_ini <- user(1e-12)
 R_wt_ini <- user(1e-12)
 
