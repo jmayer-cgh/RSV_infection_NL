@@ -158,19 +158,6 @@ return (output_transp)
 
 ```{r}
 # Define likelihood function
-# Stefan
-# LL = function(x){
-#   dat %>% 
-#     rowwise() %>%
-#     mutate(VE_est = VE_mod(x,tmin=Tmin, tmax=Tmax, outcome=group)) %>%
-#     rowwise() %>%
-#     mutate(LL = log(dbinom(Intervention,N_intervention,(1-VE_est)*Placebo/N_placebo))) -> datatmp
-#   return(sum(datatmp$LL))
-# }
-# LL_freq = function(x) -LL(x)
-
-# LOG LIKELIHOOD FUNCTION ---------------------------------------------------------
-
 loglik <- function(params) {
   
   model_output <- model_fun(params)
@@ -431,6 +418,26 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta3[1],
                                                    autumn_comp = theta3[3],
                                                    winter_comp = theta3[4],
                                                    loglikelihood = log3)
+
+theta4 <- c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+
+log4 <- loglik(theta4)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta4[1], 
+                                                   summer_comp = theta4[2],
+                                                   autumn_comp = theta4[3],
+                                                   winter_comp = theta4[4],
+                                                   loglikelihood = log4)
+
+theta5 <- c(spring_comp = 10, summer_comp = 10, autumn_comp = 10, winter_comp = 100)
+
+log5 <- loglik(theta5)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta5[1], 
+                                                   summer_comp = theta5[2],
+                                                   autumn_comp = theta5[3],
+                                                   winter_comp = theta5[4],
+                                                   loglikelihood = log5)
 ```
 
 ```{r}
