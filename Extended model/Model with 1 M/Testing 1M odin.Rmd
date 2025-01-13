@@ -21,7 +21,7 @@ theme_set(theme_minimal())
 
 ```{r}
 # Load model
-gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M /Odin model 1 M comp.R")
+gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M/Odin model 1 M comp.R")
 ```
 
 ```{r}
@@ -76,10 +76,6 @@ data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confi
 # Run the model once
 model_fun <- function (estimates) {
  p_new <- list(dt = 1, 
-              # M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
-              # M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
-              # S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
-              # R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, mu = 0.1 
               spring_comp = estimates[1], 
               summer_comp = estimates[2], 
               autumn_comp = estimates[3], 
@@ -103,18 +99,12 @@ output_df <- as.data.frame(output)
 
 # Add names
 output_df_names <- c("time",
-                "M1_sp", "M2_sp", "S_sp", "R_sp",
-                "M1_sm", "M2_sm", "S_sm", "R_sm",
-                "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
-
-# output_df_names <- c("time",
-#                 "M_sp", "S_sp", "R_sp",
-#                 "M_sm", "S_sm", "R_sm",
-#                 "M_au", "S_au", "R_au",
-#                 "M_wt", "S_wt", "R_wt", "R_all",
-#                 "lambda_spring", "lambda_summer", "lambda_autumn", "lambda_winter",
-#                 "spring_component", "summer_component", "autumn_component", "winter_component")
+                "M_sp", "S_sp", "R_sp",
+                "M_sm", "S_sm", "R_sm",
+                "M_au", "S_au", "R_au",
+                "M_wt", "S_wt", "R_wt", "R_all",
+                "lambda_spring", "lambda_summer", "lambda_autumn", "lambda_winter",
+                "spring_component", "summer_component", "autumn_component", "winter_component")
 
 output_df_w_names <- cbind(output_df_names, output_df)
 
@@ -124,7 +114,7 @@ colnames(output_transp) <- output_df_w_names[, 1]
 
 # Get proportion seroconverted at a given age
 output_transp <- output_transp %>% rowwise() %>%
-  dplyr::mutate(total_pop = sum(c_across(M1_sp:R_wt)),
+  dplyr::mutate(total_pop = sum(c_across(M_sp:R_wt)),
           prop_sero_tot = R_all / total_pop)
 
 # output_transp <- output_transp %>% group_by(time) %>%
@@ -136,10 +126,32 @@ return (output_transp)
 ```
 
 ```{r}
+# Define likelihood function
+loglik <- function(params) {
+  
+  model_output <- model_fun(params)
+  
+  # Whole data
+  nconv <- data_no_season$nconv[!is.na(data_no_season$nconv)] # n seroconverted at each age point  (data)
+  N <- data_no_season$N[!is.na(data_no_season$nconv)] # total N at each age point  (data) 
+  prob <- model_output$prop_sero_tot[model_output$time %in% data_no_season$agemid] # proportion seroconverted at each age point (model output)
+  
+  ll_all <- sum(dbinom(x = nconv,
+                       size = N,
+                       prob = prob,
+                       log = TRUE), na.rm = TRUE)
+  
+  return(ll_all)
+  
+} 
+```
+
+
+```{r}
 # Testing the likelihood function
 theta1 <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
 
-log1 <- loglik(theta1)
+log1 <- loglik(theta1) # -157.00
 
 likelihood_values <- data.frame(spring_comp = double(),
                                 summer_comp = double(), 
@@ -155,7 +167,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta1[1],
 
 theta2 <- c(spring_comp = 0.003478, summer_comp = 0.00060, autumn_comp = 0.00264, winter_comp = 0.00692) # Values from old model
 
-log2 <- loglik(theta2)
+log2 <- loglik(theta2) # -31.22
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta2[1], 
                                                    summer_comp = theta2[2],
@@ -165,7 +177,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta2[1],
 
 theta3 <- c(spring_comp = 0.000078, summer_comp = 0.00060, autumn_comp = 0.034, winter_comp = 0.03)
 
-log3 <- loglik(theta3)
+log3 <- loglik(theta3) # -102.92
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta3[1], 
                                                    summer_comp = theta3[2],
@@ -175,7 +187,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta3[1],
 
 theta4 <- c(spring_comp = 0.1, summer_comp = 0.00060, autumn_comp = 0.1, winter_comp = 0.1)
 
-log4 <- loglik(theta4)
+log4 <- loglik(theta4) # -199.02
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta4[1], 
                                                    summer_comp = theta4[2],
@@ -185,7 +197,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta4[1],
 
 theta5 <- c(spring_comp = 0.00001, summer_comp = 0.00060, autumn_comp = 0.00001, winter_comp = 0.00001)
 
-log5 <- loglik(theta5)
+log5 <- loglik(theta5) # -293.17
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta5[1], 
                                                    summer_comp = theta5[2],
@@ -195,7 +207,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta5[1],
 
 theta6 <- c(spring_comp = 0, summer_comp = 0.00060, autumn_comp = 0, winter_comp = 0)
 
-log6 <- loglik(theta6)
+log6 <- loglik(theta6) # -296.35
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta6[1], 
                                                    summer_comp = theta6[2],
@@ -205,11 +217,194 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta6[1],
 
 theta7 <- c(spring_comp = 0, summer_comp = 0.10, autumn_comp = 0, winter_comp = 0)
 
-log7 <- loglik(theta7)
+log7 <- loglik(theta7) # -225.65
 
 likelihood_values <- likelihood_values %>% add_row(spring_comp = theta7[1], 
                                                    summer_comp = theta7[2],
                                                    autumn_comp = theta7[3],
                                                    winter_comp = theta7[4],
                                                    loglikelihood = log7)
+```
+
+```{r}
+# Plot the model output
+theta <- c(spring_comp = 0.003478, summer_comp = 0.00060, autumn_comp = 0.00264, winter_comp = 0.00692)
+model_output <- model_fun(theta)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
+```{r}
+# FITTING -------------------------------------------
+
+# Estimated params
+# spring_comp = mean FOI (proportion infected per day) in spring
+# summer_comp = mean FOI for children in summer
+# autumn_comp = mean FOI for children in autumn
+# winter_comp = mean FOI for children in winter
+estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
+index <- which(names(theta) %in% estpars) # index of estimated params
+
+# Priors
+lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0)
+upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+
+bayesianSetup <- createBayesianSetup(likelihood = loglik, 
+                                    lower = lower, 
+                                    upper = upper,
+                                    names = names(theta[index]))
+nchains <- 2
+mcmc_settings <- list(iterations = 2*80000, 
+                      nrChains = nchains)
+system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
+                   sampler = "Metropolis", 
+                   settings = mcmc_settings)}) # takes about 3 hours
+```
+
+```{r}
+# DIAGNOSTICS -----------------------------------------------
+
+plot(trace) 
+
+# burn-in
+nburn <- 10000
+plot(trace, parametersOnly = TRUE, start = nburn)
+
+# check convergence and correlations
+gelmanDiagnostics(trace, plot = TRUE, start = nburn)
+correlationPlot(getSample(trace, parametersOnly = TRUE, coda = TRUE, start = nburn), density = "smooth", thin = 50)
+marginalPlot(trace, prior = T, singlePanel = T, start = nburn, nDrawsPrior = 1000)
+
+# remove burn-in for trajsim simulation
+tracefinal <- getSample(trace, parametersOnly = TRUE, coda = TRUE, start = nburn)
+plot(tracefinal)
+coda::effectiveSize(tracefinal)
+
+# Posterior summary
+summary(tracefinal)
+
+# save the trace
+saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Model with 1 M /Odin model with BT and 1 M.rds")
+```
+
+```{r}
+maketrajsim <- function(trace, theta, ndraw, data) {
+  
+  #Draw n fitted parameter vectors theta from the MCMC object
+  sample <- getSample(trace, parametersOnly = TRUE, thin = 1, numSamples = ndraw) #trace is a sampler, parametersOnly = T means that likelihood, posterior and prior values are not provided in the output, thin = thinning parameter
+  
+  traj.rep <- plyr::adply(.data = sample, .margins = 1, .progress = "text", .parallel = F, .fun = function(x) { #split sample by 1 = rows and apply function
+    
+    #Define the theta as the estimated parameters from the current draw and the fixed parameters
+    theta.sample <- c(x, theta[!is.na(theta)])
+    
+    #Simulate trajectory for selected theta
+    traj <- model_fun(theta.sample) #match.fun extracts the underlying function
+    traj <- cbind(as.data.frame(t(x)), traj)
+  })
+  
+  colnames(traj.rep)[1] <- "replicate"
+  return(traj.rep)
+  
+}
+
+trajsim <- maketrajsim(tracefinal, theta, ndraw = 1000)
+```
+
+```{r}
+# Proportion converted overall
+trajquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                             function(x) quantile(x[,"prop_sero_tot"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles) <- c("agemid", "low95", "median", "up95")
+
+# Overall incidence overtime
+trajquantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                             function(x) quantile(x[,"R_all"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(trajquantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+
+# FOI per birth cohort
+lambda_spquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                  function(x) quantile(x[,"lambda_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
+
+lambda_smquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                  function(x) quantile(x[,"lambda_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
+
+lambda_auquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                  function(x) quantile(x[,"lambda_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
+
+lambda_wtquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                  function(x) quantile(x[,"lambda_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
+
+# Parameter estimates
+Pquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                          function(x) quantile(x[,"spring_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Pquantiles) <- c("agemid", "low95", "median", "up95")
+
+Mquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                          function(x) quantile(x[,"summer_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Mquantiles) <- c("agemid", "low95", "median", "up95")
+
+Aquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                          function(x) quantile(x[,"autumn_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Aquantiles) <- c("agemid", "low95", "median", "up95")
+
+Wquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+                          function(x) quantile(x[,"winter_comp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
+
+
+# Cumulative proportion seroconverted by season of birth
+# spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+#                                      function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+# colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# summer_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+#                                      function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+# colnames(summer_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# autumn_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+#                                      function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+# colnames(autumn_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# winter_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
+#                                      function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+# colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+# Incident proportion seroconverted by season of birth
+spring_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"R_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(spring_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+summer_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"R_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(summer_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+autumn_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"R_au"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(autumn_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+winter_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
+                                     function(x) quantile(x[,"R_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
+colnames(winter_conv_quantiles_inc) <- c("agemid", "low95", "median", "up95")
+
+# Plot fit and FOI
+# Whole dataset
+fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = trajquantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = trajquantiles, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+fit
 ```
