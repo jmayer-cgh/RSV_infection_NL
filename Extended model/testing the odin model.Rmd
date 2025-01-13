@@ -60,10 +60,10 @@ x_df <- as.data.frame(x)
 
 # Add names
 x_df_names <- c("time",
-                "M_sp", "S_sp", "R_sp",
-                "M_sm", "S_sm", "R_sm",
-                "M_au", "S_au", "R_au",
-                "M_wt", "S_wt", "R_wt", "R_all")
+                "M1_sp", "M2_sp", "S_sp", "R_sp",
+                "M1_sm", "M2_sm", "S_sm", "R_sm",
+                "M1_au", "M2_au", "S_au", "R_au",
+                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
