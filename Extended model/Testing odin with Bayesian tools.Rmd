@@ -503,6 +503,16 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta7[1],
                                                    autumn_comp = theta7[3],
                                                    winter_comp = theta7[4],
                                                    loglikelihood = log7)
+
+theta8 <- c(spring_comp = 10, summer_comp = 10, autumn_comp = 10, winter_comp = 10)
+
+log8 <- loglik(theta8)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta8[1], 
+                                                   summer_comp = theta8[2],
+                                                   autumn_comp = theta8[3],
+                                                   winter_comp = theta8[4],
+                                                   loglikelihood = log8)
 ```
 
 ```{r}

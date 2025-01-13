@@ -246,22 +246,22 @@ initial(R_wt) <- R_wt_ini
 initial(R_all) <- R_sp_ini + R_sm_ini + R_au_ini + R_wt_ini
 
 ## User defined parameters - default in parentheses:
-M1_sp_ini <- user (682 * 0.26) # user(1-2*1e-12)
+M1_sp_ini <-user(1-2*1e-12) # user (682 * 0.26) #
 M2_sp_ini <- user(1e-12)
 S_sp_ini <- user(1e-12)
 R_sp_ini <- user(1e-12)
 
-M1_sm_ini <- user (682 * 0.29) # user(1-2*1e-12)
+M1_sm_ini <- user(1-2*1e-12) # user (682 * 0.29) #
 M2_sm_ini <- user(1e-12)
 S_sm_ini <- user(1e-12)
 R_sm_ini <- user(1e-12)
 
-M1_au_ini <- user (682 * 0.24) # user(1-2*1e-12)
+M1_au_ini <-user(1-2*1e-12) # user (682 * 0.24) #
 M2_au_ini <- user(1e-12)
 S_au_ini <- user(1e-12)
 R_au_ini <- user(1e-12)
 
-M1_wt_ini <- user (682 * 0.20) # user(1-2*1e-12)
+M1_wt_ini <- user(1-2*1e-12) # user (682 * 0.20) #
 M2_wt_ini <- user(1e-12)
 S_wt_ini <- user(1e-12)
 R_wt_ini <- user(1e-12)
