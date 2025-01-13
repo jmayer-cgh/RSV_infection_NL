@@ -74,6 +74,15 @@ data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confi
 ```
 
 ```{r}
+# Plot the data
+data_no_season %>% ggplot() +
+  geom_point(aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
+```{r}
 # Run the model once
 model_fun <- function (estimates) {
  p_new <- list(dt = 1, 
@@ -124,11 +133,9 @@ output_transp <- data.frame(t(output_df_w_names[-1]))
 colnames(output_transp) <- output_df_w_names[, 1]
 
 # Get proportion seroconverted at a given age
-output_transp <- output_transp %>% group_by(time) %>%
-  mutate(prop_sero_tot = R_all / sum(M1_sp, M1_sm, M1_au, M1_wt,
-                                     M2_sp, M2_sm, M2_au, M2_wt,
-                                     S_sp, S_sm, S_au, S_wt,
-                                     R_sp, R_sm, R_au, R_wt))
+output_transp <- output_transp %>% rowwise() %>%
+  dplyr::mutate(total_pop = sum(c_across(M1_sp:R_wt)),
+          prop_sero_tot = R_all / total_pop)
 
 # output_transp <- output_transp %>% group_by(time) %>%
 #   mutate(prop_sero_tot = R_all / sum(M_sp, M_sm, M_au, M_wt,
@@ -153,6 +160,44 @@ return (output_transp)
 #   geom_line(aes(x = time, y = autumn_component), colour = "yellow") +
 #   geom_line(aes(x = time, y = winter_component), colour = "blue") +
 #   ylim(0.00001, 0.00006)
+```
+
+```{r}
+# Plot the model output
+theta <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
+model_output <- model_fun(theta)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
+```{r}
+theta <- c(spring_comp = 1, summer_comp = 1, autumn_comp = 1, winter_comp = 1)
+model_output <- model_fun(theta)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
+```{r}
+# Plot the model output
+theta <- c(spring_comp = 0, summer_comp = 0.1, autumn_comp = 0, winter_comp = 0)
+model_output <- model_fun(theta)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
 ```
 
 
@@ -409,7 +454,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta2[1],
                                                    winter_comp = theta2[4],
                                                    loglikelihood = log2)
 
-theta3 <- c(spring_comp = 0.000078, summer_comp = 0.00060, autumn_comp = 0.00264, winter_comp = 0.00692)
+theta3 <- c(spring_comp = 0.000078, summer_comp = 0.00060, autumn_comp = 0.034, winter_comp = 0.03)
 
 log3 <- loglik(theta3)
 
@@ -419,7 +464,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta3[1],
                                                    winter_comp = theta3[4],
                                                    loglikelihood = log3)
 
-theta4 <- c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+theta4 <- c(spring_comp = 0.1, summer_comp = 0.00060, autumn_comp = 0.1, winter_comp = 0.1)
 
 log4 <- loglik(theta4)
 
@@ -429,7 +474,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta4[1],
                                                    winter_comp = theta4[4],
                                                    loglikelihood = log4)
 
-theta5 <- c(spring_comp = 10, summer_comp = 10, autumn_comp = 10, winter_comp = 100)
+theta5 <- c(spring_comp = 0.00001, summer_comp = 0.00060, autumn_comp = 0.00001, winter_comp = 0.00001)
 
 log5 <- loglik(theta5)
 
@@ -438,6 +483,26 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta5[1],
                                                    autumn_comp = theta5[3],
                                                    winter_comp = theta5[4],
                                                    loglikelihood = log5)
+
+theta6 <- c(spring_comp = 0, summer_comp = 0.00060, autumn_comp = 0, winter_comp = 0)
+
+log6 <- loglik(theta6)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta6[1], 
+                                                   summer_comp = theta6[2],
+                                                   autumn_comp = theta6[3],
+                                                   winter_comp = theta6[4],
+                                                   loglikelihood = log6)
+
+theta7 <- c(spring_comp = 0, summer_comp = 0.10, autumn_comp = 0, winter_comp = 0)
+
+log7 <- loglik(theta7)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta7[1], 
+                                                   summer_comp = theta7[2],
+                                                   autumn_comp = theta7[3],
+                                                   winter_comp = theta7[4],
+                                                   loglikelihood = log7)
 ```
 
 ```{r}

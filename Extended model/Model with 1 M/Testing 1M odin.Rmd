@@ -1,0 +1,215 @@
+# Testing the odin model with 1 M compartment
+
+```{r}
+# Load libraries
+rm(list=ls())
+set.seed(42)
+
+library(tidyverse)
+library(BayesianTools)
+library(binom)
+# library(plyr)
+# library(deSolve)
+# library(coda)
+# library(lubridate)
+library(odin.dust)
+library(odin)
+library(dplyr)
+library (tidyr)
+theme_set(theme_minimal())
+```
+
+```{r}
+# Load model
+gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M /Odin model 1 M comp.R")
+```
+
+```{r}
+# DATA PREP  ------------------------------------------------------------
+
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
+                 sep=",")
+# use if offline
+#library(readr)
+#data <- read_csv("LSHTM/Project/Data/infection_status.csv")
+
+# Group age into intervals 
+# bi-monthly for 0-2 years and 6-monthly for 2-5 years
+data$agegrp <- cut(data$age_days,
+                   breaks = c(seq(0,730, by = 30.25*2),
+                              seq(909,2000, by = 30.25*6)), 
+                   include.lowest = T, right = F)
+# Divide by season of birth
+spring <- c(3, 4, 5)
+summer <- c(6, 7, 8)
+autumn <- c (9, 10, 11)
+winter <- c(1, 2, 12)
+
+data <- data %>% 
+  mutate(Birth_mo = birthday %>% month(),
+         season_birth = case_when (Birth_mo %in% spring ~ "Spring",
+                                   Birth_mo %in% summer ~ "Summer",
+                                   Birth_mo %in% autumn ~ "Autumn",
+                                   Birth_mo %in% winter ~ "Winter"),
+         visitnursery_child = case_when (visitnursery_child == 0 ~ FALSE,
+                                         visitnursery_child == 1 ~ TRUE))
+
+#different groupings to plot different things
+# only grouped by age
+data_no_season <- data %>% group_by(agegrp) %>% 
+  dplyr::summarise(agemid = round(median(age_days)), # Age midpoint in age group
+                   N = n(), # Total N in age group
+                   nconv = sum(infection))
+
+# grouped by age and season of birth
+data_season <- data %>% group_by(agegrp, season_birth) %>% 
+  dplyr::summarise(agemid = round(median(age_days)), # Age midpoint in age group
+                   N = n(), # Total N in age group
+                   nconv = sum(infection)) # n seroconverted in age group
+
+# Calculate seroprevalence and binomial confidence intervals
+data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_season$nconv, data_no_season$N, method="exact")[,c("mean","lower","upper")]
+data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_season$nconv, data_season$N, method="exact")[,c("mean","lower","upper")]
+```
+
+```{r}
+# Run the model once
+model_fun <- function (estimates) {
+ p_new <- list(dt = 1, 
+              # M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25, M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
+              # M2_sp_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0, M2_sm_ini = 0,
+              # S_sp_ini = 0, S_sm_ini = 0, S_au_ini = 0, S_wt_ini = 0,
+              # R_sp_ini = 0, R_sm_ini = 0, R_au_ini = 0, R_wt_ini = 0, mu = 0.1 
+              spring_comp = estimates[1], 
+              summer_comp = estimates[2], 
+              autumn_comp = estimates[3], 
+              winter_comp = estimates[4])
+msr_model <- gen_msr$new(pars = p_new,
+                         time = 1,
+                         n_particles = 1L,
+                         n_threads = 4L,
+                         seed = 1L)
+
+n_times <- 2190
+n_particles <- 1L
+output <- array(NA, dim = c(msr_model$info()$len, n_particles, n_times))
+
+for (t in seq_len(n_times)) {
+  output[ , , t] <- msr_model$run(t)
+}
+
+# Turn the result into something intelligible
+output_df <- as.data.frame(output)
+
+# Add names
+output_df_names <- c("time",
+                "M1_sp", "M2_sp", "S_sp", "R_sp",
+                "M1_sm", "M2_sm", "S_sm", "R_sm",
+                "M1_au", "M2_au", "S_au", "R_au",
+                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
+
+# output_df_names <- c("time",
+#                 "M_sp", "S_sp", "R_sp",
+#                 "M_sm", "S_sm", "R_sm",
+#                 "M_au", "S_au", "R_au",
+#                 "M_wt", "S_wt", "R_wt", "R_all",
+#                 "lambda_spring", "lambda_summer", "lambda_autumn", "lambda_winter",
+#                 "spring_component", "summer_component", "autumn_component", "winter_component")
+
+output_df_w_names <- cbind(output_df_names, output_df)
+
+# Transpose and assign names
+output_transp <- data.frame(t(output_df_w_names[-1]))
+colnames(output_transp) <- output_df_w_names[, 1]
+
+# Get proportion seroconverted at a given age
+output_transp <- output_transp %>% rowwise() %>%
+  dplyr::mutate(total_pop = sum(c_across(M1_sp:R_wt)),
+          prop_sero_tot = R_all / total_pop)
+
+# output_transp <- output_transp %>% group_by(time) %>%
+#   mutate(prop_sero_tot = R_all / sum(M_sp, M_sm, M_au, M_wt,
+#                                      S_sp, S_sm, S_au, S_wt,
+#                                      R_sp, R_sm, R_au, R_wt))
+return (output_transp)
+}
+```
+
+```{r}
+# Testing the likelihood function
+theta1 <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
+
+log1 <- loglik(theta1)
+
+likelihood_values <- data.frame(spring_comp = double(),
+                                summer_comp = double(), 
+                                autumn_comp = double(),
+                                winter_comp = double (),
+                                loglikelihood = double ())
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta1[1], 
+                                                   summer_comp = theta1[2],
+                                                   autumn_comp = theta1[3],
+                                                   winter_comp = theta1[4],
+                                                   loglikelihood = log1)
+
+theta2 <- c(spring_comp = 0.003478, summer_comp = 0.00060, autumn_comp = 0.00264, winter_comp = 0.00692) # Values from old model
+
+log2 <- loglik(theta2)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta2[1], 
+                                                   summer_comp = theta2[2],
+                                                   autumn_comp = theta2[3],
+                                                   winter_comp = theta2[4],
+                                                   loglikelihood = log2)
+
+theta3 <- c(spring_comp = 0.000078, summer_comp = 0.00060, autumn_comp = 0.034, winter_comp = 0.03)
+
+log3 <- loglik(theta3)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta3[1], 
+                                                   summer_comp = theta3[2],
+                                                   autumn_comp = theta3[3],
+                                                   winter_comp = theta3[4],
+                                                   loglikelihood = log3)
+
+theta4 <- c(spring_comp = 0.1, summer_comp = 0.00060, autumn_comp = 0.1, winter_comp = 0.1)
+
+log4 <- loglik(theta4)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta4[1], 
+                                                   summer_comp = theta4[2],
+                                                   autumn_comp = theta4[3],
+                                                   winter_comp = theta4[4],
+                                                   loglikelihood = log4)
+
+theta5 <- c(spring_comp = 0.00001, summer_comp = 0.00060, autumn_comp = 0.00001, winter_comp = 0.00001)
+
+log5 <- loglik(theta5)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta5[1], 
+                                                   summer_comp = theta5[2],
+                                                   autumn_comp = theta5[3],
+                                                   winter_comp = theta5[4],
+                                                   loglikelihood = log5)
+
+theta6 <- c(spring_comp = 0, summer_comp = 0.00060, autumn_comp = 0, winter_comp = 0)
+
+log6 <- loglik(theta6)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta6[1], 
+                                                   summer_comp = theta6[2],
+                                                   autumn_comp = theta6[3],
+                                                   winter_comp = theta6[4],
+                                                   loglikelihood = log6)
+
+theta7 <- c(spring_comp = 0, summer_comp = 0.10, autumn_comp = 0, winter_comp = 0)
+
+log7 <- loglik(theta7)
+
+likelihood_values <- likelihood_values %>% add_row(spring_comp = theta7[1], 
+                                                   summer_comp = theta7[2],
+                                                   autumn_comp = theta7[3],
+                                                   winter_comp = theta7[4],
+                                                   loglikelihood = log7)
+```

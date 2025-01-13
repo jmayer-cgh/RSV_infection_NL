@@ -1,3 +1,5 @@
+# MSc model with 1 M compartment and only seasonal components for the FOI
+
 # HOUSEKEEPING ------------------------------------------------------------
 
 rm(list=ls())
@@ -54,20 +56,17 @@ data_season <- data %>% group_by(agegrp, season_birth) %>%
                    N = n(), # Total N in age group
                    nconv = sum(infection)) # n seroconverted in age group
 
+# grouped by age, season of birth and day-care attendance
+data <- data %>% subset(!is.na(visitnursery_child))
+data <- data %>% group_by(agegrp, season_birth, visitnursery_child) %>% 
+  dplyr::summarise(agemid = round(median(age_days)), # Age midpoint in age group
+                   N = n(), # Total N in age group
+                   nconv = sum(infection)) # n seroconverted in age group
+
 # Calculate seroprevalence and binomial confidence intervals
-data_no_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_no_season$nconv, data_no_season$N, method="exact")[,c("mean","lower","upper")]
-data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data_season$nconv, data_season$N, method="exact")[,c("mean","lower","upper")]
+data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(data$nconv, data$N, method="exact")[,c("mean","lower","upper")]
 
 # MODEL EQUATION  ------------------------------------------------------------
-# Define function for waning following the Erlang distribution
-# We will use it to model the waning of maternal immunity
-# erlang.decay = function(immunity_init, T, k=2, t) {
-#   res = 0
-#   for(n in 0:(k-1)){
-#     res = res + 1/factorial(n)*exp(-T*t)*(T*t)^n } # T is the rate, t is the age
-#   return(immunity_init * res)
-# }
-
 # Notes:
 # - The states are integrated on a log-scale to avoid negative states, which is 
 # why we log-transform them when in the model input and exponentiate them inside the model
@@ -295,8 +294,6 @@ maketrajsim <- function(trace, theta, age, model, inits, ndraw, data) {
 # M = mean FOI for children in summer
 # A = mean FOI for children in autumn
 # W = mean FOI for children in winter
-# V = waning rate of protection offered by maternal immunity from the vaccine
-# C = contact parameter
 theta <- c(P = 0.00001, M = 0.02002, A = 0.00003, W = 0.00004) # these are just random values, to be fitted
 
 # INITS ---------------------------------------------------------
@@ -335,4 +332,19 @@ loglik <- function(theta, age, data, model, inits) {
 } 
 
 # Test function
-loglik(theta, agepred, data_season, model, inits)
+log <- loglik(theta, agepred, data_no_season, model, inits)
+
+theta1 <- c(P = 0.003478, M = 0.00060, A = 0.00264, W = 0.00692)
+log1 <- loglik(theta1, agepred, data, model, inits)
+
+theta2 <- c(P = 0.003478, M = 0.060, A = 0.00264, W = 0.00692)
+log2 <- loglik(theta2, agepred, data, model, inits)
+
+theta3 <- c(P = 0.003478, M = 0.00060, A = 0.1, W = 0.00692)
+log3 <- loglik(theta3, agepred, data, model, inits)
+
+theta4 <- c(P = 0.1, M = 0, A = 0.1, W = 0.1)
+log4 <- loglik(theta4, agepred, data, model, inits)
+
+theta5 <- c(P = 0, M = 0.1, A = 0, W = 0)
+log5 <- loglik(theta5, agepred, data, model, inits)
