@@ -332,19 +332,19 @@ loglik <- function(theta, age, data, model, inits) {
 } 
 
 # Test function
-log <- loglik(theta, agepred, data_no_season, model, inits)
+log <- loglik(theta, agepred, data_no_season, model, inits) # -859.61
 
 theta1 <- c(P = 0.003478, M = 0.00060, A = 0.00264, W = 0.00692)
-log1 <- loglik(theta1, agepred, data, model, inits)
+log1 <- loglik(theta1, agepred, data, model, inits) # -858.52
 
 theta2 <- c(P = 0.003478, M = 0.060, A = 0.00264, W = 0.00692)
-log2 <- loglik(theta2, agepred, data, model, inits)
+log2 <- loglik(theta2, agepred, data, model, inits) # -1212.24
 
 theta3 <- c(P = 0.003478, M = 0.00060, A = 0.1, W = 0.00692)
-log3 <- loglik(theta3, agepred, data, model, inits)
+log3 <- loglik(theta3, agepred, data, model, inits) # -1182.29
 
 theta4 <- c(P = 0.1, M = 0, A = 0.1, W = 0.1)
-log4 <- loglik(theta4, agepred, data, model, inits)
+log4 <- loglik(theta4, agepred, data, model, inits) # -1405.04
 
 theta5 <- c(P = 0, M = 0.1, A = 0, W = 0)
-log5 <- loglik(theta5, agepred, data, model, inits)
+log5 <- loglik(theta5, agepred, data, model, inits) # -1208.19
