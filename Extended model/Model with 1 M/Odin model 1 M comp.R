@@ -234,8 +234,7 @@ R_wt_ini <- user(1e-12)
 
 # transition parameters
 mu <- user (1/182.5) # half-life is 6 months
-spring_comp <- user(0.00001) # random values to be fitted
+spring_comp <- user(0.003478) # random values to be fitted
 summer_comp <- user(0.02002)
-autumn_comp <- user(0.00003)
-winter_comp <- user(0.00004)
-#contact_comp <- user(0.02)
+autumn_comp <- user(0.00264)
+winter_comp <- user(0.00692)

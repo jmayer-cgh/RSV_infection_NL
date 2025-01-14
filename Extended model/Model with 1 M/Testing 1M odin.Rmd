@@ -76,10 +76,11 @@ data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confi
 # Run the model once
 model_fun <- function (estimates) {
  p_new <- list(dt = 1, 
-              spring_comp = estimates[1], 
-              summer_comp = estimates[2], 
-              autumn_comp = estimates[3], 
-              winter_comp = estimates[4])
+             # spring_comp = estimates[1], 
+              summer_comp = estimates[1]#, 
+              # autumn_comp = estimates[3], 
+              # winter_comp = estimates[4]
+             )
 msr_model <- gen_msr$new(pars = p_new,
                          time = 1,
                          n_particles = 1L,
@@ -247,12 +248,13 @@ model_output %>% ggplot() +
 # summer_comp = mean FOI for children in summer
 # autumn_comp = mean FOI for children in autumn
 # winter_comp = mean FOI for children in winter
-estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
+# estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
+estpars <- c("summer_comp")
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
-lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0)
-upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+lower = c(summer_comp = 0)
+upper = c(summer_comp = 0.1)
 
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
