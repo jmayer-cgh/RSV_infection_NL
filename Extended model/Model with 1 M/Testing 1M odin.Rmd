@@ -248,13 +248,13 @@ model_output %>% ggplot() +
 # summer_comp = mean FOI for children in summer
 # autumn_comp = mean FOI for children in autumn
 # winter_comp = mean FOI for children in winter
-# estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
-estpars <- c("summer_comp")
+estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
+# estpars <- c("summer_comp")
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
-lower = c(summer_comp = 0)
-upper = c(summer_comp = 0.1)
+lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0)
+upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
 
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
@@ -262,7 +262,9 @@ bayesianSetup <- createBayesianSetup(likelihood = loglik,
                                     names = names(theta[index]))
 nchains <- 2
 mcmc_settings <- list(iterations = 2*80000, 
-                      nrChains = nchains)
+                      nrChains = nchains,
+                      adapt = T, # running an adaptive MCMC
+                      optimize = T)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
                    sampler = "Metropolis", 
                    settings = mcmc_settings)}) # takes about 3 hours - 41.3 hours
@@ -415,5 +417,18 @@ fit
 # Check acceptance rate
 traceMCMC <- coda::mcmc(trace)
 traceMCMC[[1]]$acceptanceRate
+```
+
+```{r}
+# Get trace with estimates of all 4 parameters
+trace_4_params <- readRDS("Odin model with BT and 1 M.rds")
+
+# Check acceptance rate
+trace_4_MCMC <- coda::mcmc(trace_4_params)
+trace_4_MCMC[[1]]$acceptanceRate
+```
+
+```{r}
+summary(trace_4_params)
 ```
 
