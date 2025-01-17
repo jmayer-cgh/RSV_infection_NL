@@ -76,10 +76,10 @@ data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confi
 # Run the model once
 model_fun <- function (estimates) {
  p_new <- list(dt = 1, 
-             # spring_comp = estimates[1], 
-              summer_comp = estimates[1]#, 
-              # autumn_comp = estimates[3], 
-              # winter_comp = estimates[4]
+              spring_comp = estimates[1], 
+              summer_comp = estimates[2], 
+               autumn_comp = estimates[3], 
+               winter_comp = estimates[4]
              )
 msr_model <- gen_msr$new(pars = p_new,
                          time = 1,
