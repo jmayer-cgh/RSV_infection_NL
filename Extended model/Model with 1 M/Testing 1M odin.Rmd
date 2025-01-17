@@ -225,6 +225,7 @@ likelihood_values <- likelihood_values %>% add_row(spring_comp = theta7[1],
                                                    autumn_comp = theta7[3],
                                                    winter_comp = theta7[4],
                                                    loglikelihood = log7)
+
 ```
 
 ```{r}
@@ -239,6 +240,45 @@ model_output %>% ggplot() +
                     ymax = seroprev_up95)) +
   ylab("Proportion seroconverted") + xlab("age (days)") 
 ```
+
+```{r}
+# Trying out a different method for estimating values
+LL_freq = function(x) -loglik(x) # optim searches for parameters, which minimise the function fn --> change the sign of the function
+
+out_freq <- optim(c(0.003478, 0.02002, 0.00264, 0.00692), 
+                  LL_freq, 
+                  lower = 0.0001 + c(0, 0, 0, 0), 
+                  upper = 0.9999 * c(1, 1, 1, 1), 
+                  method= 'L-BFGS-B')
+
+out_freq
+```
+
+```{r}
+# Plot the model output
+theta8 <- out_freq$par
+model_output <- model_fun(theta8)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
+```{r}
+# Compared to old model
+model_output <- model_fun(theta2)
+
+model_output %>% ggplot() +
+  geom_line(aes(x = time, y = prop_sero_tot), colour = "indianred1") +
+  geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
+  geom_errorbar(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, 
+                    ymax = seroprev_up95)) +
+  ylab("Proportion seroconverted") + xlab("age (days)") 
+```
+
 
 ```{r}
 # FITTING -------------------------------------------
@@ -430,5 +470,11 @@ trace_4_MCMC[[1]]$acceptanceRate
 
 ```{r}
 summary(trace_4_params)
+```
+
+```{r}
+time <- 30.41 * 18 + 5
+spring_FOI_sp <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0
+
 ```
 
