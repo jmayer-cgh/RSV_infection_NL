@@ -55,103 +55,25 @@ n_SR_wt <- lambda_wt * dt * S_wt# S to R
 
 ## Building the FOI
 # Define booleans to know which season the cohort is in
-spring_FOI_sp <- if ((time <= 30.41*3) ||  
-                     ((time >= 365) && (time <= (365+30.41*3))) ||
-                     ((time >= 2*365) && (time <= (2*365+30.41*3))) ||
-                     ((time >= 3*365) && (time <= (3*365+30.41*3))) || 
-                     ((time >= 4*365) && (time <= (4*365+30.41*3))) || 
-                     ((time >= 5*365) && (time <= (5*365+30.41*3)))) 1 else 0
-summer_FOI_sp <- if ((time > 30.41*3 && time <= 30.41*6 ) ||                      # FOI in summer for those born in spring
-                              ((time > 365 + 30.41*3) && (time <= (365+30.41*6))) ||
-                              ((time > 2*365 + 30.41*3) && (time <= (2*365+30.41*6))) ||
-                              ((time > 3*365 + 30.41*3) && (time <= (3*365+30.41*6))) ||
-                              ((time > 4*365 + 30.41*3) && (time <= (4*365+30.41*6))) ||
-                              ((time > 5*365 + 30.41*3) && (time <= (5*365+30.41*6)))) 1 else 0 
-autumn_FOI_sp <- if ( (time > 30.41*6 && time <= 30.41*9 ) ||                    
-                    ((time > 365+30.41*6) && (time <= (365+30.41*9))) ||
-                    ((time > 2*365 + 30.41*6) && (time <= (2*365+30.41*9))) ||
-                    ((time > 3*365 + 30.41*6) && (time <= (3*365+30.41*9))) ||
-                    ((time > 4*365 + 30.41*6) && (time <= (4*365+30.41*9))) ||
-                    ((time > 5*365 + 30.41*6) && (time <= (5*365+30.41*9)))) 1 else 0
-winter_FOI_sp <- if ( (time > 30.41*9 && time <= 30.41*12 ) ||                   
-                    ((time > 365+30.41*9) && (time <= (365+30.41*12))) ||
-                    ((time > 2*365 + 30.41*9) && (time <= (2*365+30.41*12))) ||
-                    ((time > 3*365 + 30.41*9) && (time <= (3*365+30.41*12))) ||
-                    ((time > 4*365 + 30.41*9) && (time <= (4*365+30.41*12))) ||
-                    ((time > 5*365 + 30.41*9) && (time <= (5*365+30.41*12)))) 1 else 0
-spring_FOI_sm <- if ( (time > 30.41*9 && time <= 30.41*12 )  ||                 
-                              ((time > 365+30.41*9) && (time <= (365+30.41*12))) ||
-                              ((time > 2*365 + 30.41*9) && (time <= (2*365+30.41*12))) ||
-                              ((time > 3*365 + 30.41*9) && (time <= (3*365+30.41*12))) ||
-                              ((time > 4*365 + 30.41*9) && (time <= (4*365+30.41*12))) ||
-                              ((time > 5*365 + 30.41*9) && (time <= (5*365+30.41*12)))) 1 else 0
-summer_FOI_sm <- if((time <= 30.41*3) ||                                     
-                            ((time >= 365) && (time <= (365+30.41*3))) ||
-                            ((time >= 2*365) && (time <= (2*365+30.41*3))) ||
-                            ((time >= 3*365) && (time <= (3*365+30.41*3))) ||
-                            ((time >= 4*365) && (time <= (4*365+30.41*3))) ||
-                            ((time >= 5*365) && (time <= (5*365+30.41*3)))) 1 else 0
+spring_FOI_sp <- if (any(time %% 365 <= 30.41 * 3)) 1 else 0 # FOI in the spring for those born in the spring
+summer_FOI_sp <- if (any(time %% 365 > 30.41*3 && time %% 365 <= 30.41*6 )) 1 else 0 # FOI in the summer for those born in the spring
+autumn_FOI_sp <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0 # FOI in the autumn for those born in the spring
+winter_FOI_sp <- if (any(time %% 365 > 30.41*9 && time %% 365 <= 30.41*12 )) 1 else 0 # FOI in the winter for those born in the spring
 
-autumn_FOI_sm <- if ((time > 30.41*3 && time <= 30.41*6 ) ||                       # FOI in autumn for those born in summer
-                             ((time > 365 + 30.41*3) && (time <= (365+30.41*6))) ||
-                             ((time > 2*365 + 30.41*3) && (time <= (2*365+30.41*6))) || 
-                             ((time > 3*365 + 30.41*3) && (time <= (3*365+30.41*6))) ||
-                             ((time > 4*365 + 30.41*3) && (time <= (4*365+30.41*6))) ||
-                             ((time > 5*365 + 30.41*3) && (time <= (5*365+30.41*6)))) 1 else 0
-winter_FOI_sm <- if ( (time > 30.41*6 && time <= 30.41*9 ) ||                    
-                              ((time > 365+30.41*6) && (time <= (365+30.41*9))) ||
-                              ((time > 2*365 + 30.41*6) && (time <= (2*365+30.41*9))) ||
-                              ((time > 3*365 + 30.41*6) && (time <= (3*365+30.41*9))) ||
-                              ((time > 4*365 + 30.41*6) && (time <= (4*365+30.41*9))) ||
-                              ((time > 5*365 + 30.41*6) && (time <= (5*365+30.41*9)))) 1 else 0
-spring_FOI_au <- if ( (time > 30.41*6 && time <= 30.41*9 ) ||                    
-                              ((time > 365+30.41*6) && (time <= (365+30.41*9))) ||
-                              ((time > 2*365 + 30.41*6) && (time <= (2*365+30.41*9))) ||
-                              ((time > 3*365 + 30.41*6) && (time <= (3*365+30.41*9))) ||
-                              ((time > 4*365 + 30.41*6) && (time <= (4*365+30.41*9))) ||
-                              ((time > 5*365 + 30.41*6) && (time <= (5*365+30.41*9)))) 1 else 0
-summer_FOI_au <- if ( (time > 30.41*9 && time <= 30.41*12 ) ||                   
-                              ((time > 365+30.41*9) && (time <= (365+30.41*12))) ||
-                              ((time > 2*365 + 30.41*9) && (time <= (2*365+30.41*12))) ||
-                              ((time > 3*365 + 30.41*9) && (time <= (3*365+30.41*12))) ||
-                              ((time > 4*365 + 30.41*9) && (time <= (4*365+30.41*12))) ||
-                              ((time > 5*365 + 30.41*9) && (time <= (5*365+30.41*12)))) 1 else 0
-autumn_FOI_au <- if((time <= 30.41*3) ||                                      
-                            ((time >= 365) && (time <= (365+30.41*3))) ||
-                            ((time >= 2*365) && (time <= (2*365+30.41*3))) ||
-                            ((time >= 3*365) && (time <= (3*365+30.41*3))) ||
-                            ((time >= 4*365) && (time <= (4*365+30.41*3))) ||
-                            ((time >= 5*365) && (time <= (5*365+30.41*3)))) 1 else 0
-winter_FOI_au <- if ((time > 30.41*3 && time <= 30.41*6 ) ||                      # FOI in winter for those born in autumn
-                               ((time > 365 + 30.41*3) && (time <= (365+30.41*6))) ||
-                               ((time > 2*365 + 30.41*3) && (time <= (2*365+30.41*6))) || 
-                               ((time > 3*365 + 30.41*3) && (time <= (3*365+30.41*6))) ||
-                               ((time > 4*365 + 30.41*3) && (time <= (4*365+30.41*6))) ||
-                               ((time > 5*365 + 30.41*3) && (time <= (5*365+30.41*6)))) 1 else 0
-spring_FOI_wt <- if ((time > 30.41*3 && time <= 30.41*6 ) ||                      # FOI in spring for those born in winter
-                             ((time > 365 + 30.41*3) && (time <= (365+30.41*6))) ||
-                             ((time > 2*365 + 30.41*3) && (time <= (2*365+30.41*6))) ||
-                             ((time > 3*365 + 30.41*3) && (time <= (3*365+30.41*6))) ||
-                             ((time > 4*365 + 30.41*3) && (time <= (4*365+30.41*6))) ||
-                             ((time > 5*365 + 30.41*3) && (time <= (5*365+30.41*6)))) 1 else 0
-summer_FOI_wt <- if ( (time > 30.41*6 && time <= 30.41*9 ) ||                     
-                              ((time > 365+30.41*6) && (time <= (365+30.41*9))) ||
-                              ((time > 2*365 + 30.41*6) && (time <= (2*365+30.41*9))) ||
-                              ((time > 3*365 + 30.41*6) && (time <= (3*365+30.41*9))) ||
-                              ((time > 4*365 + 30.41*6) && (time <= (4*365+30.41*9))) ||
-                              ((time > 5*365 + 30.41*6) && (time <= (5*365+30.41*9)))) 1 else 0
-autumn_FOI_wt <- if ( (time > 30.41*9 && time <= 30.41*12 )     ||              
-                              ((time > 365+30.41*9) && (time <= (365+30.41*12))) ||
-                              ((time > 2*365 + 30.41*9) && (time <= (2*365+30.41*12))) ||
-                              ((time > 3*365 + 30.41*9) && (time <= (3*365+30.41*12))) ||
-                              ((time > 4*365 + 30.41*9) && (time <= (4*365+30.41*12))) ||
-                              ((time > 5*365 + 30.41*9) && (time <= (5*365+30.41*12)))) 1 else 0
-winter_FOI_wt <- if( (time <= 30.41*3) ||                                     
-                             ((time >= 365) && (time <= (365+30.41*3))) ||
-                             ((time >= 2*365) && (time <= (2*365+30.41*3))) ||
-                             ((time >= 3*365) && (time <= (3*365+30.41*3))) ||
-                             ((time >= 4*365) && (time <= (4*365+30.41*3))) ||
-                             ((time >= 5*365) && (time <= (5*365+30.41*3)))) 1 else 0
+spring_FOI_sm <- if (any(time %% 365 > 30.41*9 && time %% 365 <= 30.41*12 )) 1 else 0
+summer_FOI_sm <- if (any(time %% 365 <= 30.41 * 3)) 1 else 0
+autumn_FOI_sm <- if (any(time %% 365 > 30.41*3 && time %% 365 <= 30.41*6 )) 1 else 0 # FOI in the autumn for those born in the summer
+winter_FOI_sm <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0
+
+spring_FOI_au <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0
+summer_FOI_au <- if (any(time %% 365 > 30.41*9 && time %% 365 <= 30.41*12 )) 1 else 0
+autumn_FOI_au <- if (any(time %% 365 <= 30.41 * 3)) 1 else 0
+winter_FOI_au <- if (any(time %% 365 > 30.41*3 && time %% 365 <= 30.41*6 )) 1 else 0 # FOI in the winter for those born in the autumn
+
+spring_FOI_wt <- if (any(time %% 365 > 30.41*3 && time %% 365 <= 30.41*6 )) 1 else 0 # FOI in the spring for those born in the winter
+summer_FOI_wt <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0
+autumn_FOI_wt <- if (any(time %% 365 > 30.41*9 && time %% 365 <= 30.41*12 )) 1 else 0
+winter_FOI_wt <- if (any(time %% 365 <= 30.41 * 3)) 1 else 0
 
 
 # time-dependent contact parameter for each birth cohort
