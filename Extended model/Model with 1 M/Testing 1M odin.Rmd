@@ -265,7 +265,7 @@ mcmc_settings <- list(iterations = 2*80000,
                       nrChains = nchains)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
                    sampler = "Metropolis", 
-                   settings = mcmc_settings)}) # takes about 3 hours
+                   settings = mcmc_settings)}) # takes about 3 hours - 41.3 hours
 ```
 
 ```{r}
@@ -291,7 +291,7 @@ coda::effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Model with 1 M /Odin model with BT and 1 M.rds")
+saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M/Odin model with BT, 1 M, summer only.rds")
 ```
 
 ```{r}
@@ -410,3 +410,10 @@ fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
 
 fit
 ```
+
+```{r}
+# Check acceptance rate
+traceMCMC <- coda::mcmc(trace)
+traceMCMC[[1]]$acceptanceRate
+```
+
