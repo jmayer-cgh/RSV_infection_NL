@@ -471,10 +471,3 @@ trace_4_MCMC[[1]]$acceptanceRate
 ```{r}
 summary(trace_4_params)
 ```
-
-```{r}
-time <- 30.41 * 18 + 5
-spring_FOI_sp <- if (any(time %% 365 > 30.41*6 && time %% 365 <= 30.41*9 )) 1 else 0
-
-```
-
