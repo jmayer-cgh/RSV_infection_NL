@@ -200,6 +200,19 @@ model_output %>% ggplot() +
   ylab("Proportion seroconverted") + xlab("age (days)") 
 ```
 
+```{r}
+# Testing gradient descent
+LL_freq = function(x) -loglik(x) # optim searches for parameters, which minimise the function fn --> change the sign of the function
+
+out_freq <- optim(c(0.003478, 0.02002, 0.00264, 0.00692), 
+                  LL_freq, 
+                  lower = 0.0001 + c(0, 0, 0, 0), 
+                  upper = 0.9999 * c(1, 1, 1, 1), 
+                  method= 'L-BFGS-B')
+
+out_freq
+```
+
 
 ```{r}
 # Define likelihood function
@@ -427,6 +440,7 @@ lambda_wt <- ggplot() + theme_bw() + ggtitle("FOI for the winter birth cohort (n
   xlab("age (days)") + ylab("FOI") + xlim(0, 365)
 lambda_wt
 ```
+
 ```{r}
 # Testing the likelihood function
 theta1 <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
@@ -514,7 +528,7 @@ set.seed(34)
 
 for (i in 1:n) {
     # ... make some data
-    theta <- c(spring_comp = runif(n = 1, min = 0, max = 0.01), 
+    theta <- c(spring_comp = runif(n = 1, min = 0, max = 0.1), 
               summer_comp = 0.00060, 
               autumn_comp = 0.00264, 
               winter_comp = 0.00692)
@@ -530,8 +544,8 @@ for (i in 1:n) {
 likelihood_values <- do.call(rbind, likelihood_values_list)
 
 likelihood_values %>% ggplot() +
-  geom_line(aes(x = spring_comp, y = loglikelihood)) +
-  geom_point(aes(x=0.003478, y=-237.64), colour="blue")
+  geom_line(aes(x = spring_comp, y = loglikelihood)) # +
+ # geom_point(aes(x=0.003478, y=-237.64), colour="blue")
 ```
 
 ```{r}
@@ -543,7 +557,7 @@ set.seed(34)
 for (i in 1:n) {
     # ... make some data
     theta <- c(spring_comp = 0.00003478,
-              summer_comp = runif(n = 1, min = 0, max = 0.001), 
+              summer_comp = runif(n = 1, min = 0, max = 0.1), 
               autumn_comp = 0.00264, 
               winter_comp = 0.00692)
     log <- loglik(theta)
@@ -558,7 +572,7 @@ for (i in 1:n) {
 likelihood_values <- do.call(rbind, likelihood_values_list)
 
 likelihood_values %>% ggplot() +
-  geom_line(aes(x = summer_comp, y = loglikelihood)) +
-  geom_point(aes(x=0.00060, y=-237.64), colour="blue")
+  geom_line(aes(x = summer_comp, y = loglikelihood)) # +
+  # geom_point(aes(x=0.00060, y=-237.64), colour="blue")
 ```
 
