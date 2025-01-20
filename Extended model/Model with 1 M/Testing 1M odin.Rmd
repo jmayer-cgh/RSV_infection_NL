@@ -408,21 +408,21 @@ colnames(Wquantiles) <- c("agemid", "low95", "median", "up95")
 
 
 # Cumulative proportion seroconverted by season of birth
-# spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-#                                      function(x) quantile(x[,"conv_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-# colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
-# 
-# summer_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-#                                      function(x) quantile(x[,"conv_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-# colnames(summer_conv_quantiles) <- c("agemid", "low95", "median", "up95")
-# 
-# autumn_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-#                                      function(x) quantile(x[,"conv_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-# colnames(autumn_conv_quantiles) <- c("agemid", "low95", "median", "up95")
-# 
-# winter_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
-#                                      function(x) quantile(x[,"conv_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T)) 
-# colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+spring_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                     function(x) quantile(x[,"R_sp"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(spring_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+summer_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                     function(x) quantile(x[,"R_sm"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(summer_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+autumn_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                     function(x) quantile(x[,"R_au"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(autumn_conv_quantiles) <- c("agemid", "low95", "median", "up95")
+
+winter_conv_quantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+                                     function(x) quantile(x[,"R_wt"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 
 # Incident proportion seroconverted by season of birth
 spring_conv_quantiles_inc <- plyr::ddply(.data = trajsim, .variables = "time", 
@@ -458,6 +458,37 @@ fit
 traceMCMC <- coda::mcmc(trace)
 traceMCMC[[1]]$acceptanceRate
 ```
+
+```{r}
+# Saving the useful files ------------------------------------------------------------
+path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/Odin with 1 M/"
+write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
+write.csv(lambda_smquantiles, paste0(path, "strat_lambda_sm.csv"))
+write.csv(lambda_auquantiles, paste0(path, "strat_lambda_au.csv"))
+write.csv(lambda_wtquantiles, paste0(path, "strat_lambda_wt.csv"))
+
+write.csv(Pquantiles, paste0(path, "strat_Pquantiles.csv"))
+write.csv(Mquantiles, paste0(path, "strat_Mquantiles.csv"))
+write.csv(Aquantiles, paste0(path, "strat_Aquantiles.csv"))
+write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
+
+# Cumulative seroconversion
+write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
+write.csv(trajsim, paste0(path, "strat_trajsim.csv"))
+write.csv(spring_conv_quantiles, paste0(path, "strat_spring_conv_tot.csv"))
+write.csv(summer_conv_quantiles, paste0(path, "strat_summer_conv_tot.csv"))
+write.csv(autumn_conv_quantiles, paste0(path, "strat_autumn_conv_tot.csv"))
+write.csv(winter_conv_quantiles, paste0(path, "strat_winter_conv_tot.csv"))
+
+# Incident seroconversion
+write.csv(trajquantiles_inc, paste0(path, "Incidence/strat_trajquantiles_inc.csv"))
+write.csv(trajsim, paste0(path, "Incidence/strat_trajsim.csv"))
+write.csv(spring_conv_quantiles_inc, paste0(path, "Incidence/strat_spring_conv_inc.csv"))
+write.csv(summer_conv_quantiles_inc, paste0(path, "Incidence/strat_summer_conv_inc.csv"))
+write.csv(autumn_conv_quantiles_inc, paste0(path, "Incidence/strat_autumn_conv_inc.csv"))
+write.csv(winter_conv_quantiles_inc, paste0(path, "Incidence/strat_winter_conv_inc.csv"))
+```
+
 
 ```{r}
 # Get trace with estimates of all 4 parameters
