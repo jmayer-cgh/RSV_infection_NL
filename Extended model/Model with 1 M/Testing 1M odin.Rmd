@@ -333,7 +333,7 @@ coda::effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M/Odin model with BT, 1 M, summer only.rds")
+saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M/Odin model with BT, 1 M, adaptive.rds")
 ```
 
 ```{r}
