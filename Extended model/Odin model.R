@@ -34,23 +34,23 @@ update(R_all) <- R_sp + R_sm + R_au + R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
-n_M1M2_sp <- mu/2 * dt * M1_sp # M1 to M2
-n_M2S_sp <- mu/2 * dt * M2_sp # M2 to S
+n_M1M2_sp <- mu*2 * dt * M1_sp # M1 to M2
+n_M2S_sp <- mu*2 * dt * M2_sp # M2 to S
 n_SR_sp <- lambda_sp * dt * S_sp # S to R
 
 # summer birth cohort
-n_M1M2_sm <- mu/2 * dt * M1_sm # M1 to M2
-n_M2S_sm <- mu/2 * dt * M2_sm # M2 to S
+n_M1M2_sm <- mu*2 * dt * M1_sm # M1 to M2
+n_M2S_sm <- mu*2 * dt * M2_sm # M2 to S
 n_SR_sm <- lambda_sm * dt * S_sm # S to R
 
 # autumn birth cohort
-n_M1M2_au <- mu/2 * dt * M1_au # M1 to M2
-n_M2S_au <- mu/2 * dt * M2_au # M2 to S
+n_M1M2_au <- mu*2 * dt * M1_au # M1 to M2
+n_M2S_au <- mu*2 * dt * M2_au # M2 to S
 n_SR_au <- lambda_au * dt * S_au # S to R
 
 # winter birth cohort
-n_M1M2_wt <- mu/2 * dt * M1_wt# M1 to M2
-n_M2S_wt <- mu/2 * dt * M2_wt # M2 to S
+n_M1M2_wt <- mu*2 * dt * M1_wt# M1 to M2
+n_M2S_wt <- mu*2 * dt * M2_wt # M2 to S
 n_SR_wt <- lambda_wt * dt * S_wt# S to R
 
 ## Building the FOI
