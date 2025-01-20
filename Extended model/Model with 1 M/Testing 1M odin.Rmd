@@ -307,7 +307,7 @@ mcmc_settings <- list(iterations = 2*80000,
                       optimize = T)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
                    sampler = "Metropolis", 
-                   settings = mcmc_settings)}) # takes about 3 hours - 41.3 hours
+                   settings = mcmc_settings)}) # takes about 3 hours - 9 hours
 ```
 
 ```{r}
