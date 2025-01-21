@@ -409,6 +409,37 @@ fit
 ```
 
 ```{r}
+# Saving the useful files ------------------------------------------------------------
+path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/"
+# write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
+# write.csv(lambda_smquantiles, paste0(path, "strat_lambda_sm.csv"))
+# write.csv(lambda_auquantiles, paste0(path, "strat_lambda_au.csv"))
+# write.csv(lambda_wtquantiles, paste0(path, "strat_lambda_wt.csv"))
+
+write.csv(Pquantiles, paste0(path, "strat_Pquantiles.csv"))
+write.csv(Mquantiles, paste0(path, "strat_Mquantiles.csv"))
+write.csv(Aquantiles, paste0(path, "strat_Aquantiles.csv"))
+write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
+
+# Cumulative seroconversion
+write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
+write.csv(trajsim, paste0(path, "strat_trajsim.csv"))
+write.csv(spring_conv_quantiles, paste0(path, "strat_spring_conv_tot.csv"))
+write.csv(summer_conv_quantiles, paste0(path, "strat_summer_conv_tot.csv"))
+write.csv(autumn_conv_quantiles, paste0(path, "strat_autumn_conv_tot.csv"))
+write.csv(winter_conv_quantiles, paste0(path, "strat_winter_conv_tot.csv"))
+
+# Incident seroconversion
+# write.csv(trajquantiles_inc, paste0(path, "Incidence/strat_trajquantiles_inc.csv"))
+# write.csv(trajsim, paste0(path, "Incidence/strat_trajsim.csv"))
+# write.csv(spring_conv_quantiles_inc, paste0(path, "Incidence/strat_spring_conv_inc.csv"))
+# write.csv(summer_conv_quantiles_inc, paste0(path, "Incidence/strat_summer_conv_inc.csv"))
+# write.csv(autumn_conv_quantiles_inc, paste0(path, "Incidence/strat_autumn_conv_inc.csv"))
+# write.csv(winter_conv_quantiles_inc, paste0(path, "Incidence/strat_winter_conv_inc.csv"))
+```
+
+
+```{r}
 lambda_sp <- ggplot() + theme_bw() + ggtitle("FOI for the spring birth cohort (no daycare)") +
   geom_ribbon(data = lambda_spquantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
   geom_line(data = lambda_spquantiles, aes(x = agemid, y = median), color = "red") +
