@@ -414,12 +414,6 @@ coda::effectiveSize(mcmc2)
 plot(mcmc2) # run this in the console
 ```
 
-```{r}
-# Get the values
-parameter_mean_hpd <- apply(pmcmc_tuned_run$pars, 2, mean)
-parameter_mean_hpd
-```
-
 
 ```{r}
 1 - coda::rejectionRate(mcmc2) # Is this better???? YES!
@@ -494,5 +488,56 @@ legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 matplot(model_data$age_mid_start, prop_seroconv, type = "l", lty = 1, col = grey(0.7, 0.2),
         xlab = "Day", ylab = "Number of cases", ylim = c(0, 1.2))
 points(model_data$age_mid_start, model_data$prop_seroconv, pch = 20)
+```
+
+```{r}
+# Parameter estimates
+hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, prob = c(0.025, 0.5, 0.975), na.rm=T) 
+rownames(hpd) <- c("low95", "median", "up95")
+
+# Get the mean highest probability distribution
+mean_hpd <- apply(pmcmc_tuned_run$pars, 2, mean)
+
+lower_95_hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, probs = 0.05)
+
+upper_95_hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, probs = 0.95)
+
+summary_hpd <- rbind(mean_hpd, lower_95_hpd, upper_95_hpd)
+summary_hpd
+```
+
+```{r}
+# Seroconversion estimates
+seroconversion <- list()
+
+for (i in 1:length(pmcmc_tuned_run$trajectories$time)){
+  age_midpoint <- pmcmc_tuned_run$trajectories$time[i]
+  
+  low95_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.05)
+  median_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.5)
+  up95_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.95)
+  
+  low95_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.05)
+  median_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.5)
+  up95_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.95)
+  
+  low95_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.05)
+  median_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.5)
+  up95_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.95)
+  
+  low95_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.05)
+  median_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.5)
+  up95_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.95)
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_sp, median_sp, up95_sp, 
+                         low95_sm, median_sm, up95_sm, 
+                         low95_au, median_au, up95_au, 
+                         low95_wt, median_wt, up95_wt)
+  
+  seroconversion[[i]] <- combined
+}
+
+seroconversion_df <- do.call("rbind", seroconversion)
 ```
 
