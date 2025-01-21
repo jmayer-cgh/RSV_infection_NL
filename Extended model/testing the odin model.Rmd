@@ -11,8 +11,8 @@ library(ggplot2)
 
 ```{r}
 # Load model
-# gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
-gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model 1 M comp.R")
+gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
+# gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model 1 M comp.R")
 ```
 
 # Running the MSIR model with dust
@@ -63,22 +63,29 @@ x_df_names <- c("time",
                 "M1_sp", "M2_sp", "S_sp", "R_sp",
                 "M1_sm", "M2_sm", "S_sm", "R_sm",
                 "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
+                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all",
+                "prop_seroconverted")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
 # Transpose and assign names
 x_transp <- data.frame(t(x_df_w_names[-1]))
 colnames(x_transp) <- x_df_w_names[, 1]
+
+# Calculate proportion seroconverted
+x_transp <- x_transp %>% mutate %>% rowwise() %>%
+  dplyr::mutate(total_pop = sum(c_across(M1_sp:R_wt)),
+          prop_sero_tot = R_all / total_pop)
 ```
 
 ```{r}
-palette <- c("M" = "#F2862C",  "S" = "#8c8cd9", "R" = "#999966", "R_all" = "pink")
+palette <- c("M1" = "#F2862C",  "M2" = "yellow", "S" = "#8c8cd9", "R" = "#999966", "prop_sero_tot" = "pink")
 x_transp %>% ggplot(aes(x = time)) +
-  geom_line(aes(y = M_sp, colour = "M")) + 
+  geom_line(aes(y = M1_sp, colour = "M1")) + 
+  geom_line(aes(y = M2_sp, colour = "M2")) + 
   geom_line(aes(y = S_sp, colour = "S")) + 
   geom_line(aes(y = R_sp, colour = "R")) + 
-  geom_line(aes(y = R_all, colour = "R_all")) + 
+  geom_line(aes(y = prop_sero_tot, colour = "prop_sero_tot")) + 
   labs(title = "Model progression for the spring cohort", x = "Age",
        y = "Number of individuals", colour = "State") +
   theme_light() +
@@ -228,7 +235,7 @@ case_compare <- function(state, observed, pars = NULL){
   # Whole data
   nconv <- observed$n_infection # n seroconverted at each age point  (data)
   N <- observed$N # total N at each age point  (data)
-  prob <- state[14, , drop = T] / colSums(state[2:13, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
+  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
  # prob <- observed$prop_seroconv
 
   dbinom(x = nconv,
@@ -291,15 +298,16 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   }
 
   par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-  # cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
-  cols <- c(M_sp = "#8c8cd9", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+  cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", prop_sero_tot = "pink")
+  # cols <- c(M_sp = "#8c8cd9", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
   matplot(times, t(history[2, , -1]), type = "l",
           xlab = "Time", ylab = "Number of individuals",
-          col = cols[["M_sp"]], lty = 1, ylim = range(history))
-  matlines(times, t(history[3, , -1]), col = cols[["S_sp"]], lty = 1)
-  matlines(times, t(history[4, , -1]), col = cols[["R_sp"]], lty = 1)
-  matlines(times, t(history[14, , -1]), col = cols[["R_all"]], lty = 1)
-  matpoints(t(true_history[1]), t(true_history[9]), pch = 19, cols = c("black", "black"))
+          col = cols[["M1_sp"]], lty = 1, ylim = c(0,2))
+  matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
+  matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
+  matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
+  matlines(times, t(history[17, , -1]), col = cols[["prop_sero_tot"]], lty = 1)
+  matpoints(t(true_history[1]), t(true_history[8]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
 }
@@ -318,13 +326,13 @@ filter$run(save_history = TRUE, pars = list(dt = dt,
 # Use MCMC to infer parameter values
 
 # Define parameters first
-spring_comp <- pmcmc_parameter("spring_comp", initial = 0.003478, max = 0.1, min = 0, prior = function(p) # take values from old model
+spring_comp <- pmcmc_parameter("spring_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-summer_comp <- pmcmc_parameter("summer_comp", initial = 0.00060, max = 0.1, min = 0, prior = function(p)
+summer_comp <- pmcmc_parameter("summer_comp", initial = 0.000202, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.00264, max = 0.1, min = 0, prior = function(p)
+autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-winter_comp <- pmcmc_parameter("winter_comp", initial = 0.00692, max = 0.1, min = 0, prior = function(p)
+winter_comp <- pmcmc_parameter("winter_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
 
 proposal_matrix <- diag(0.1, 4)
@@ -407,6 +415,13 @@ plot(mcmc2) # run this in the console
 ```
 
 ```{r}
+# Get the values
+parameter_mean_hpd <- apply(pmcmc_tuned_run$pars, 2, mean)
+parameter_mean_hpd
+```
+
+
+```{r}
 1 - coda::rejectionRate(mcmc2) # Is this better???? YES!
 ```
 
@@ -436,24 +451,24 @@ hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
 ```{r}
 # Compare with the data
 times <- c(0, incidence_data$age_mid)
-cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
+cols <- c(`M1 spring` = "#8c8cd9", `M2 spring` = "turquoise", `S spring` = "#cc0044", `R spring` = "#999966", `Total prop \nseroconverted` = "pink")
 
 state <- mcmc_sample$trajectories$state
 
-prevalence <-  t(state[18, , -1])
+prop_seroconv <-  t(state[17, , -1])
 
 par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
-matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
-        ylim = c(0, max(t(state[18, , ])) * 1.2), xlab = "Day", ylab = "Number of individuals")
-matlines(times, t(state[3, , ]), lty = 1, col = cols["M2_sp"])
-matlines(times, t(state[4, , ]), lty = 1, col = cols["S_sp"])
-matlines(times, t(state[5, , ]), lty = 1, col = cols["R_sp"])
-matlines(times, t(state[18, , ]), lty = 1, col = cols["R_all"])
-legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
+matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1 spring"],
+        ylim = c(0, max(t(state[17, , ])) * 1.2), xlab = "Day", ylab = "Proportion of individuals")
+matlines(times, t(state[3, , ]), lty = 1, col = cols["M2 spring"])
+matlines(times, t(state[4, , ]), lty = 1, col = cols["S spring"])
+matlines(times, t(state[5, , ]), lty = 1, col = cols["R spring"])
+matlines(times, t(state[17, , ]), lty = 1, col = cols["Total prop \nseroconverted"])
+legend("right", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
-matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
-        xlab = "Day", ylab = "Number of cases", ylim = c(0, 700))
-points(model_data$age_mid_start, model_data$cum_infection, pch = 20)
+matplot(model_data$age_mid_start, prop_seroconv, type = "l", lty = 1, col = grey(0.7, 0.2),
+        xlab = "Day", ylab = "Proportion of seroconverted children", ylim = c(0, 1.2))
+points(model_data$age_mid_start, model_data$prop_seroconv, pch = 20)
 ```
 ```{r}
 parameters <- mcmc_sample$pars
@@ -465,7 +480,7 @@ single_sample <- pmcmc_sample(pmcmc_tuned_run, n_sample = 1)
 
 state_single <- single_sample$trajectories$state
 
-prevalence <-  (state_single[18, , -1])
+prop_seroconv <-  (state_single[17, , -1])
 
 par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
 matplot(times, (state_single[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
@@ -473,11 +488,11 @@ matplot(times, (state_single[2, , ]), type = "l", lty = 1, col = cols["M1_sp"],
 matlines(times, (state_single[3, , ]), lty = 1, col = cols["M2_sp"])
 matlines(times, (state_single[4, , ]), lty = 1, col = cols["S_sp"])
 matlines(times, (state_single[5, , ]), lty = 1, col = cols["R_sp"])
-matlines(times, (state_single[18, , ]), lty = 1, col = cols["R_all"])
+matlines(times, (state_single[17, , ]), lty = 1, col = cols["prop_sero_tot"])
 legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
-matplot(model_data$age_mid_start, prevalence, type = "l", lty = 1, col = grey(0.7, 0.2),
-        xlab = "Day", ylab = "Number of cases", ylim = c(0, 700))
-points(model_data$age_mid_start, model_data$cum_infection, pch = 20)
+matplot(model_data$age_mid_start, prop_seroconv, type = "l", lty = 1, col = grey(0.7, 0.2),
+        xlab = "Day", ylab = "Number of cases", ylim = c(0, 1.2))
+points(model_data$age_mid_start, model_data$prop_seroconv, pch = 20)
 ```
 
