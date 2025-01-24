@@ -539,5 +539,14 @@ for (i in 1:length(pmcmc_tuned_run$trajectories$time)){
 }
 
 seroconversion_df <- do.call("rbind", seroconversion)
+rownames(seroconversion_df) <- NULL
+```
+
+```{r}
+# Save files
+path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"
+
+write.csv(summary_hpd, paste0(path, "highest probability distribution.csv"), row.names = F)
+write.csv(seroconversion_df, paste0(path, "seroconversion by age.csv"), row.names = F)
 ```
 
