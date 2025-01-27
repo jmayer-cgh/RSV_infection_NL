@@ -5,37 +5,42 @@ library(ggplot2)
 
 # Define useful paths
 path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
-path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/Vaccination/" #Where model outputs are stored
+path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"  #Where model outputs are stored
   
 # Read in RSV-illness rates
 mild_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Mild illness")
 severe_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Severe illness")
 
 # Read in model estimate
-conversion_rate_summer <- read.csv(paste0(path_model, "Incidence/strat_summer_conv_inc.csv")) %>% 
-  subset(select = -X)
-conversion_rate_autumn <- read.csv(paste0(path_model, "Incidence/strat_autumn_conv_inc.csv")) %>% 
-  subset(select = -X)
-conversion_rate_winter <- read.csv(paste0(path_model, "Incidence/strat_winter_conv_inc.csv")) %>% 
-  subset(select = -X)
-conversion_rate_spring <- read.csv(paste0(path_model, "Incidence/strat_spring_conv_inc.csv")) %>% 
-  subset(select = -X)
+conversion_rate <- read.csv(paste0(path_model, "seroconversion by age.csv")) 
 
-# Combine all estimates into one DF
-conversion <- conversion_rate_summer %>% mutate(birth_season = "summer") %>%
+# Convert into a long format
+conversion <- conversion_rate %>% 
+  select(age_midpoint, low95_sp, median_sp, up95_sp) %>%
+  rename(low95 = "low95_sp", median = "median_sp", up95 = "up95_sp") %>%
+  mutate(birth_season = "spring") %>%
   rbind(
-    conversion_rate_autumn %>% mutate(birth_season = "autumn")
+    conversion_rate %>% 
+      select(age_midpoint, low95_sm, median_sm, up95_sm) %>%
+      rename(low95 = "low95_sm", median = "median_sm", up95 = "up95_sm") %>%
+      mutate(birth_season = "summer")
   ) %>%
   rbind(
-    conversion_rate_winter %>% mutate(birth_season = "winter")
+    conversion_rate %>% 
+      select(age_midpoint, low95_au, median_au, up95_au) %>%
+      rename(low95 = "low95_au", median = "median_au", up95 = "up95_au") %>%
+      mutate(birth_season = "autumn")
   ) %>%
   rbind(
-    conversion_rate_spring %>% mutate(birth_season = "spring")
+    conversion_rate %>% 
+    select(age_midpoint, low95_wt, median_wt, up95_wt) %>%
+    rename(low95 = "low95_wt", median = "median_wt", up95 = "up95_wt") %>%
+    mutate(birth_season = "winter")
   )
 
 # Convert ages to the same units
-conversion_formated <- conversion %>% mutate(age_months = trunc(agemid/30.4375)) %>% # turn age into months
-  arrange(agemid) # arrange by age instead of by season of birth
+conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30.4375)) %>% # turn age into months
+  arrange(age_midpoint) # arrange by age instead of by season of birth
 
 # Put ages in the same categories as the disease progression data
 conversion_formated <- conversion_formated %>% 
@@ -52,106 +57,106 @@ conversion_formated <- conversion_formated %>%
 
 # Define which season of the year the birth cohorts are in
 conversion_formated <- conversion_formated %>% 
-  group_by(agemid, birth_season) %>%
-  mutate(current_season = case_when(birth_season == "summer" & ((agemid <= 30.41*3)          # season in which the cohort was born                    
-                                    || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
-                                    || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
-                                    || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
-                                    || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "summer",
-                                    birth_season == "autumn" & ((agemid <= 30.41*3)                              
-                                    || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
-                                    || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
-                                    || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
-                                    || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "autumn",
-                                    birth_season == "winter" & ((agemid <= 30.41*3)                              
-                                    || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
-                                    || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
-                                    || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
-                                    || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "winter",
-                                    birth_season == "spring" & ((agemid <= 30.41*3)                              
-                                    || ((agemid >= 365) & (agemid <= (365+30.41*3))) 
-                                    || ((agemid >= 2*365) & (agemid <= (2*365+30.41*3))) 
-                                    || ((agemid >= 3*365) & (agemid <= (3*365+30.41*3))) 
-                                    || ((agemid >= 4*365) & (agemid <= (4*365+30.41*3))) 
-                                    || ((agemid >= 5*365) & (agemid <= (5*365+30.41*3)))) ~ "spring",
+  group_by(age_midpoint, birth_season) %>%
+  mutate(current_season = case_when(birth_season == "summer" & ((age_midpoint <= 30.41*3)          # season in which the cohort was born                    
+                                    || ((age_midpoint >= 365) & (age_midpoint <= (365+30.41*3))) 
+                                    || ((age_midpoint >= 2*365) & (age_midpoint <= (2*365+30.41*3))) 
+                                    || ((age_midpoint >= 3*365) & (age_midpoint <= (3*365+30.41*3))) 
+                                    || ((age_midpoint >= 4*365) & (age_midpoint <= (4*365+30.41*3))) 
+                                    || ((age_midpoint >= 5*365) & (age_midpoint <= (5*365+30.41*3)))) ~ "summer",
+                                    birth_season == "autumn" & ((age_midpoint <= 30.41*3)                              
+                                    || ((age_midpoint >= 365) & (age_midpoint <= (365+30.41*3))) 
+                                    || ((age_midpoint >= 2*365) & (age_midpoint <= (2*365+30.41*3))) 
+                                    || ((age_midpoint >= 3*365) & (age_midpoint <= (3*365+30.41*3))) 
+                                    || ((age_midpoint >= 4*365) & (age_midpoint <= (4*365+30.41*3))) 
+                                    || ((age_midpoint >= 5*365) & (age_midpoint <= (5*365+30.41*3)))) ~ "autumn",
+                                    birth_season == "winter" & ((age_midpoint <= 30.41*3)                              
+                                    || ((age_midpoint >= 365) & (age_midpoint <= (365+30.41*3))) 
+                                    || ((age_midpoint >= 2*365) & (age_midpoint <= (2*365+30.41*3))) 
+                                    || ((age_midpoint >= 3*365) & (age_midpoint <= (3*365+30.41*3))) 
+                                    || ((age_midpoint >= 4*365) & (age_midpoint <= (4*365+30.41*3))) 
+                                    || ((age_midpoint >= 5*365) & (age_midpoint <= (5*365+30.41*3)))) ~ "winter",
+                                    birth_season == "spring" & ((age_midpoint <= 30.41*3)                              
+                                    || ((age_midpoint >= 365) & (age_midpoint <= (365+30.41*3))) 
+                                    || ((age_midpoint >= 2*365) & (age_midpoint <= (2*365+30.41*3))) 
+                                    || ((age_midpoint >= 3*365) & (age_midpoint <= (3*365+30.41*3))) 
+                                    || ((age_midpoint >= 4*365) & (age_midpoint <= (4*365+30.41*3))) 
+                                    || ((age_midpoint >= 5*365) & (age_midpoint <= (5*365+30.41*3)))) ~ "spring",
                                     
-                                    birth_season == "summer" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) # season following the one the cohort was born in
-                                    || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
-                                    || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
-                                    || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
-                                    || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "autumn",
-                                    birth_season == "autumn" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
-                                    || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
-                                    || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
-                                    || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
-                                    || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "winter",
-                                    birth_season == "winter" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
-                                    || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
-                                    || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
-                                    || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
-                                    || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "spring",
-                                    birth_season == "spring" & ((agemid > 30.41*3 & agemid <= 30.41*6 ) 
-                                    || ((agemid > 365 + 30.41*3) & (agemid <= (365+30.41*6))) 
-                                    || ((agemid > 2*365 + 30.41*3) & (agemid <= (2*365+30.41*6))) 
-                                    || ((agemid > 3*365 + 30.41*3) & (agemid <= (3*365+30.41*6))) 
-                                    || ((agemid > 4*365 + 30.41*3) & (agemid <= (4*365+30.41*6))) 
-                                    || ((agemid > 5*365 + 30.41*3) & (agemid <= (5*365+30.41*6)))) ~ "summer",
+                                    birth_season == "summer" & ((age_midpoint > 30.41*3 & age_midpoint <= 30.41*6 ) # season following the one the cohort was born in
+                                    || ((age_midpoint > 365 + 30.41*3) & (age_midpoint <= (365+30.41*6))) 
+                                    || ((age_midpoint > 2*365 + 30.41*3) & (age_midpoint <= (2*365+30.41*6))) 
+                                    || ((age_midpoint > 3*365 + 30.41*3) & (age_midpoint <= (3*365+30.41*6))) 
+                                    || ((age_midpoint > 4*365 + 30.41*3) & (age_midpoint <= (4*365+30.41*6))) 
+                                    || ((age_midpoint > 5*365 + 30.41*3) & (age_midpoint <= (5*365+30.41*6)))) ~ "autumn",
+                                    birth_season == "autumn" & ((age_midpoint > 30.41*3 & age_midpoint <= 30.41*6 ) 
+                                    || ((age_midpoint > 365 + 30.41*3) & (age_midpoint <= (365+30.41*6))) 
+                                    || ((age_midpoint > 2*365 + 30.41*3) & (age_midpoint <= (2*365+30.41*6))) 
+                                    || ((age_midpoint > 3*365 + 30.41*3) & (age_midpoint <= (3*365+30.41*6))) 
+                                    || ((age_midpoint > 4*365 + 30.41*3) & (age_midpoint <= (4*365+30.41*6))) 
+                                    || ((age_midpoint > 5*365 + 30.41*3) & (age_midpoint <= (5*365+30.41*6)))) ~ "winter",
+                                    birth_season == "winter" & ((age_midpoint > 30.41*3 & age_midpoint <= 30.41*6 ) 
+                                    || ((age_midpoint > 365 + 30.41*3) & (age_midpoint <= (365+30.41*6))) 
+                                    || ((age_midpoint > 2*365 + 30.41*3) & (age_midpoint <= (2*365+30.41*6))) 
+                                    || ((age_midpoint > 3*365 + 30.41*3) & (age_midpoint <= (3*365+30.41*6))) 
+                                    || ((age_midpoint > 4*365 + 30.41*3) & (age_midpoint <= (4*365+30.41*6))) 
+                                    || ((age_midpoint > 5*365 + 30.41*3) & (age_midpoint <= (5*365+30.41*6)))) ~ "spring",
+                                    birth_season == "spring" & ((age_midpoint > 30.41*3 & age_midpoint <= 30.41*6 ) 
+                                    || ((age_midpoint > 365 + 30.41*3) & (age_midpoint <= (365+30.41*6))) 
+                                    || ((age_midpoint > 2*365 + 30.41*3) & (age_midpoint <= (2*365+30.41*6))) 
+                                    || ((age_midpoint > 3*365 + 30.41*3) & (age_midpoint <= (3*365+30.41*6))) 
+                                    || ((age_midpoint > 4*365 + 30.41*3) & (age_midpoint <= (4*365+30.41*6))) 
+                                    || ((age_midpoint > 5*365 + 30.41*3) & (age_midpoint <= (5*365+30.41*6)))) ~ "summer",
                                     
-                                    birth_season == "summer" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  # two seasons after birth
-                                    || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
-                                    || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
-                                    || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
-                                    || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "winter",
-                                    birth_season == "autumn" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
-                                    || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
-                                    || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
-                                    || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
-                                    || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "spring",
-                                    birth_season == "winter" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
-                                    || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
-                                    || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
-                                    || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
-                                    || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "summer",
-                                    birth_season == "spring" & ((agemid > 30.41*6 & agemid <= 30.41*9 )  
-                                    || ((agemid > 365+30.41*6) & (agemid <= (365+30.41*9))) 
-                                    || ((agemid > 2*365 + 30.41*6) & (agemid <= (2*365+30.41*9))) 
-                                    || ((agemid > 3*365 + 30.41*6) & (agemid <= (3*365+30.41*9))) 
-                                    || ((agemid > 4*365 + 30.41*6) & (agemid <= (4*365+30.41*9))) 
-                                    || ((agemid > 5*365 + 30.41*6) & (agemid <= (5*365+30.41*9)))) ~ "autumn",
+                                    birth_season == "summer" & ((age_midpoint > 30.41*6 & age_midpoint <= 30.41*9 )  # two seasons after birth
+                                    || ((age_midpoint > 365+30.41*6) & (age_midpoint <= (365+30.41*9))) 
+                                    || ((age_midpoint > 2*365 + 30.41*6) & (age_midpoint <= (2*365+30.41*9))) 
+                                    || ((age_midpoint > 3*365 + 30.41*6) & (age_midpoint <= (3*365+30.41*9))) 
+                                    || ((age_midpoint > 4*365 + 30.41*6) & (age_midpoint <= (4*365+30.41*9))) 
+                                    || ((age_midpoint > 5*365 + 30.41*6) & (age_midpoint <= (5*365+30.41*9)))) ~ "winter",
+                                    birth_season == "autumn" & ((age_midpoint > 30.41*6 & age_midpoint <= 30.41*9 )  
+                                    || ((age_midpoint > 365+30.41*6) & (age_midpoint <= (365+30.41*9))) 
+                                    || ((age_midpoint > 2*365 + 30.41*6) & (age_midpoint <= (2*365+30.41*9))) 
+                                    || ((age_midpoint > 3*365 + 30.41*6) & (age_midpoint <= (3*365+30.41*9))) 
+                                    || ((age_midpoint > 4*365 + 30.41*6) & (age_midpoint <= (4*365+30.41*9))) 
+                                    || ((age_midpoint > 5*365 + 30.41*6) & (age_midpoint <= (5*365+30.41*9)))) ~ "spring",
+                                    birth_season == "winter" & ((age_midpoint > 30.41*6 & age_midpoint <= 30.41*9 )  
+                                    || ((age_midpoint > 365+30.41*6) & (age_midpoint <= (365+30.41*9))) 
+                                    || ((age_midpoint > 2*365 + 30.41*6) & (age_midpoint <= (2*365+30.41*9))) 
+                                    || ((age_midpoint > 3*365 + 30.41*6) & (age_midpoint <= (3*365+30.41*9))) 
+                                    || ((age_midpoint > 4*365 + 30.41*6) & (age_midpoint <= (4*365+30.41*9))) 
+                                    || ((age_midpoint > 5*365 + 30.41*6) & (age_midpoint <= (5*365+30.41*9)))) ~ "summer",
+                                    birth_season == "spring" & ((age_midpoint > 30.41*6 & age_midpoint <= 30.41*9 )  
+                                    || ((age_midpoint > 365+30.41*6) & (age_midpoint <= (365+30.41*9))) 
+                                    || ((age_midpoint > 2*365 + 30.41*6) & (age_midpoint <= (2*365+30.41*9))) 
+                                    || ((age_midpoint > 3*365 + 30.41*6) & (age_midpoint <= (3*365+30.41*9))) 
+                                    || ((age_midpoint > 4*365 + 30.41*6) & (age_midpoint <= (4*365+30.41*9))) 
+                                    || ((age_midpoint > 5*365 + 30.41*6) & (age_midpoint <= (5*365+30.41*9)))) ~ "autumn",
                                     
-                                    birth_season == "summer" & ((agemid > 30.41*9 & agemid <= 30.41*12 ) # 3 seasons after birth                    
-                                    || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
-                                    || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
-                                    || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
-                                    || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "spring",
-                                    birth_season == "autumn" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                     
-                                    || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
-                                    || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
-                                    || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
-                                    || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "summer",
-                                    birth_season == "winter" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                     
-                                    || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
-                                    || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
-                                    || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
-                                    || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "autumn",
-                                    birth_season == "spring" & ((agemid > 30.41*9 & agemid <= 30.41*12 )                   
-                                    || ((agemid > 365+30.41*9) & (agemid <= (365+30.41*12))) 
-                                    || ((agemid > 2*365 + 30.41*9) & (agemid <= (2*365+30.41*12))) 
-                                    || ((agemid > 3*365 + 30.41*9) & (agemid <= (3*365+30.41*12))) 
-                                    || ((agemid > 4*365 + 30.41*9) & (agemid <= (4*365+30.41*12))) 
-                                    || ((agemid > 5*365 + 30.41*9) & (agemid <= (5*365+30.41*12)))) ~ "winter"
+                                    birth_season == "summer" & ((age_midpoint > 30.41*9 & age_midpoint <= 30.41*12 ) # 3 seasons after birth                    
+                                    || ((age_midpoint > 365+30.41*9) & (age_midpoint <= (365+30.41*12))) 
+                                    || ((age_midpoint > 2*365 + 30.41*9) & (age_midpoint <= (2*365+30.41*12))) 
+                                    || ((age_midpoint > 3*365 + 30.41*9) & (age_midpoint <= (3*365+30.41*12))) 
+                                    || ((age_midpoint > 4*365 + 30.41*9) & (age_midpoint <= (4*365+30.41*12))) 
+                                    || ((age_midpoint > 5*365 + 30.41*9) & (age_midpoint <= (5*365+30.41*12)))) ~ "spring",
+                                    birth_season == "autumn" & ((age_midpoint > 30.41*9 & age_midpoint <= 30.41*12 )                     
+                                    || ((age_midpoint > 365+30.41*9) & (age_midpoint <= (365+30.41*12))) 
+                                    || ((age_midpoint > 2*365 + 30.41*9) & (age_midpoint <= (2*365+30.41*12))) 
+                                    || ((age_midpoint > 3*365 + 30.41*9) & (age_midpoint <= (3*365+30.41*12))) 
+                                    || ((age_midpoint > 4*365 + 30.41*9) & (age_midpoint <= (4*365+30.41*12))) 
+                                    || ((age_midpoint > 5*365 + 30.41*9) & (age_midpoint <= (5*365+30.41*12)))) ~ "summer",
+                                    birth_season == "winter" & ((age_midpoint > 30.41*9 & age_midpoint <= 30.41*12 )                     
+                                    || ((age_midpoint > 365+30.41*9) & (age_midpoint <= (365+30.41*12))) 
+                                    || ((age_midpoint > 2*365 + 30.41*9) & (age_midpoint <= (2*365+30.41*12))) 
+                                    || ((age_midpoint > 3*365 + 30.41*9) & (age_midpoint <= (3*365+30.41*12))) 
+                                    || ((age_midpoint > 4*365 + 30.41*9) & (age_midpoint <= (4*365+30.41*12))) 
+                                    || ((age_midpoint > 5*365 + 30.41*9) & (age_midpoint <= (5*365+30.41*12)))) ~ "autumn",
+                                    birth_season == "spring" & ((age_midpoint > 30.41*9 & age_midpoint <= 30.41*12 )                   
+                                    || ((age_midpoint > 365+30.41*9) & (age_midpoint <= (365+30.41*12))) 
+                                    || ((age_midpoint > 2*365 + 30.41*9) & (age_midpoint <= (2*365+30.41*12))) 
+                                    || ((age_midpoint > 3*365 + 30.41*9) & (age_midpoint <= (3*365+30.41*12))) 
+                                    || ((age_midpoint > 4*365 + 30.41*9) & (age_midpoint <= (4*365+30.41*12))) 
+                                    || ((age_midpoint > 5*365 + 30.41*9) & (age_midpoint <= (5*365+30.41*12)))) ~ "winter"
                                     
   ))
 
@@ -205,7 +210,7 @@ mild_illness_progression <- conversion_formated %>%
   mutate(total_mild_cases = median*total_MI_prop,
          total_MA_mild_cases = median*total_MA_MI_prop,
          total_nonMA_mild_cases = median*total_nMA_MI_prop) %>%
-  select(age_bracket, age_months, agemid, birth_season, current_season, median, 
+  select(age_bracket, age_months, age_midpoint, birth_season, current_season, median, 
          total_mild_cases, total_MA_mild_cases, total_nonMA_mild_cases)
 
 severe_illness_progression <- conversion_formated %>%
@@ -213,84 +218,84 @@ severe_illness_progression <- conversion_formated %>%
   mutate(total_severe_cases = median*total_SI_prop,
          total_MA_severe_cases = median*total_MA_SI_prop,
          total_nonMA_severe_cases = median*total_nMA_SI_prop) %>%
-  select(age_bracket, age_months, agemid, birth_season, current_season, median, 
+  select(age_bracket, age_months, age_midpoint, birth_season, current_season, median, 
          total_severe_cases, total_MA_severe_cases, total_nonMA_severe_cases)
 
 # By season in the first year of life
 mild_illness_progression_season <- mild_illness_progression %>%
   # get the contribution of each birth cohort to the proportion of sick children
-  group_by(current_season, agemid, birth_season) %>%
+  group_by(current_season, age_midpoint, birth_season) %>%
   mutate(seasonal_contribution = case_when(birth_season == "spring" ~ 0.26*total_mild_cases, 
                                            birth_season == "summer" ~ 0.29*total_mild_cases,
                                            birth_season == "autumn" ~ 0.24*total_mild_cases, 
                                            birth_season == "winter" ~ 0.20*total_mild_cases
                                             )) %>%
   ungroup() %>%
-  filter(agemid <= 365) %>% # look at first year of life only
+  filter(age_midpoint <= 365) %>% # look at first year of life only
   # get total proportion of sick children by season
   group_by(current_season) %>%
   mutate(mild_illness_season = sum(seasonal_contribution)) %>% 
-  select(age_months, agemid, birth_season, current_season, seasonal_contribution, mild_illness_season)
+  select(age_months, age_midpoint, birth_season, current_season, seasonal_contribution, mild_illness_season)
 
 severe_illness_progression_season <- severe_illness_progression %>%
-  group_by(current_season, agemid, birth_season) %>%
+  group_by(current_season, age_midpoint, birth_season) %>%
   mutate(seasonal_contribution = case_when(birth_season == "spring" ~ 0.26*total_severe_cases,
                                            birth_season == "summer" ~ 0.29*total_severe_cases,
                                            birth_season == "autumn" ~ 0.24*total_severe_cases, 
                                            birth_season == "winter" ~ 0.20*total_severe_cases
   )) %>%
   ungroup() %>%
-  filter(agemid <= 365) %>%
+  filter(age_midpoint <= 365) %>%
   group_by(current_season) %>%
   mutate(severe_illness_season = sum(seasonal_contribution)) %>%
-  select(age_months, agemid, birth_season, current_season, seasonal_contribution, severe_illness_season)
+  select(age_months, age_midpoint, birth_season, current_season, seasonal_contribution, severe_illness_season)
 
 # Plots
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_mild_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_mild_cases, colour = birth_season)) +
   labs(title = "Proportion of all mild illness", x = "Age (days)",
         y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() 
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_MA_mild_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_MA_mild_cases, colour = birth_season)) +
   labs(title = "Proportion of medically assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_nonMA_mild_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_nonMA_mild_cases, colour = birth_season)) +
   labs(title = "Proportion of non-medically-assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_severe_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_severe_cases, colour = birth_season)) +
   labs(title = "Proportion of all severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() 
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_MA_severe_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_MA_severe_cases, colour = birth_season)) +
   labs(title = "Proportion of medically assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = agemid, y = total_nonMA_severe_cases, colour = birth_season)) +
+  geom_point(aes(x = age_midpoint, y = total_nonMA_severe_cases, colour = birth_season)) +
   labs(title = "Proportion of non-medically-assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 # Check seasonal trends by season of birth
-mild_illness_progression %>% filter (agemid <= 365) %>%
-  ggplot(aes(x = agemid, y = total_mild_cases)) +
+mild_illness_progression %>% filter (age_midpoint <= 365) %>%
+  ggplot(aes(x = age_midpoint, y = total_mild_cases)) +
   geom_point(aes(colour = current_season)) + 
   geom_smooth() +
   labs(title = "Proportion of all mild illness", x = "Age (days)",
@@ -299,8 +304,8 @@ mild_illness_progression %>% filter (agemid <= 365) %>%
   theme_light() +
   facet_wrap(~birth_season)
 
-severe_illness_progression %>% filter (agemid <= 365) %>%
-  ggplot(aes(x = agemid, y = total_severe_cases)) +
+severe_illness_progression %>% filter (age_midpoint <= 365) %>%
+  ggplot(aes(x = age_midpoint, y = total_severe_cases)) +
   geom_point(aes(colour = current_season)) + 
   geom_smooth() +
   labs(title = "Proportion of all severe illness", x = "Age (days)",
