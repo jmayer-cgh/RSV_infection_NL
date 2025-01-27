@@ -214,8 +214,29 @@ for (i in 1:length(pmcmc_tuned_run$trajectories$time)){
 seroconversion_df <- do.call("rbind", seroconversion)
 rownames(seroconversion_df) <- NULL
 
+# Get incident cases
+incidence_df <- data.frame(age_midpoint = seroconversion_df$age_midpoint,
+                           incidence = c(0, diff(seroconversion_df$median_sp)),
+                           season_birth = "spring") %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence = c(0, diff(seroconversion_df$median_sm)),
+               season_birth = "summer")
+  ) %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence = c(0, diff(seroconversion_df$median_au)),
+               season_birth = "autumn")
+  ) %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence = c(0, diff(seroconversion_df$median_wt)),
+               season_birth = "winter")
+  )
+
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"
 
 write.csv(summary_hpd, paste0(path, "highest probability distribution.csv"), row.names = F)
 write.csv(seroconversion_df, paste0(path, "seroconversion by age.csv"), row.names = F)
+write.csv(incidence_df, paste0(path, "incidence by age.csv"), row.names = F)
