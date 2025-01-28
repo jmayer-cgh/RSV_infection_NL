@@ -207,28 +207,28 @@ severe_illness_prop <- severe_illness_rate %>%
 # By age
 mild_illness_progression <- conversion_formated %>%
   merge(mild_illness_prop, by.x = "age_bracket", by.y = "Age (months)") %>%
-  mutate(total_mild_cases = incidence*total_MI_prop,
-         total_MA_mild_cases = incidence*total_MA_MI_prop,
-         total_nonMA_mild_cases = incidence*total_nMA_MI_prop) %>%
+  mutate(total_mild_cases_prop = incidence*total_MI_prop,
+         total_MA_mild_cases_prop = incidence*total_MA_MI_prop,
+         total_nonMA_mild_cases_prop = incidence*total_nMA_MI_prop) %>%
   select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
-         total_mild_cases, total_MA_mild_cases, total_nonMA_mild_cases)
+         total_mild_cases_prop, total_MA_mild_cases_prop, total_nonMA_mild_cases_prop)
 
 severe_illness_progression <- conversion_formated %>%
   merge(severe_illness_prop, by.x = "age_bracket", by.y = "Age (months)") %>%
-  mutate(total_severe_cases = incidence*total_SI_prop,
-         total_MA_severe_cases = incidence*total_MA_SI_prop,
-         total_nonMA_severe_cases = incidence*total_nMA_SI_prop) %>%
+  mutate(total_severe_cases_prop = incidence*total_SI_prop,
+         total_MA_severe_cases_prop = incidence*total_MA_SI_prop,
+         total_nonMA_severe_cases_prop = incidence*total_nMA_SI_prop) %>%
   select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
-         total_severe_cases, total_MA_severe_cases, total_nonMA_severe_cases)
+         total_severe_cases_prop, total_MA_severe_cases_prop, total_nonMA_severe_cases_prop)
 
 # By season in the first year of life
 mild_illness_progression_season <- mild_illness_progression %>%
   # get the contribution of each birth cohort to the proportion of sick children
   group_by(current_season, age_midpoint, season_birth) %>%
-  mutate(seasonal_contribution = case_when(season_birth == "spring" ~ 0.26*total_mild_cases, 
-                                           season_birth == "summer" ~ 0.29*total_mild_cases,
-                                           season_birth == "autumn" ~ 0.24*total_mild_cases, 
-                                           season_birth == "winter" ~ 0.20*total_mild_cases
+  mutate(seasonal_contribution = case_when(season_birth == "spring" ~ 0.26*total_mild_cases_prop, 
+                                           season_birth == "summer" ~ 0.29*total_mild_cases_prop,
+                                           season_birth == "autumn" ~ 0.24*total_mild_cases_prop, 
+                                           season_birth == "winter" ~ 0.20*total_mild_cases_prop
                                             )) %>%
   ungroup() %>%
   filter(age_midpoint <= 365) %>% # look at first year of life only
@@ -239,10 +239,10 @@ mild_illness_progression_season <- mild_illness_progression %>%
 
 severe_illness_progression_season <- severe_illness_progression %>%
   group_by(current_season, age_midpoint, season_birth) %>%
-  mutate(seasonal_contribution = case_when(season_birth == "spring" ~ 0.26*total_severe_cases,
-                                           season_birth == "summer" ~ 0.29*total_severe_cases,
-                                           season_birth == "autumn" ~ 0.24*total_severe_cases, 
-                                           season_birth == "winter" ~ 0.20*total_severe_cases
+  mutate(seasonal_contribution = case_when(season_birth == "spring" ~ 0.26*total_severe_cases_prop,
+                                           season_birth == "summer" ~ 0.29*total_severe_cases_prop,
+                                           season_birth == "autumn" ~ 0.24*total_severe_cases_prop, 
+                                           season_birth == "winter" ~ 0.20*total_severe_cases_prop
   )) %>%
   ungroup() %>%
   filter(age_midpoint <= 365) %>%
@@ -252,42 +252,42 @@ severe_illness_progression_season <- severe_illness_progression %>%
 
 # Plots
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_mild_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_mild_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of all mild illness", x = "Age (days)",
         y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() 
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_MA_mild_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_MA_mild_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of medically assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_nonMA_mild_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_nonMA_mild_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of non-medically-assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_severe_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_severe_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of all severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() 
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_MA_severe_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_MA_severe_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of medically assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_nonMA_severe_cases, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_nonMA_severe_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of non-medically-assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
@@ -295,7 +295,7 @@ severe_illness_progression %>% ggplot() +
 
 # Check seasonal trends by season of birth
 mild_illness_progression %>% filter (age_midpoint <= 365) %>%
-  ggplot(aes(x = age_midpoint, y = total_mild_cases)) +
+  ggplot(aes(x = age_midpoint, y = total_mild_cases_prop)) +
   geom_point(aes(colour = current_season)) + 
   geom_smooth() +
   labs(title = "Proportion of all mild illness", x = "Age (days)",
@@ -305,7 +305,7 @@ mild_illness_progression %>% filter (age_midpoint <= 365) %>%
   facet_wrap(~season_birth)
 
 severe_illness_progression %>% filter (age_midpoint <= 365) %>%
-  ggplot(aes(x = age_midpoint, y = total_severe_cases)) +
+  ggplot(aes(x = age_midpoint, y = total_severe_cases_prop)) +
   geom_point(aes(colour = current_season)) + 
   geom_smooth() +
   labs(title = "Proportion of all severe illness", x = "Age (days)",
