@@ -9,21 +9,23 @@ path_pop <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Universit
 
 # Read in model outputs
 severe_illness <- read.csv(paste0(path_output, "Proportion severe illness by age.csv"))
+mild_illness <- read.csv(paste0(path_output, "Proportion mild illness by age.csv"))
 
 # Restrict to < 1 year
 severe_illness_u1 <- severe_illness %>% filter (age_months <= 12)
+mild_illness_u1 <- mild_illness %>% filter (age_months <= 12)
 
 # Read in German population estimates and format it
-pop_de <- read_excel(paste0(path_pop, "Population estimates.xlsx")) 
-colnames(pop_de)[1] <- "Age"
-colnames(pop_de)[2] <- "Population size"
-
-pop_de <- pop_de %>% filter(grepl("year", Age)) %>%
-  mutate(Age = case_when(Age == "under 1 year" ~ 0,
-                         Age == "1 year" ~ 1,
-                         TRUE ~ as.numeric(gsub("years", "", Age))),
-         Age = as.numeric(Age),
-         `Population size` = as.numeric(`Population size`))
+# pop_de <- read_excel(paste0(path_pop, "Population estimates.xlsx")) 
+# colnames(pop_de)[1] <- "Age"
+# colnames(pop_de)[2] <- "Population size"
+# 
+# pop_de <- pop_de %>% filter(grepl("year", Age)) %>%
+#   mutate(Age = case_when(Age == "under 1 year" ~ 0,
+#                          Age == "1 year" ~ 1,
+#                          TRUE ~ as.numeric(gsub("years", "", Age))),
+#          Age = as.numeric(Age),
+#          `Population size` = as.numeric(`Population size`))
 
 # Read in birth numbers for 2023
 births_de <- read_excel(paste0(path_pop, "Births.xlsx")) 
@@ -54,12 +56,21 @@ births_de <- births_de %>%
   unique()
 
 # Add pop size in <1 y.o by season
-cases_u1_de <- severe_illness_u1 %>%
+severe_cases_u1_de <- severe_illness_u1 %>%
+  merge(births_de %>% select(total, season),
+        by.x = "season_birth" , by.y = "season")
+
+mild_cases_u1_de <- mild_illness_u1 %>%
   merge(births_de %>% select(total, season),
         by.x = "season_birth" , by.y = "season")
 
 # Get number of cases
-cases_u1_de <- cases_u1_de %>%
-  mutate(n_severe = total_severe_cases * total,
-         n_MA_severe = total_MA_severe_cases * total,
-         n_nonMA_severe = total_nonMA_severe_cases * total)
+severe_cases_u1_de <- severe_cases_u1_de %>%
+  mutate(n_severe = total_severe_cases_prop * total,
+         n_MA_severe = total_MA_severe_cases_prop * total,
+         n_nonMA_severe = total_nonMA_severe_cases_prop * total)
+
+mild_cases_u1_de <- mild_cases_u1_de %>%
+  mutate(n_severe = total_mild_cases_prop * total,
+         n_MA_severe = total_MA_mild_cases_prop * total,
+         n_nonMA_severe = total_nonMA_mild_cases_prop * total)
