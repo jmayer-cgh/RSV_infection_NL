@@ -8,35 +8,35 @@ path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Univers
 path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"  #Where model outputs are stored
   
 # Read in RSV-illness rates
-mild_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Mild illness")
-severe_illness_rate <- read_excel(paste0(path_paper,"RSV illness rates SA.xlsx"), sheet = "Severe illness")
+mild_illness_rate <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness")
+severe_illness_rate <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness")
 
 # Read in model estimate
 conversion_rate <- read.csv(paste0(path_model, "incidence by age.csv")) 
 
 # Convert into a long format
-conversion <- conversion_rate %>% 
-  select(age_midpoint, low95_sp, incidence_sp, up95_sp) %>%
-  rename(low95 = "low95_sp", incidence = "incidence_sp", up95 = "up95_sp") %>%
-  mutate(season_birth = "spring") %>%
-  rbind(
-    conversion_rate %>% 
-      select(age_midpoint, low95_sm, incidence_sm, up95_sm) %>%
-      rename(low95 = "low95_sm", incidence = "incidence_sm", up95 = "up95_sm") %>%
-      mutate(season_birth = "summer")
-  ) %>%
-  rbind(
-    conversion_rate %>% 
-      select(age_midpoint, low95_au, incidence_au, up95_au) %>%
-      rename(low95 = "low95_au", incidence = "incidence_au", up95 = "up95_au") %>%
-      mutate(season_birth = "autumn")
-  ) %>%
-  rbind(
-    conversion_rate %>% 
-    select(age_midpoint, low95_wt, incidence_wt, up95_wt) %>%
-    rename(low95 = "low95_wt", incidence = "incidence_wt", up95 = "up95_wt") %>%
-    mutate(season_birth = "winter")
-  )
+conversion <- conversion_rate # %>% 
+  # select(age_midpoint, low95_sp, incidence_sp, up95_sp) %>%
+  # rename(low95 = "low95_sp", incidence = "incidence_sp", up95 = "up95_sp") %>%
+  # mutate(season_birth = "spring") %>%
+  # rbind(
+  #   conversion_rate %>% 
+  #     select(age_midpoint, low95_sm, incidence_sm, up95_sm) %>%
+  #     rename(low95 = "low95_sm", incidence = "incidence_sm", up95 = "up95_sm") %>%
+  #     mutate(season_birth = "summer")
+  # ) %>%
+  # rbind(
+  #   conversion_rate %>% 
+  #     select(age_midpoint, low95_au, incidence_au, up95_au) %>%
+  #     rename(low95 = "low95_au", incidence = "incidence_au", up95 = "up95_au") %>%
+  #     mutate(season_birth = "autumn")
+  # ) %>%
+  # rbind(
+  #   conversion_rate %>% 
+  #   select(age_midpoint, low95_wt, incidence_wt, up95_wt) %>%
+  #   rename(low95 = "low95_wt", incidence = "incidence_wt", up95 = "up95_wt") %>%
+  #   mutate(season_birth = "winter")
+  # )
 
 # Convert ages to the same units
 conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30.4375)) %>% # turn age into months
