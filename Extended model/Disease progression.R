@@ -7,36 +7,40 @@ library(ggplot2)
 path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
 path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"  #Where model outputs are stored
   
-# Read in RSV-illness rates
-mild_illness_rate <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness")
-severe_illness_rate <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness")
+# Read in RSV-illness numbers
+mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
+  janitor::clean_names()
+severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>% 
+  janitor::clean_names()
+
+# Get proportion of cases that are mild, severe, MA, non-MA
+illness_type <- mild_illness %>% 
+  merge(severe_illness, by = "age_months") %>%
+  group_by(age_months) %>% # total number of cases in each category first
+  summarise(total_cases = total_mild_illness_number + total_severe_illness_number,
+            total_ma_cases = ma_mild_illness_number + ma_severe_illness_number,
+            total_non_ma_cases = non_ma_mild_illness_number + non_ma_severe_illness_number,
+            
+            # prop of each type of mild cases
+            prop_mild_cases = total_mild_illness_number / total_cases,
+            prop_ma_mild_cases = ma_mild_illness_number / total_cases,
+            prop_non_ma_mild_cases = non_ma_mild_illness_number / total_cases,
+            
+            # prop of each type of severe cases
+            prop_severe_cases = total_severe_illness_number / total_cases,
+            prop_ma_severe_cases = ma_severe_illness_number / total_cases,
+            prop_non_ma_severe_cases = non_ma_severe_illness_number / total_cases,
+            
+            # prop of cases by MA status
+            prop_ma_cases = total_ma_cases / total_cases,
+            prop_non_ma_cases = total_non_ma_cases / total_cases) %>%
+  ungroup()
 
 # Read in model estimate
 conversion_rate <- read.csv(paste0(path_model, "incidence by age.csv")) 
 
 # Convert into a long format
-conversion <- conversion_rate # %>% 
-  # select(age_midpoint, low95_sp, incidence_sp, up95_sp) %>%
-  # rename(low95 = "low95_sp", incidence = "incidence_sp", up95 = "up95_sp") %>%
-  # mutate(season_birth = "spring") %>%
-  # rbind(
-  #   conversion_rate %>% 
-  #     select(age_midpoint, low95_sm, incidence_sm, up95_sm) %>%
-  #     rename(low95 = "low95_sm", incidence = "incidence_sm", up95 = "up95_sm") %>%
-  #     mutate(season_birth = "summer")
-  # ) %>%
-  # rbind(
-  #   conversion_rate %>% 
-  #     select(age_midpoint, low95_au, incidence_au, up95_au) %>%
-  #     rename(low95 = "low95_au", incidence = "incidence_au", up95 = "up95_au") %>%
-  #     mutate(season_birth = "autumn")
-  # ) %>%
-  # rbind(
-  #   conversion_rate %>% 
-  #   select(age_midpoint, low95_wt, incidence_wt, up95_wt) %>%
-  #   rename(low95 = "low95_wt", incidence = "incidence_wt", up95 = "up95_wt") %>%
-  #   mutate(season_birth = "winter")
-  # )
+conversion <- conversion_rate 
 
 # Convert ages to the same units
 conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30.4375)) %>% # turn age into months
@@ -161,65 +165,65 @@ conversion_formated <- conversion_formated %>%
   ))
 
 # Convert illness rates to proportions (prop = 1-exp(1/rate*T))
-mild_illness_prop <- mild_illness_rate %>%
-  mutate(total_MI_prop = 1-exp(-`Total mild illness rate`/100000),
-         total_MI_prop_low = 1-exp(-`Total mild illness lower CI`/100000),
-         total_MI_prop_up = 1-exp(-`Total mild illness upper CI`/100000),
-         total_MA_MI_prop = 1-exp(-`MA mild illness rate`/100000),
-         total_MA_MI_prop_low = 1-exp(-`MA mild illness lower CI`/100000),
-         total_MA_MI_prop_up = 1-exp(-`MA mild illness upper CI`/100000),
-         total_nMA_MI_prop = 1-exp(-`Non-MA mild illness rate`/100000),
-         total_nMA_MI_prop_low = 1-exp(-`Non-MA mild illness lower CI`/100000),
-         total_nMA_MI_prop_up = 1-exp(-`Non-MA mild illness upper CI`/100000)) %>%
-  select(`Age (months)`,
-         total_MI_prop,
-         total_MI_prop_low,
-         total_MI_prop_up,
-         total_MA_MI_prop,
-         total_MA_MI_prop_low,
-         total_MA_MI_prop_up,
-         total_nMA_MI_prop,
-         total_nMA_MI_prop_low,
-         total_nMA_MI_prop_up)
-
-severe_illness_prop <- severe_illness_rate %>%
-  mutate(total_SI_prop = 1-exp(-`Total severe illness rate`/100000),
-         total_SI_prop_low = 1-exp(-`Total severe illness lower CI`/100000),
-         total_SI_prop_up = 1-exp(-`Total severe illness upper CI`/100000),
-         total_MA_SI_prop = 1-exp(-`MA severe illness rate`/100000),
-         total_MA_SI_prop_low = 1-exp(-`MA severe illness lower CI`/100000),
-         total_MA_SI_prop_up = 1-exp(-`MA severe illness upper CI`/100000),
-         total_nMA_SI_prop = 1-exp(-`Non-MA severe illness rate`/100000),
-         total_nMA_SI_prop_low = 1-exp(-`Non-MA severe illness lower CI`/100000),
-         total_nMA_SI_prop_up = 1-exp(-`Non-MA severe illness upper CI`/100000)) %>%
-  select(`Age (months)`,
-         total_SI_prop,
-         total_SI_prop_low,
-         total_SI_prop_up,
-         total_MA_SI_prop,
-         total_MA_SI_prop_low,
-         total_MA_SI_prop_up,
-         total_nMA_SI_prop,
-         total_nMA_SI_prop_low,
-         total_nMA_SI_prop_up)
+# mild_illness_prop <- mild_illness_rate %>%
+#   mutate(total_MI_prop = 1-exp(-`Total mild illness rate`/100000),
+#          total_MI_prop_low = 1-exp(-`Total mild illness lower CI`/100000),
+#          total_MI_prop_up = 1-exp(-`Total mild illness upper CI`/100000),
+#          total_MA_MI_prop = 1-exp(-`MA mild illness rate`/100000),
+#          total_MA_MI_prop_low = 1-exp(-`MA mild illness lower CI`/100000),
+#          total_MA_MI_prop_up = 1-exp(-`MA mild illness upper CI`/100000),
+#          total_nMA_MI_prop = 1-exp(-`Non-MA mild illness rate`/100000),
+#          total_nMA_MI_prop_low = 1-exp(-`Non-MA mild illness lower CI`/100000),
+#          total_nMA_MI_prop_up = 1-exp(-`Non-MA mild illness upper CI`/100000)) %>%
+#   select(`Age (months)`,
+#          total_MI_prop,
+#          total_MI_prop_low,
+#          total_MI_prop_up,
+#          total_MA_MI_prop,
+#          total_MA_MI_prop_low,
+#          total_MA_MI_prop_up,
+#          total_nMA_MI_prop,
+#          total_nMA_MI_prop_low,
+#          total_nMA_MI_prop_up)
+# 
+# severe_illness_prop <- severe_illness_rate %>%
+#   mutate(total_SI_prop = 1-exp(-`Total severe illness rate`/100000),
+#          total_SI_prop_low = 1-exp(-`Total severe illness lower CI`/100000),
+#          total_SI_prop_up = 1-exp(-`Total severe illness upper CI`/100000),
+#          total_MA_SI_prop = 1-exp(-`MA severe illness rate`/100000),
+#          total_MA_SI_prop_low = 1-exp(-`MA severe illness lower CI`/100000),
+#          total_MA_SI_prop_up = 1-exp(-`MA severe illness upper CI`/100000),
+#          total_nMA_SI_prop = 1-exp(-`Non-MA severe illness rate`/100000),
+#          total_nMA_SI_prop_low = 1-exp(-`Non-MA severe illness lower CI`/100000),
+#          total_nMA_SI_prop_up = 1-exp(-`Non-MA severe illness upper CI`/100000)) %>%
+#   select(`Age (months)`,
+#          total_SI_prop,
+#          total_SI_prop_low,
+#          total_SI_prop_up,
+#          total_MA_SI_prop,
+#          total_MA_SI_prop_low,
+#          total_MA_SI_prop_up,
+#          total_nMA_SI_prop,
+#          total_nMA_SI_prop_low,
+#          total_nMA_SI_prop_up)
 
 # Combine seroconversion data with illness data
 # By age
 mild_illness_progression <- conversion_formated %>%
-  merge(mild_illness_prop, by.x = "age_bracket", by.y = "Age (months)") %>%
-  mutate(total_mild_cases_prop = incidence*total_MI_prop,
-         total_MA_mild_cases_prop = incidence*total_MA_MI_prop,
-         total_nonMA_mild_cases_prop = incidence*total_nMA_MI_prop) %>%
+  merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
+  mutate(total_mild_cases_prop = incidence * prop_mild_cases,
+         total_ma_mild_cases_prop = incidence * prop_ma_mild_cases,
+         total_non_ma_mild_cases_prop = incidence * prop_non_ma_mild_cases) %>%
   select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
-         total_mild_cases_prop, total_MA_mild_cases_prop, total_nonMA_mild_cases_prop)
+         total_mild_cases_prop, total_ma_mild_cases_prop, total_non_ma_mild_cases_prop)
 
 severe_illness_progression <- conversion_formated %>%
-  merge(severe_illness_prop, by.x = "age_bracket", by.y = "Age (months)") %>%
-  mutate(total_severe_cases_prop = incidence*total_SI_prop,
-         total_MA_severe_cases_prop = incidence*total_MA_SI_prop,
-         total_nonMA_severe_cases_prop = incidence*total_nMA_SI_prop) %>%
+  merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
+  mutate(total_severe_cases_prop = incidence * prop_severe_cases,
+         total_ma_severe_cases_prop = incidence * prop_ma_severe_cases,
+         total_non_ma_severe_cases_prop = incidence * prop_non_ma_severe_cases) %>%
   select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
-         total_severe_cases_prop, total_MA_severe_cases_prop, total_nonMA_severe_cases_prop)
+         total_severe_cases_prop, total_ma_severe_cases_prop, total_non_ma_severe_cases_prop)
 
 # By season in the first year of life
 mild_illness_progression_season <- mild_illness_progression %>%
@@ -259,14 +263,14 @@ mild_illness_progression %>% ggplot() +
   theme_light() 
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_MA_mild_cases_prop, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_ma_mild_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of medically assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 mild_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_nonMA_mild_cases_prop, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_non_ma_mild_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of non-medically-assisted mild illness", x = "Age (days)",
        y = "Proportion of mild illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
@@ -280,14 +284,14 @@ severe_illness_progression %>% ggplot() +
   theme_light() 
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_MA_severe_cases_prop, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_ma_severe_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of medically assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
 severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint, y = total_nonMA_severe_cases_prop, colour = season_birth)) +
+  geom_point(aes(x = age_midpoint, y = total_non_ma_severe_cases_prop, colour = season_birth)) +
   labs(title = "Proportion of non-medically-assisted severe illness", x = "Age (days)",
        y = "Proportion of severe illness", colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
