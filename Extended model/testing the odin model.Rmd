@@ -12,7 +12,6 @@ library(ggplot2)
 ```{r}
 # Load model
 gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model.R")
-# gen_msr <- odin_dust("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Odin model 1 M comp.R")
 ```
 
 # Running the MSIR model with dust
@@ -63,8 +62,7 @@ x_df_names <- c("time",
                 "M1_sp", "M2_sp", "S_sp", "R_sp",
                 "M1_sm", "M2_sm", "S_sm", "R_sm",
                 "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all",
-                "prop_seroconverted")
+                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
@@ -314,6 +312,7 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
 
 plot_particle_filter(filter$history(), model_data, incidence_data$age_mid)
 ```
+
 ```{r}
 # True with other initial conditions to see if it's any better (it's not)
 filter$run(save_history = TRUE, pars = list(dt = dt, 
@@ -322,8 +321,21 @@ filter$run(save_history = TRUE, pars = list(dt = dt,
                                             M1_au_ini = 1191 * 0.24,
                                             M1_wt_ini = 1191 * 0.20))
 ```
+
 ```{r}
 # Use MCMC to infer parameter values
+# Define a truncated Gamma distribution function for mu
+dtruncgamma <- function(x, shape, rate, lower, upper) {
+  if (x < lower || x > upper) {
+    return(0)
+  } else {
+    # Calculate the untruncated gamma density
+    density <- dgamma(x, shape = shape, rate = rate)
+    # Calculate the normalization factor
+    normalization <- pgamma(upper, shape = shape, rate = rate) - pgamma(lower, shape = shape, rate = rate)
+    return(density / normalization)
+  }
+}
 
 # Define parameters first
 spring_comp <- pmcmc_parameter("spring_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
@@ -334,12 +346,19 @@ autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.000001, max = 0.1, min
   dunif(p, max = 0.1, min = 0))
 winter_comp <- pmcmc_parameter("winter_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
+# mu <- pmcmc_parameter("mu", initial = 0.02, max = 0.1, min = 0, prior = function(p)
+#   #dunif(p, max = 0.2, min = 0)) 
+#   dtruncgamma(p, shape = 2.5, rate = 1/30.0, lower = 1/10, upper = 1/180)) # Try a truncated Gamma distribution like Fabienne
+pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
+  dunif(p, max = 1, min = 0))
 
-proposal_matrix <- diag(0.1, 4)
+proposal_matrix <- diag(0.1, 5)
 mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
-                                       winter_comp = winter_comp),
+                                       winter_comp = winter_comp,
+                                      # mu = mu,
+                                       pi = pi),
                                   proposal_matrix)
 # Chain parameters
 n_steps <- 1e4
@@ -376,13 +395,20 @@ coda::effectiveSize(mcmc1)
 ```
 
 ```{r}
+plot(mcmc1) # run this in the console
+```
+
+
+```{r}
 # Tuning the MCMC
 proposal_matrix <- cov(pmcmc_run$pars)
 mcmc_pars <- mcstate::pmcmc_parameters$new(
   list(spring_comp = spring_comp, 
-                                       summer_comp = summer_comp,
-                                       autumn_comp = autumn_comp,
-                                       winter_comp = winter_comp),
+       summer_comp = summer_comp,
+       autumn_comp = autumn_comp,
+       winter_comp = winter_comp,
+       # mu = mu,
+       pi = pi),
   proposal_matrix)
 proposal_matrix
 ```
@@ -406,6 +432,7 @@ mcmc2 <- coda::as.mcmc(cbind(
 
 summary(mcmc2)
 ```
+
 ```{r}
 coda::effectiveSize(mcmc2)
 ```
@@ -432,6 +459,10 @@ plot(pmcmc_tuned_run$pars[, "summer_comp"], type = "l", xlab = "Iteration",
      ylab = "summer_comp")
 plot(pmcmc_tuned_run$pars[, "autumn_comp"], type = "l", xlab = "Iteration",
      ylab = "autumn_comp")
+# plot(pmcmc_tuned_run$pars[, "mu"], type = "l", xlab = "Iteration",
+#      ylab = "mu")
+plot(pmcmc_tuned_run$pars[, "pi"], type = "l", xlab = "Iteration",
+     ylab = "pi")
 hist(mcmc_sample$pars[, "winter_comp"], main = "", xlab = "winter_comp",
      freq = FALSE)
 hist(mcmc_sample$pars[, "spring_comp"], main = "", xlab = "spring_comp",
@@ -439,6 +470,10 @@ hist(mcmc_sample$pars[, "spring_comp"], main = "", xlab = "spring_comp",
 hist(mcmc_sample$pars[, "summer_comp"], main = "", xlab = "summer_comp",
      freq = FALSE)
 hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
+     freq = FALSE)
+# hist(mcmc_sample$pars[, "mu"], main = "", xlab = "mu",
+#      freq = FALSE)
+hist(mcmc_sample$pars[, "pi"], main = "", xlab = "pi",
      freq = FALSE)
 ```
 

@@ -218,27 +218,27 @@ lambda_wt = (summer_comp + spring_comp) * spring_FOI_wt +
 
 ## Initial states:
 # spring cohort
-initial(M1_sp) <- M1_sp_ini
+initial(M1_sp) <- pi * M1_sp_ini # only a proportion og children is born
 initial(M2_sp) <- M2_sp_ini
-initial(S_sp) <- S_sp_ini
+initial(S_sp) <- (1-pi) * M1_sp_ini
 initial(R_sp) <- R_sp_ini
 
 # summer cohort
-initial(M1_sm) <- M1_sm_ini
+initial(M1_sm) <- pi * M1_sm_ini
 initial(M2_sm) <- M2_sm_ini
-initial(S_sm) <- S_sm_ini
+initial(S_sm) <- (1-pi) * M1_sm_ini
 initial(R_sm) <- R_sm_ini
 
 # autumn cohort
-initial(M1_au) <- M1_au_ini
+initial(M1_au) <- pi * M1_au_ini
 initial(M2_au) <- M2_au_ini
-initial(S_au) <- S_au_ini
+initial(S_au) <- (1-pi) * M1_au_ini
 initial(R_au) <- R_au_ini
 
 # winter cohort
-initial(M1_wt) <- M1_wt_ini
+initial(M1_wt) <- pi * M1_wt_ini
 initial(M2_wt) <- M2_wt_ini
-initial(S_wt) <- S_wt_ini
+initial(S_wt) <- (1-pi) * M1_wt_ini
 initial(R_wt) <- R_wt_ini
 
 # Total
@@ -267,9 +267,12 @@ R_wt_ini <- user(1e-12)
 
 
 # transition parameters
-mu <- user (1/182.5) # half-life is 6 months
+mu <- user(1/59.50121)# (1/182.5) # half-life is 6 months
 spring_comp <- user(0.00001) # random values to be fitted
 summer_comp <- user(0.02002)
 autumn_comp <- user(0.00003)
 winter_comp <- user(0.00004)
 #contact_comp <- user(0.02)
+
+# Proportion born with maternal immunity
+pi <- user(0.5)
