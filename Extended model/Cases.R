@@ -145,6 +145,7 @@ ma_cases_u1_de <- ma_cases_u1_de %>%
                  severity = "all")
   )
 
+# Now we can get the # of prevented cases
 ma_prevented_vacc <- ma_cases_u1_de %>% 
   select(season_birth, age_months, n_ma_cases, severity) %>%
   mutate(ve = case_when(age_months == 0 ~ 0.75,
@@ -232,26 +233,7 @@ hosp_prevented_age_long %>% ggplot() +
 # From Hammit et al, nirvesimab prevents 74.5% of medically attended RSV-associated lower respiratory tract infections
 # Calculate this
 
-# # First, we need to combine mild and severe MA cases
-# ma_cases_u1_de <- mild_cases_u1_de %>% 
-#   select (season_birth, age_months, n_ma_mild) %>%
-#   mutate(severity = "mild") %>%
-#   rename(n_ma_cases = "n_ma_mild") %>%
-#   rbind(
-#     severe_cases_u1_de %>% 
-#       select (season_birth, age_months, n_ma_severe) %>%
-#       mutate(severity = "severe") %>%
-#       rename(n_ma_cases = "n_ma_severe")
-#   )
-# 
-# ma_cases_u1_de <- ma_cases_u1_de %>%
-#   rbind(
-#     ma_cases_u1_de %>% group_by(season_birth, age_months) %>%
-#       summarise (n_ma_cases = sum(n_ma_cases),
-#                  severity = "all")
-#   )
-
-# Add number of prevented cases
+# Get number of prevented cases
 ma_prevented_nirs <- ma_prevented_vacc %>% 
   select(season_birth, age_months, n_ma_cases_vacc, severity) %>%
   mutate(n_ma_cases_nirs = n_ma_cases_vacc * (1-0.745),
