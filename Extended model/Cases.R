@@ -91,43 +91,124 @@ severe_cases_u1_de %>% ggplot(aes(x = age_midpoint, y = n_severe)) +
   theme_light() +
   facet_wrap(~season_birth)
 
+# ------------- Abrysvo ----------------------------------------------------
+# We have estimates of VE by age so we will use those
+# ------------------------------------------------------------------------------
+# Estimate VE at different ages from Fabienne's S6 figure
+# Hospitalisations
+hosp_prevented_vacc <- severe_cases_u1_de %>% 
+  select(season_birth, age_bracket, age_months, age_midpoint, current_season,
+         n_ma_severe) %>%
+  mutate(ve = case_when(age_months == 0 ~ 0.75,
+                        age_months == 1 ~ 0.70,
+                        age_months == 3 ~ 0.50,
+                        age_months == 4 ~ 0.35,
+                        age_months == 7 ~ 0.125,
+                        age_months == 8 ~ 0.10,
+                        age_months == 10 ~ 0.06,
+                        age_months == 12 ~ 0.04))
+
+hosp_prevented_vacc <- hosp_prevented_vacc %>% 
+  group_by(season_birth, age_bracket, age_months, age_midpoint, current_season, ve) %>%
+  summarise(n_ma_severe_vacc = n_ma_severe * (1-ve), # number of cases despite vaccination
+            n_ma_severe_averted = n_ma_severe * ve)
+
+hosp_prevented_vacc <- hosp_prevented_vacc %>% 
+  rbind(
+    hosp_prevented_vacc %>% 
+    group_by(season_birth) %>%
+      summarise(age_bracket = 'all', 
+                age_months = NA,
+                age_midpoint = NA, 
+                current_season = NA,
+                n_ma_severe_vacc = sum(n_ma_severe_vacc),
+                n_ma_severe_averted = sum(n_ma_severe_averted))
+  )
+  
+# Medically assisted cases
+# First, we need to combine mild and severe MA cases
+ma_cases_u1_de <- mild_cases_u1_de %>% 
+  select (season_birth, age_months, n_ma_mild) %>%
+  mutate(severity = "mild") %>%
+  rename(n_ma_cases = "n_ma_mild") %>%
+  rbind(
+    severe_cases_u1_de %>% 
+      select (season_birth, age_months, n_ma_severe) %>%
+      mutate(severity = "severe") %>%
+      rename(n_ma_cases = "n_ma_severe")
+  )
+
+ma_cases_u1_de <- ma_cases_u1_de %>%
+  rbind(
+    ma_cases_u1_de %>% group_by(season_birth, age_months) %>%
+      summarise (n_ma_cases = sum(n_ma_cases),
+                 severity = "all")
+  )
+
+ma_prevented_vacc <- ma_cases_u1_de %>% 
+  select(season_birth, age_months, n_ma_cases, severity) %>%
+  mutate(ve = case_when(age_months == 0 ~ 0.75,
+                        age_months == 1 ~ 0.70,
+                        age_months == 3 ~ 0.50,
+                        age_months == 4 ~ 0.35,
+                        age_months == 7 ~ 0.125,
+                        age_months == 8 ~ 0.10,
+                        age_months == 10 ~ 0.06,
+                        age_months == 12 ~ 0.04))
+
+ma_prevented_vacc <- ma_prevented_vacc %>% 
+  group_by(season_birth, age_months, severity, ve) %>%
+  summarise(n_ma_cases_vacc = n_ma_cases * (1-ve), # number of cases despite vaccination
+            n_ma_cases_averted = n_ma_cases * ve)
+
+ma_prevented_vacc <- ma_prevented_vacc %>% 
+  rbind(
+    ma_prevented_vacc %>% 
+      group_by(season_birth) %>%
+      summarise(age_months = NA,
+                severity = "all",
+                n_ma_cases_vacc = sum(n_ma_cases_vacc, na.rm = T),
+                n_ma_cases_averted = sum(n_ma_cases_averted, na.rm = T))
+  )
+
 # ------------- Nirvesimab ----------------------------------------------------
 # From Muller et al, nirvesimab prevents 76.8% of RSV-associated hospitalisations.
 # From the SA data, MA severe illness = hospitalisation
+# We want to know the added effect of nirsevimab with maternal vaccination
 # Combine the two estimates
 # ------------------------------------------------------------------------------
 
-hosp_prevented <- severe_cases_u1_de %>% 
+hosp_prevented <- hosp_prevented_vacc %>% 
   select(season_birth, age_bracket, age_months, age_midpoint, current_season,
-         n_ma_severe) %>%
-  mutate(n_ma_severe_nirv = n_ma_severe * (1-0.768),
-         n_ma_severe_averted = n_ma_severe * 0.768)
+         n_ma_severe_vacc, n_ma_severe_averted) %>%
+  mutate(n_ma_severe_nirs = n_ma_severe_vacc * (1-0.768),
+         n_ma_severe_averted_nirs = n_ma_severe_vacc * 0.768)
 
 # Get number of cases averted by given nirvesimab at a given age
 hosp_prevented_age <- hosp_prevented %>% group_by(season_birth) %>%
-  summarise (prev_u1 = sum(n_ma_severe_averted),
-             prev_1 = sum(n_ma_severe_averted[age_months >= 1]),
-             prev_3 = sum(n_ma_severe_averted[age_months >= 3]),
-             prev_4 = sum(n_ma_severe_averted[age_months >= 4]),
-             prev_7 = sum(n_ma_severe_averted[age_months >= 7]),
-             prev_8 = sum(n_ma_severe_averted[age_months >= 8]),
-             prev_10 = sum(n_ma_severe_averted[age_months >= 10]),
-             prev_12 = sum(n_ma_severe_averted[age_months >= 12])) %>%
+  summarise (prev_u1 = sum(n_ma_severe_averted_nirs),
+             prev_1 = sum(n_ma_severe_averted_nirs[age_months >= 1], na.rm = T),
+             prev_3 = sum(n_ma_severe_averted_nirs[age_months >= 3], na.rm = T),
+             prev_4 = sum(n_ma_severe_averted_nirs[age_months >= 4], na.rm = T),
+             prev_7 = sum(n_ma_severe_averted_nirs[age_months >= 7], na.rm = T),
+             prev_8 = sum(n_ma_severe_averted_nirs[age_months >= 8], na.rm = T),
+             prev_10 = sum(n_ma_severe_averted_nirs[age_months >= 10], na.rm = T),
+             prev_12 = sum(n_ma_severe_averted_nirs[age_months >= 12], na.rm = T)) %>%
   ungroup() %>%
   rbind(
     data.frame(season_birth = "all",
-               prev_u1 = sum(hosp_prevented$n_ma_severe_averted),
-               prev_1 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 1]),
-               prev_3 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 3]),
-               prev_4 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 4]),
-               prev_7 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 7]),
-               prev_8 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 8]),
-               prev_10 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 10]),
-               prev_12 = sum(hosp_prevented$n_ma_severe_averted[hosp_prevented$age_months >= 12]))
+               prev_u1 = sum(hosp_prevented$n_ma_severe_averted_nirs),
+               prev_1 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 1], na.rm = T),
+               prev_3 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 3], na.rm = T),
+               prev_4 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 4], na.rm = T),
+               prev_7 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 7], na.rm = T),
+               prev_8 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 8], na.rm = T),
+               prev_10 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 10], na.rm = T),
+               prev_12 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 12], na.rm = T))
   )
 
 # Pivot longer for easier plotting
-hosp_prevented_age_long <- hosp_prevented_age %>% 
+hosp_prevented_age_nirs_long <- hosp_prevented_age %>% 
   rename(`0` = "prev_u1",
          `1` = "prev_1",
          `3` = "prev_3",
@@ -151,81 +232,81 @@ hosp_prevented_age_long %>% ggplot() +
 # From Hammit et al, nirvesimab prevents 74.5% of medically attended RSV-associated lower respiratory tract infections
 # Calculate this
 
-# First, we need to combine mild and severe MA cases
-ma_cases_u1_de <- mild_cases_u1_de %>% 
-  select (season_birth, age_months, n_ma_mild) %>%
-  mutate(severity = "mild") %>%
-  rename(n_ma_cases = "n_ma_mild") %>%
-  rbind(
-    severe_cases_u1_de %>% 
-      select (season_birth, age_months, n_ma_severe) %>%
-      mutate(severity = "severe") %>%
-      rename(n_ma_cases = "n_ma_severe")
-  )
-
-ma_cases_u1_de <- ma_cases_u1_de %>%
-  rbind(
-    ma_cases_u1_de %>% group_by(season_birth, age_months) %>%
-      summarise (n_ma_cases = sum(n_ma_cases),
-                 severity = "all")
-  )
+# # First, we need to combine mild and severe MA cases
+# ma_cases_u1_de <- mild_cases_u1_de %>% 
+#   select (season_birth, age_months, n_ma_mild) %>%
+#   mutate(severity = "mild") %>%
+#   rename(n_ma_cases = "n_ma_mild") %>%
+#   rbind(
+#     severe_cases_u1_de %>% 
+#       select (season_birth, age_months, n_ma_severe) %>%
+#       mutate(severity = "severe") %>%
+#       rename(n_ma_cases = "n_ma_severe")
+#   )
+# 
+# ma_cases_u1_de <- ma_cases_u1_de %>%
+#   rbind(
+#     ma_cases_u1_de %>% group_by(season_birth, age_months) %>%
+#       summarise (n_ma_cases = sum(n_ma_cases),
+#                  severity = "all")
+#   )
 
 # Add number of prevented cases
-ma_prevented <- ma_cases_u1_de %>% 
-  select(season_birth, age_months, n_ma_cases, severity) %>%
-  mutate(n_ma_cases_nirv = n_ma_cases * (1-0.745),
-         n_ma_cases_averted = n_ma_cases * 0.745)
+ma_prevented_nirs <- ma_prevented_vacc %>% 
+  select(season_birth, age_months, n_ma_cases_vacc, severity) %>%
+  mutate(n_ma_cases_nirs = n_ma_cases_vacc * (1-0.745),
+         n_ma_cases_averted_nirs = n_ma_cases_vacc * 0.745)
 
 # Get number of MA cases averted by given nirvesimab at a given age
-ma_prevented_age <- ma_prevented %>% group_by(season_birth, severity) %>%
-  summarise (prev_u1 = sum(n_ma_cases_averted),
-             prev_1 = sum(n_ma_cases_averted[age_months >= 1]),
-             prev_3 = sum(n_ma_cases_averted[age_months >= 3]),
-             prev_4 = sum(n_ma_cases_averted[age_months >= 4]),
-             prev_7 = sum(n_ma_cases_averted[age_months >= 7]),
-             prev_8 = sum(n_ma_cases_averted[age_months >= 8]),
-             prev_10 = sum(n_ma_cases_averted[age_months >= 10]),
-             prev_12 = sum(n_ma_cases_averted[age_months >= 12])) %>%
+ma_prevented_age_nirs <- ma_prevented_nirs %>% group_by(season_birth, severity) %>%
+  summarise (prev_u1 = sum(n_ma_cases_averted_nirs),
+             prev_1 = sum(n_ma_cases_averted_nirs[age_months >= 1], na.rm = T),
+             prev_3 = sum(n_ma_cases_averted_nirs[age_months >= 3], na.rm = T),
+             prev_4 = sum(n_ma_cases_averted_nirs[age_months >= 4], na.rm = T),
+             prev_7 = sum(n_ma_cases_averted_nirs[age_months >= 7], na.rm = T),
+             prev_8 = sum(n_ma_cases_averted_nirs[age_months >= 8], na.rm = T),
+             prev_10 = sum(n_ma_cases_averted_nirs[age_months >= 10], na.rm = T),
+             prev_12 = sum(n_ma_cases_averted_nirs[age_months >= 12], na.rm = T)) %>%
   ungroup() %>%
   rbind(
     data.frame(season_birth = "all",
                severity = "all",
-               prev_u1 = sum(ma_prevented$n_ma_cases_averted),
-               prev_1 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 1 & ma_prevented$severity == "all"]),
-               prev_3 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 3 & ma_prevented$severity == "all"]),
-               prev_4 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 4 & ma_prevented$severity == "all"]),
-               prev_7 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 7 & ma_prevented$severity == "all"]),
-               prev_8 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 8 & ma_prevented$severity == "all"]),
-               prev_10 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 10 & ma_prevented$severity == "all"]),
-               prev_12 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 12 & ma_prevented$severity == "all"]))
+               prev_u1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs),
+               prev_1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 1 & ma_prevented$severity == "all"]),
+               prev_3 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 3 & ma_prevented$severity == "all"]),
+               prev_4 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 4 & ma_prevented$severity == "all"]),
+               prev_7 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 7 & ma_prevented$severity == "all"]),
+               prev_8 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 8 & ma_prevented$severity == "all"]),
+               prev_10 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 10 & ma_prevented$severity == "all"]),
+               prev_12 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 12 & ma_prevented$severity == "all"]))
   ) %>%
   rbind(
     data.frame(season_birth = "all",
                severity = "mild",
-               prev_u1 = sum(ma_prevented$n_ma_cases_averted),
-               prev_1 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 1 & ma_prevented$severity == "mild"]),
-               prev_3 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 3 & ma_prevented$severity == "mild"]),
-               prev_4 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 4 & ma_prevented$severity == "mild"]),
-               prev_7 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 7 & ma_prevented$severity == "mild"]),
-               prev_8 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 8 & ma_prevented$severity == "mild"]),
-               prev_10 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 10 & ma_prevented$severity == "mild"]),
-               prev_12 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 12 & ma_prevented$severity == "mild"]))
+               prev_u1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs),
+               prev_1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 1 & ma_prevented_nirs$severity == "mild"]),
+               prev_3 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 3 & ma_prevented_nirs$severity == "mild"]),
+               prev_4 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 4 & ma_prevented_nirs$severity == "mild"]),
+               prev_7 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 7 & ma_prevented_nirs$severity == "mild"]),
+               prev_8 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 8 & ma_prevented_nirs$severity == "mild"]),
+               prev_10 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 10 & ma_prevented_nirs$severity == "mild"]),
+               prev_12 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 12 & ma_prevented_nirs$severity == "mild"]))
   )%>%
   rbind(
     data.frame(season_birth = "all",
                severity = "severe",
-               prev_u1 = sum(ma_prevented$n_ma_cases_averted),
-               prev_1 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 1 & ma_prevented$severity == "severe"]),
-               prev_3 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 3 & ma_prevented$severity == "severe"]),
-               prev_4 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 4 & ma_prevented$severity == "severe"]),
-               prev_7 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 7 & ma_prevented$severity == "severe"]),
-               prev_8 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 8 & ma_prevented$severity == "severe"]),
-               prev_10 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 10 & ma_prevented$severity == "severe"]),
-               prev_12 = sum(ma_prevented$n_ma_cases_averted[ma_prevented$age_months >= 12 & ma_prevented$severity == "severe"]))
+               prev_u1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs),
+               prev_1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 1 & ma_prevented_nirs$severity == "severe"]),
+               prev_3 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 3 & ma_prevented_nirs$severity == "severe"]),
+               prev_4 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 4 & ma_prevented_nirs$severity == "severe"]),
+               prev_7 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 7 & ma_prevented_nirs$severity == "severe"]),
+               prev_8 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 8 & ma_prevented_nirs$severity == "severe"]),
+               prev_10 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 10 & ma_prevented_nirs$severity == "severe"]),
+               prev_12 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 12 & ma_prevented_nirs$severity == "severe"]))
   )
 
 # Pivot longer for easier plotting
-ma_prevented_age_long <- ma_prevented_age %>% 
+ma_prevented_age_long_nirs <- ma_prevented_age_nirs %>% 
   rename(`0` = "prev_u1",
          `1` = "prev_1",
          `3` = "prev_3",
@@ -248,5 +329,5 @@ ma_prevented_age_long %>% ggplot() +
   facet_wrap(~severity)
 
 # Save outputs
-hosp_prevented_age %>% write.csv(paste0(path_output, "Prevented hospitalisations.csv"), row.names = F)
-ma_prevented_age %>% write.csv(paste0(path_output, "Prevented MA cases.csv"), row.names = F)
+hosp_prevented_age %>% write.csv(paste0(path_output, "Prevented hospitalisations nirsevimab.csv"), row.names = F)
+ma_prevented_age %>% write.csv(paste0(path_output, "Prevented MA cases nirsevimab.csv"), row.names = F)

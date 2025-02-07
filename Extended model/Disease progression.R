@@ -37,7 +37,7 @@ illness_type <- mild_illness %>%
   ungroup()
 
 # Read in model estimate
-conversion_rate <- read.csv(paste0(path_model, "incidence by age.csv")) 
+conversion_rate <- read.csv(paste0(path_model, "incidence by age, assumed mu.csv")) 
 
 # Convert into a long format
 conversion <- conversion_rate 
