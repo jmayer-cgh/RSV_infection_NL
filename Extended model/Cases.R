@@ -79,7 +79,7 @@ severe_cases_u1_de %>% ggplot() +
 
 mild_cases_u1_de %>% ggplot() +
   geom_point(aes(x = age_months, y = n_mild, colour = season_birth)) +
-  labs(title = "Number of severe RSV cases", x = "Age (months)",
+  labs(title = "Number of mild RSV cases", x = "Age (months)",
        y = "Cases", colour = "Season of birth") +
   theme_light()
 
@@ -87,6 +87,14 @@ severe_cases_u1_de %>% ggplot(aes(x = age_midpoint, y = n_severe)) +
   geom_point(aes(colour = current_season)) + 
   geom_smooth() +
   labs(title = "Number of severe RSV cases", x = "Age (days)",
+       y = "Cases", colour = "Current season") +
+  theme_light() +
+  facet_wrap(~season_birth)
+
+mild_cases_u1_de %>% ggplot(aes(x = age_midpoint, y = n_mild)) +
+  geom_point(aes(colour = current_season)) + 
+  geom_smooth() +
+  labs(title = "Number of mild RSV cases", x = "Age (days)",
        y = "Cases", colour = "Current season") +
   theme_light() +
   facet_wrap(~season_birth)
@@ -222,7 +230,7 @@ hosp_prevented_age_nirs_long <- hosp_prevented_age %>%
                names_to = "immun_age", values_to = "hosp_prev") %>%
   mutate(immun_age = factor(immun_age, levels = c("0", "1", "3", "4", "7", "8", "10", "12")))
 
-hosp_prevented_age_long %>% ggplot() +
+hosp_prevented_age_nirs_long  %>% ggplot() +
   geom_col(aes(x = immun_age, y = hosp_prev, fill = season_birth), position="dodge") +
   labs(title = "Number of averted RSV-associated hospitalisation by age at immunisation",
        x = "\nAge at immunisation (months)",
@@ -254,13 +262,13 @@ ma_prevented_age_nirs <- ma_prevented_nirs %>% group_by(season_birth, severity) 
     data.frame(season_birth = "all",
                severity = "all",
                prev_u1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs),
-               prev_1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 1 & ma_prevented$severity == "all"]),
-               prev_3 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 3 & ma_prevented$severity == "all"]),
-               prev_4 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 4 & ma_prevented$severity == "all"]),
-               prev_7 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 7 & ma_prevented$severity == "all"]),
-               prev_8 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 8 & ma_prevented$severity == "all"]),
-               prev_10 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 10 & ma_prevented$severity == "all"]),
-               prev_12 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented$age_months >= 12 & ma_prevented$severity == "all"]))
+               prev_1 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 1 & ma_prevented_nirs$severity == "all"]),
+               prev_3 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 3 & ma_prevented_nirs$severity == "all"]),
+               prev_4 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 4 & ma_prevented_nirs$severity == "all"]),
+               prev_7 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 7 & ma_prevented_nirs$severity == "all"]),
+               prev_8 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 8 & ma_prevented_nirs$severity == "all"]),
+               prev_10 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 10 & ma_prevented_nirs$severity == "all"]),
+               prev_12 = sum(ma_prevented_nirs$n_ma_cases_averted_nirs[ma_prevented_nirs$age_months >= 12 & ma_prevented_nirs$severity == "all"]))
   ) %>%
   rbind(
     data.frame(season_birth = "all",
@@ -301,7 +309,7 @@ ma_prevented_age_long_nirs <- ma_prevented_age_nirs %>%
                names_to = "immun_age", values_to = "ma_prev") %>%
   mutate(immun_age = factor(immun_age, levels = c("0", "1", "3", "4", "7", "8", "10", "12")))
 
-ma_prevented_age_long %>% ggplot() +
+ma_prevented_age_long_nirs %>% ggplot() +
   geom_col(aes(x = immun_age, y = ma_prev, fill = season_birth), position="dodge") +
   labs(title = "Number of averted RSV-associated MA-cases by age at immunisation",
        x = "\nAge at immunisation (months)",
@@ -312,4 +320,4 @@ ma_prevented_age_long %>% ggplot() +
 
 # Save outputs
 hosp_prevented_age %>% write.csv(paste0(path_output, "Prevented hospitalisations nirsevimab.csv"), row.names = F)
-ma_prevented_age %>% write.csv(paste0(path_output, "Prevented MA cases nirsevimab.csv"), row.names = F)
+ma_prevented_age_nirs %>% write.csv(paste0(path_output, "Prevented MA cases nirsevimab.csv"), row.names = F)

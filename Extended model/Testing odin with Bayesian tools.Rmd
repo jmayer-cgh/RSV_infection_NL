@@ -235,7 +235,7 @@ loglik <- function(params) {
 } 
 
 # Test function
-theta <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004)
+theta <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004, pi = 0.5)
 
 loglik(theta)
 
@@ -246,12 +246,12 @@ loglik(theta)
 # summer_comp = mean FOI for children in summer
 # autumn_comp = mean FOI for children in autumn
 # winter_comp = mean FOI for children in winter
-estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp") # parameters to estimate, can be modified
+estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", "pi") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
-lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0)
-upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1)
+lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0, pi = 0)
+upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1, pi = 1)
 
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
