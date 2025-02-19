@@ -251,4 +251,4 @@ ggplot(data = dat_combined, aes(x = Tmid, y = VEmid, ymin = VElo, ymax = VEhi)) 
   ) +
   facet_grid(~type)  
 
-dat_combined %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Erlang waning/Waning with Erlang func/VE.csv")
+dat_combined %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Erlang waning/VE.csv")
