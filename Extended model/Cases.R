@@ -107,14 +107,14 @@ mild_cases_u1_de %>% ggplot(aes(x = age_midpoint, y = n_mild)) +
 hosp_prevented_vacc <- severe_cases_u1_de %>% 
   select(season_birth, age_bracket, age_months, age_midpoint, current_season,
          n_ma_severe) %>%
-  mutate(ve = case_when(age_months == 0 ~ 0.75,
-                        age_months == 1 ~ 0.70,
-                        age_months == 3 ~ 0.50,
-                        age_months == 4 ~ 0.35,
-                        age_months == 7 ~ 0.125,
-                        age_months == 8 ~ 0.10,
-                        age_months == 10 ~ 0.06,
-                        age_months == 12 ~ 0.04))
+  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.87 from Ayaka
+                        age_months == 1 ~ 0.70, # 0.83
+                        age_months == 3 ~ 0.50, # 0.66
+                        age_months == 4 ~ 0.35, # 0.45
+                        age_months == 7 ~ 0.125, # 0.32
+                        age_months == 8 ~ 0.10, # 0.26
+                        age_months == 10 ~ 0.06, # 0.17
+                        age_months == 12 ~ 0.04)) # 0.10
 
 hosp_prevented_vacc <- hosp_prevented_vacc %>% 
   group_by(season_birth, age_bracket, age_months, age_midpoint, current_season, ve) %>%
@@ -156,14 +156,14 @@ ma_cases_u1_de <- ma_cases_u1_de %>%
 # Now we can get the # of prevented cases
 ma_prevented_vacc <- ma_cases_u1_de %>% 
   select(season_birth, age_months, n_ma_cases, severity) %>%
-  mutate(ve = case_when(age_months == 0 ~ 0.75,
-                        age_months == 1 ~ 0.70,
-                        age_months == 3 ~ 0.50,
-                        age_months == 4 ~ 0.35,
-                        age_months == 7 ~ 0.125,
-                        age_months == 8 ~ 0.10,
-                        age_months == 10 ~ 0.06,
-                        age_months == 12 ~ 0.04))
+  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.65 from Ayaka
+                        age_months == 1 ~ 0.70, # 0.62
+                        age_months == 3 ~ 0.50, # 0.50
+                        age_months == 4 ~ 0.35, # 0.34
+                        age_months == 7 ~ 0.125, # 0.24
+                        age_months == 8 ~ 0.10, # 0.20
+                        age_months == 10 ~ 0.06, # 0.13
+                        age_months == 12 ~ 0.04)) # 0.08
 
 ma_prevented_vacc <- ma_prevented_vacc %>% 
   group_by(season_birth, age_months, severity, ve) %>%
