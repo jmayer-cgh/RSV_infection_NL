@@ -346,18 +346,18 @@ autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.000001, max = 0.1, min
   dunif(p, max = 0.1, min = 0))
 winter_comp <- pmcmc_parameter("winter_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-# mu <- pmcmc_parameter("mu", initial = 0.02, max = 0.1, min = 0, prior = function(p)
-#   #dunif(p, max = 0.2, min = 0)) 
+mu <- pmcmc_parameter("mu", initial = 0.02, max = 0.1, min = 0, prior = function(p)
+  dunif(p, max = 0.2, min = 0))
 #   dtruncgamma(p, shape = 2.5, rate = 1/30.0, lower = 1/10, upper = 1/180)) # Try a truncated Gamma distribution like Fabienne
 pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
   dunif(p, max = 1, min = 0))
 
-proposal_matrix <- diag(0.1, 5)
+proposal_matrix <- diag(0.1, 6)
 mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
                                        winter_comp = winter_comp,
-                                      # mu = mu,
+                                       mu = mu,
                                        pi = pi),
                                   proposal_matrix)
 # Chain parameters
@@ -407,7 +407,7 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(
        summer_comp = summer_comp,
        autumn_comp = autumn_comp,
        winter_comp = winter_comp,
-       # mu = mu,
+       mu = mu,
        pi = pi),
   proposal_matrix)
 proposal_matrix
@@ -447,6 +447,16 @@ plot(mcmc2) # run this in the console
 ```
 
 ```{r}
+coda::autocorr.plot(mcmc2, lag.max = 500)
+```
+
+```{r}
+# Check correlation between parameters
+lattice::levelplot(mcmc2, col.regions = heat.colors(100))
+```
+
+
+```{r}
 # Check if the chains converged using a sample from the posterior distribution
 mcmc_sample <- pmcmc_sample(pmcmc_tuned_run, n_sample = 500)
 
@@ -459,8 +469,8 @@ plot(pmcmc_tuned_run$pars[, "summer_comp"], type = "l", xlab = "Iteration",
      ylab = "summer_comp")
 plot(pmcmc_tuned_run$pars[, "autumn_comp"], type = "l", xlab = "Iteration",
      ylab = "autumn_comp")
-# plot(pmcmc_tuned_run$pars[, "mu"], type = "l", xlab = "Iteration",
-#      ylab = "mu")
+plot(pmcmc_tuned_run$pars[, "mu"], type = "l", xlab = "Iteration",
+     ylab = "mu")
 plot(pmcmc_tuned_run$pars[, "pi"], type = "l", xlab = "Iteration",
      ylab = "pi")
 hist(mcmc_sample$pars[, "winter_comp"], main = "", xlab = "winter_comp",
@@ -471,8 +481,8 @@ hist(mcmc_sample$pars[, "summer_comp"], main = "", xlab = "summer_comp",
      freq = FALSE)
 hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
      freq = FALSE)
-# hist(mcmc_sample$pars[, "mu"], main = "", xlab = "mu",
-#      freq = FALSE)
+hist(mcmc_sample$pars[, "mu"], main = "", xlab = "mu",
+     freq = FALSE)
 hist(mcmc_sample$pars[, "pi"], main = "", xlab = "pi",
      freq = FALSE)
 ```
@@ -581,7 +591,7 @@ rownames(seroconversion_df) <- NULL
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"
 
-write.csv(summary_hpd, paste0(path, "highest probability distribution.csv"), row.names = F)
-write.csv(seroconversion_df, paste0(path, "seroconversion by age.csv"), row.names = F)
+write.csv(summary_hpd, paste0(path, "highest probability distribution, pi and mu.csv"), row.names = F)
+write.csv(seroconversion_df, paste0(path, "seroconversion by age, pi and mu.csv"), row.names = F)
 ```
 
