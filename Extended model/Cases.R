@@ -319,5 +319,10 @@ ma_prevented_age_long_nirs %>% ggplot() +
   facet_wrap(~severity)
 
 # Save outputs
+# Vaccination
+hosp_prevented_vacc %>% write.csv(paste0(path_output, "Prevented hospitalisations vaccine.csv"), row.names = F)
+ma_prevented_vacc %>% write.csv(paste0(path_output, "Prevented MA cases vaccine.csv"), row.names = F)
+
+# mAB
 hosp_prevented_age %>% write.csv(paste0(path_output, "Prevented hospitalisations nirsevimab.csv"), row.names = F)
 ma_prevented_age_nirs %>% write.csv(paste0(path_output, "Prevented MA cases nirsevimab.csv"), row.names = F)
