@@ -116,27 +116,51 @@ mild_cases_u1_de %>% filter(!is.na(age_months)) %>% ggplot() +
        y = "Cases", colour = "Season of birth") +
   theme_light()
 
-severe_cases_u1_de %>% filter(!is.na(age_months)) %>% 
+pain_au_lait <- severe_cases_u1_de %>% filter(!is.na(age_months)) %>% 
   ggplot(aes(x = age_midpoint, y = n_severe)) +
-  geom_point(aes(colour = current_season)) + 
+  geom_point(aes(colour = current_season), size = 3.5) + 
   geom_smooth() +
   labs(title = "Number of severe RSV cases", x = "Age (days)",
        y = "Cases", colour = "Current season") +
   theme_light() +
   theme (axis.text.y=element_blank(), 
-         axis.ticks.y=element_blank()) +
-  facet_wrap(~season_birth)
+         axis.ticks.y=element_blank(),
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20),
+         legend.text = element_text (size = 25),
+         legend.title = element_text (size = 25),
+         strip.text.x = element_text(size = 20, color = "black")) +
+  facet_wrap(~season_birth) 
 
-mild_cases_u1_de %>% filter(!is.na(age_months)) %>%
+pain_au_lait %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Severe cases DE by season of birth and age.png",
+         width = 14, height = 16, units = "in", 
+         device='png')
+
+plt <- mild_cases_u1_de %>% filter(!is.na(age_months)) %>%
   ggplot(aes(x = age_midpoint, y = n_mild)) +
-  geom_point(aes(colour = current_season)) + 
+  geom_point(aes(colour = current_season), size = 3.5) + 
   geom_smooth() +
   labs(title = "Number of mild RSV cases", x = "Age (days)",
        y = "Cases", colour = "Current season") +
   theme_light() +
   theme (axis.text.y=element_blank(), 
-         axis.ticks.y=element_blank()) +
-  facet_wrap(~season_birth)
+         axis.ticks.y=element_blank(),
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20),
+         legend.text = element_text (size = 18),
+         strip.text.x = element_text(size = 20, color = "black")) +
+  facet_wrap(~season_birth) 
+
+plt %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Mild cases DE by season of birth and age.png",
+         width = 14, height = 16, units = "in", 
+         device='png')
+
 
 # ------------- Abrysvo ----------------------------------------------------
 # We have estimates of VE by age so we will use those
