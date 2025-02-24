@@ -1,6 +1,8 @@
 Trying to build an MSR model with odin.dust 
 
 ```{r}
+rm(list=ls())
+
 # Load libraries
 library(odin.dust)
 library(odin)
@@ -189,10 +191,31 @@ data$age_grp <- cut(data$age_days,
                               seq(909,2000, by = 30.25*6)), 
                    include.lowest = T, right = F)
 
+# Divide by season of birth
+spring <- c(3, 4, 5)
+summer <- c(6, 7, 8)
+autumn <- c (9, 10, 11)
+winter <- c(1, 2, 12)
+
+data <- data %>%
+  mutate(
+    Birth_mo = birthday %>% lubridate::month(),
+    season_birth = case_when (Birth_mo %in% spring ~ "spring",
+                              Birth_mo %in% summer ~ "summer",
+                              Birth_mo %in% autumn ~ "autumn",
+                              Birth_mo %in% winter ~ "winter"))
+
+get_midpoint <- function(cut_label) {
+  round(mean(as.numeric(unlist(strsplit(gsub("\\(|\\)|\\[|\\]", "", as.character(cut_label)), ",")))))
+}
+
+data$xMidpoint <- sapply(data$age_grp, get_midpoint)
+
+# Different groupings
 # Get number of cases by age
-incidence_data <- data %>% select (age_grp, age_days, infection) %>%
+incidence_data <- data %>% select (age_grp, age_days, infection, xMidpoint) %>%
   mutate(N_tot = n()) %>%
-  group_by(age_grp) %>%
+  group_by(age_grp, xMidpoint) %>%
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
@@ -204,12 +227,39 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   mutate(incidence = case_when(incidence >= 0 ~ round(incidence),
                                TRUE ~ 0))
 
+# Get number of cases by age and season of birth
+incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
+  mutate(N_tot = n()) %>%
+  group_by(age_grp, xMidpoint, season_birth) %>%
+  summarise(age_mid = round(median(age_days)), 
+            N = n(),
+            n_infection = sum(infection),
+            prop_seroconv = n_infection/N,
+            cum_infection = prop_seroconv * N_tot) %>%
+  ungroup() %>% 
+  distinct() %>%
+  mutate(incidence = c(0,diff(cum_infection))) %>%
+  mutate(incidence = case_when(incidence >= 0 ~ round(incidence),
+                               TRUE ~ 0))
+
+incidence_data_season_wide <- incidence_data_season %>% select (!c(age_mid, age_grp)) %>%
+  pivot_wider(
+    names_from = season_birth,
+    values_from = c(N , n_infection, prop_seroconv, cum_infection, incidence)
+  )
+
 # Put it in the right format?
 model_data <- particle_filter_data(data = incidence_data,
                                    initial_time = 0,
                                    time = "age_mid",
                                    rate = 1)
 rmarkdown::paged_table(model_data)
+
+model_data_season <- particle_filter_data(data = incidence_data_season_wide,
+                                   initial_time = 0,
+                                   time = "xMidpoint",
+                                   rate = 1)
+rmarkdown::paged_table(model_data_season)
 ```
 
 ```{r}
@@ -233,15 +283,48 @@ case_compare <- function(state, observed, pars = NULL){
   # Whole data
   nconv <- observed$n_infection # n seroconverted at each age point  (data)
   N <- observed$N # total N at each age point  (data)
-  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
+  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total population
  # prob <- observed$prop_seroconv
-
-  dbinom(x = nconv,
-                   size = N,
-                   prob = prob,
-                   log = TRUE)
   
-  #return(ll_all)
+   # Data by season of birth
+  nconv_spring <- observed$n_infection_spring
+  N_spring <- observed$N_spring
+  prob_spring <- state[5, , drop = T] / colSums(state[2:5, , drop = T]) 
+  ll_spring <- dbinom(x = nconv_spring,
+                      size = N_spring,
+                      prob = prob_spring,
+                      log = TRUE)
+  
+  nconv_summer <- observed$n_infection_summer
+  N_summer <- observed$N_summer
+  prob_summer <- state[9, , drop = T] / colSums(state[6:9, , drop = T])
+  ll_summer <- dbinom(x = nconv_summer,
+                      size = N_summer,
+                      prob = prob_summer,
+                      log = TRUE)
+  
+  nconv_autumn <- observed$n_infection_autumn
+  N_autumn <- observed$N_autumn
+  prob_autumn <- state[13, , drop = T] / colSums(state[10:13, , drop = T])
+  ll_autumn <- dbinom(x = nconv_autumn,
+                      size = N_autumn,
+                      prob = prob_autumn,
+                      log = TRUE)
+  
+  nconv_winter <- observed$n_infection_winter
+  N_winter <- observed$N_winter
+  prob_winter <- state[17, , drop = T] / colSums(state[14:17, , drop = T]) 
+  ll_winter <- dbinom(x = nconv_winter,
+                      size = N_winter,
+                      prob = prob_winter,
+                      log = TRUE)
+  
+  ll_spring + ll_summer + ll_autumn + ll_winter
+  
+  # dbinom(x = nconv,
+  #                     size = N,
+  #                     prob = prob,
+  #                     log = TRUE)
   
 }
 
@@ -267,16 +350,102 @@ N <- model_data$N # total N at each age point  (data)
 prob <- x[14, , ] / colSums(x[2:13, , ]) # proportion seroconverted at each age point (model output)
 # prob <- observed$prop_seroconv
 
+ll <- dbinom(x = nconv,
+           size = N,
+           prob = prob,
+           log = TRUE)
+
 sum(dbinom(x = nconv,
            size = N,
            prob = prob,
            log = TRUE), na.rm = TRUE) # this returns "Expected a vector of length 100 for 'index' but given 1" --> removed sum
+
+nconv_spring <- model_data_season$n_infection[model_data_season$season_birth == "Spring"] 
+N_spring <- model_data_season$N[model_data_season$season_birth == "Spring"]
+prob_spring <- x[5, , ] / colSums(x[2:5, , ]) 
+  ll_spring <- dbinom(x = nconv_spring,
+                      size = N_spring,
+                      prob = prob_spring,
+                      log = TRUE)
+  
+nconv_summer <- model_data_season$n_infection[model_data_season$season_birth == "Summer"] 
+N_summer <- model_data_season$N[model_data_season$season_birth == "Summer"]
+prob_summer <- x[5, , ] / colSums(x[2:5, , ]) 
+  ll_summer <- dbinom(x = nconv_summer,
+                      size = N_summer,
+                      prob = prob_summer,
+                      log = TRUE)
+  
+nconv_autumn <- model_data_season$n_infection[model_data_season$season_birth == "Autumn"] 
+N_autumn <- model_data_season$N[model_data_season$season_birth == "Autumn"]
+prob_autumn <- x[5, , ] / colSums(x[2:5, , ]) 
+  ll_autumn <- dbinom(x = nconv_autumn,
+                      size = N_autumn,
+                      prob = prob_autumn,
+                      log = TRUE)
+  
+nconv_winter <- model_data_season$n_infection[model_data_season$season_birth == "Winter"] 
+N_winter <- model_data_season$N[model_data_season$season_birth == "Winter"]
+prob_winter <- x[5, , ] / colSums(x[2:5, , ]) 
+  ll_winter <- dbinom(x = nconv_winter,
+                      size = N_winter,
+                      prob = prob_winter,
+                      log = TRUE)
+  
+ll_sum <- ll_spring + ll_summer + ll_winter + ll_autumn
+
+case_compare_test <- function(state, observed, pars = NULL){
+  
+  # Whole data
+  nconv <- observed$n_infection # n seroconverted at each age point  (data)
+  N <- observed$N # total N at each age point  (data)
+  prob <- state[18, , ] / colSums(state[2:17, ,  ]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total population
+ # prob <- observed$prop_seroconv
+  
+   # Data by season of birth
+  nconv_spring <- observed$n_infection_spring
+  N_spring <- observed$N_spring
+  prob_spring <- state[5, , ] / colSums(state[2:5, , ]) 
+  ll_spring <- dbinom(x = nconv_spring,
+                      size = N_spring,
+                      prob = prob_spring,
+                      log = TRUE)
+  
+  nconv_summer <- observed$n_infection_summer
+  N_summer <- observed$N_summer
+  prob_summer <- state[9, , ] / colSums(state[6:9, , ])
+  ll_summer <- dbinom(x = nconv_summer,
+                      size = N_summer,
+                      prob = prob_summer,
+                      log = TRUE)
+  
+  nconv_autumn <- observed$n_infection_autumn
+  N_autumn <- observed$N_autumn
+  prob_autumn <- state[13, , ] / colSums(state[10:13, , ])
+  ll_autumn <- dbinom(x = nconv_autumn,
+                      size = N_autumn,
+                      prob = prob_autumn,
+                      log = TRUE)
+  
+  nconv_winter <- observed$n_infection_winter
+  N_winter <- observed$N_winter
+  prob_winter <- state[17, , ] / colSums(state[14:17, , ]) 
+  ll_winter <- dbinom(x = nconv_winter,
+                      size = N_winter,
+                      prob = prob_winter,
+                      log = TRUE)
+  
+  ll_spring + ll_summer + ll_autumn + ll_winter
+  
+}
+
+case_compare_test(x, model_data_season)
 ```
 
 ```{r}
 # Set up a particle filter
 n_particles <- 100
-filter <- particle_filter$new(data = model_data,
+filter <- particle_filter$new(data = model_data_season,
                               model = gen_msr, 
                               n_particles = n_particles,
                               compare = case_compare,
@@ -298,19 +467,19 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
   cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", prop_sero_tot = "pink")
   # cols <- c(M_sp = "#8c8cd9", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
-  matplot(times, t(history[2, , -1]), type = "l",
+  matplot(times, t(history[2, , -1]) %>% unique(), type = "l",
           xlab = "Time", ylab = "Number of individuals",
           col = cols[["M1_sp"]], lty = 1, ylim = c(0,2))
   matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
   matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
   matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
   matlines(times, t(history[17, , -1]), col = cols[["prop_sero_tot"]], lty = 1)
-  matpoints(t(true_history[1]), t(true_history[8]), pch = 19, cols = c("black", "black"))
+  matpoints(t(true_history[1]), t(true_history[14]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
 }
 
-plot_particle_filter(filter$history(), model_data, incidence_data$age_mid)
+plot_particle_filter(filter$history(), model_data_season, incidence_data_season_wide$xMidpoint)
 ```
 
 ```{r}
@@ -352,12 +521,12 @@ mu <- pmcmc_parameter("mu", initial = 0.02, max = 0.1, min = 0, prior = function
 pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
   dunif(p, max = 1, min = 0))
 
-proposal_matrix <- diag(0.1, 6)
+proposal_matrix <- diag(0.1, 5)
 mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
                                        winter_comp = winter_comp,
-                                       mu = mu,
+                                       #mu = mu,
                                        pi = pi),
                                   proposal_matrix)
 # Chain parameters
@@ -386,6 +555,7 @@ mcmc1 <- coda::as.mcmc(cbind(pmcmc_run$probabilities, pmcmc_run$pars))
 
 summary(mcmc1)
 ```
+
 ```{r}
 coda::effectiveSize(mcmc1)
 ```
@@ -407,7 +577,7 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(
        summer_comp = summer_comp,
        autumn_comp = autumn_comp,
        winter_comp = winter_comp,
-       mu = mu,
+       #mu = mu,
        pi = pi),
   proposal_matrix)
 proposal_matrix
@@ -469,8 +639,8 @@ plot(pmcmc_tuned_run$pars[, "summer_comp"], type = "l", xlab = "Iteration",
      ylab = "summer_comp")
 plot(pmcmc_tuned_run$pars[, "autumn_comp"], type = "l", xlab = "Iteration",
      ylab = "autumn_comp")
-plot(pmcmc_tuned_run$pars[, "mu"], type = "l", xlab = "Iteration",
-     ylab = "mu")
+# plot(pmcmc_tuned_run$pars[, "mu"], type = "l", xlab = "Iteration",
+#      ylab = "mu")
 plot(pmcmc_tuned_run$pars[, "pi"], type = "l", xlab = "Iteration",
      ylab = "pi")
 hist(mcmc_sample$pars[, "winter_comp"], main = "", xlab = "winter_comp",
@@ -481,8 +651,8 @@ hist(mcmc_sample$pars[, "summer_comp"], main = "", xlab = "summer_comp",
      freq = FALSE)
 hist(mcmc_sample$pars[, "autumn_comp"], main = "", xlab = "autumn_comp",
      freq = FALSE)
-hist(mcmc_sample$pars[, "mu"], main = "", xlab = "mu",
-     freq = FALSE)
+# hist(mcmc_sample$pars[, "mu"], main = "", xlab = "mu",
+#      freq = FALSE)
 hist(mcmc_sample$pars[, "pi"], main = "", xlab = "pi",
      freq = FALSE)
 ```
