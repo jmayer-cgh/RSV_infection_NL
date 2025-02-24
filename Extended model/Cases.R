@@ -271,13 +271,13 @@ hosp_prevented_age <- hosp_prevented %>% group_by(season_birth) %>%
              prev_spring_10 = sum(n_ma_severe_averted_nirs[age_months >= 10 & season_birth == "spring"], na.rm = T),
     # remaining hospitalisations
              hosp_u1 = sum(n_ma_severe_nirs),
-             hosp_1 = sum(n_ma_severe_nirs[age_months >= 1], na.rm = T),
-             hosp_3 = sum(n_ma_severe_nirs[age_months >= 3], na.rm = T),
-             hosp_4 = sum(n_ma_severe_nirs[age_months >= 4], na.rm = T),
-             hosp_7 = sum(n_ma_severe_nirs[age_months >= 7], na.rm = T),
-             hosp_8 = sum(n_ma_severe_nirs[age_months >= 8], na.rm = T),
-             hosp_10 = sum(n_ma_severe_nirs[age_months >= 10], na.rm = T),
-             hosp_12 = sum(n_ma_severe_nirs[age_months >= 12], na.rm = T)) %>%
+             hosp_1 = sum(n_ma_severe_nirs[age_months >= 1], na.rm = T) + sum(n_ma_severe_vacc[age_months < 1], na.rm = T),
+             hosp_3 = sum(n_ma_severe_nirs[age_months >= 3], na.rm = T) + sum(n_ma_severe_vacc[age_months < 3], na.rm = T),
+             hosp_4 = sum(n_ma_severe_nirs[age_months >= 4], na.rm = T) + sum(n_ma_severe_vacc[age_months < 4], na.rm = T),
+             hosp_7 = sum(n_ma_severe_nirs[age_months >= 7], na.rm = T) + sum(n_ma_severe_vacc[age_months < 7], na.rm = T),
+             hosp_8 = sum(n_ma_severe_nirs[age_months >= 8], na.rm = T) + sum(n_ma_severe_vacc[age_months < 8], na.rm = T),
+             hosp_10 = sum(n_ma_severe_nirs[age_months >= 10], na.rm = T) + sum(n_ma_severe_vacc[age_months < 10], na.rm = T),
+             hosp_12 = sum(n_ma_severe_nirs[age_months >= 12], na.rm = T) + sum(n_ma_severe_vacc[age_months < 12], na.rm = T)) %>%
   ungroup() %>%
   # hospitalisations when immunising spring cohort only (hosp. are averted in the spring cohort only)
   mutate(hosp_spring_10 = case_when (season_birth == "spring" ~ hosp_10,
@@ -307,8 +307,8 @@ hosp_prevented_age <- hosp_prevented %>% group_by(season_birth) %>%
               hosp_spring_10 = 0 ) %>%# placeholder
       ungroup()
   ) %>%
-  mutate(hosp_spring_10 = case_when(season_birth == "all" ~ sum(hosp_spring_10),
-                                    TRUE ~ hosp_spring_10))
+  mutate(hosp_spring_10 = case_when (season_birth == "all" ~ sum(hosp_spring_10),
+                                     TRUE ~ hosp_spring_10))
 
 # Pivot longer for easier plotting
 hosp_prevented_age_nirs_long <- hosp_prevented_age %>% 
@@ -421,7 +421,7 @@ total_hosp_intervention <- severe_cases_u1_de %>%
   select(season_birth, age_bracket, n_ma_severe) %>%
   rename(n_hospitalisations = n_ma_severe) %>%
   mutate(prevented_hospitalisations = 0,
-         intervention = "None") %>%
+         intervention = "No immunisation") %>%
   rbind(
     hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
       ungroup() %>%
@@ -441,22 +441,26 @@ total_hosp_intervention <- severe_cases_u1_de %>%
                 n_hospitalisations = hosp_spring_10,
                 prevented_hospitalisations = prev_spring_10,
                 intervention = "Nirsevimab for spring births")
-  ) %>% mutate(intervention = factor(intervention, levels = c("None", "Maternal vaccination", "Nirsevimab for spring births")))
-  
+  ) %>% mutate(intervention = factor(intervention, levels = c("No immunisation", "Maternal vaccination", "Nirsevimab for spring births")))
+
+# Check calculation of remaining hospitalisations with nirsevimab
+remaining_hosp_nirs <- total_hosp_intervention$n_hospitalisations[total_hosp_intervention$intervention == "Maternal vaccination"] - total_hosp_intervention$prevented_hospitalisations[total_hosp_intervention$intervention == "Nirsevimab for spring births"]
+round(remaining_hosp_nirs) == round(total_hosp_intervention %>% filter(intervention == "Nirsevimab for spring births") %>% select (n_hospitalisations))
+
+
 # Plot
-palette <- c("None" = "#9C964A", "Maternal vaccination" = "#FAD77B", "Nirsevimab for spring births" = "#85D4E3")
+palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#FAD77B", "Nirsevimab for spring births" = "#85D4E3")
 
 total_hosp_intervention_plt <- total_hosp_intervention %>% ggplot() +
                                 geom_col(aes(x = intervention, y = n_hospitalisations, fill = intervention), position="dodge") +
-                                labs(title = "Number of RSV-associated hospitalisations in children under the age of 1 year",
-                                     x = "\nIntervention",
-                                     y = "Hospitalisations\n") +
+                                labs(x = "\nIntervention",
+                                     y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
                                 theme_light() +
                                 theme (axis.text.y=element_blank(), 
                                        axis.ticks.y=element_blank(),
                                        legend.position = "None",
                                        axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-                                       axis.title.x = element_blank(),
+                                       axis.title.x = element_text(size = 20),
                                        axis.title.y = element_text(size = 20),
                                        title = element_text(size = 20)) +
                               scale_fill_manual(values = palette)
