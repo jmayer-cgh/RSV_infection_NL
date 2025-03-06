@@ -79,15 +79,16 @@ autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.000001, max = 0.1, min
   dunif(p, max = 0.1, min = 0))
 winter_comp <- pmcmc_parameter("winter_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
-  dunif(p, max = 1, min = 0))
+# pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
+#   dunif(p, max = 1, min = 0))
 
-proposal_matrix <- diag(0.1, 5)
+proposal_matrix <- diag(0.1, 4)
 mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
-                                       winter_comp = winter_comp,
-                                       pi = pi),
+                                       winter_comp = winter_comp#,
+                                       # pi = pi
+                                       ),
                                   proposal_matrix)
 # Chain parameters
 n_steps <- 1e4
@@ -107,8 +108,9 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(
   list(spring_comp = spring_comp, 
        summer_comp = summer_comp,
        autumn_comp = autumn_comp,
-       winter_comp = winter_comp, 
-       pi = pi),
+       winter_comp = winter_comp#, 
+       #pi = pi
+       ),
   proposal_matrix)
 
 # Run the tuned filter
@@ -128,6 +130,7 @@ mcmc2 <- coda::as.mcmc(cbind(
 summary(mcmc2) # summary
 coda::effectiveSize(mcmc2) # ESS
 plot(mcmc2) # plot the trace
+
 
 1 - coda::rejectionRate(mcmc2) # check the acceptance rate
 
