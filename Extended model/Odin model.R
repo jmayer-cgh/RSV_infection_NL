@@ -275,4 +275,4 @@ winter_comp <- user(0.00004)
 #contact_comp <- user(0.02)
 
 # Proportion born with maternal immunity
-pi <- user(0.5)
+pi <- user(1)
