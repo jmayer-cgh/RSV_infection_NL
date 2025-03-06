@@ -103,6 +103,19 @@ mild_cases_u1_de <- mild_cases_u1_de %>% rbind(
                                     n_non_ma_mild = sum(n_non_ma_mild))
 )
 
+# Scale the numbers to have them match Fabienne's paper
+# About 22,000 hospitalisations in 2019, of which about 12% in year 1 --> 2,640
+# Model predicts about 65,000 hospitalisations --> scale by 0.04
+severe_cases_u1_de <- severe_cases_u1_de %>% 
+  mutate (n_severe_scaled = n_severe * 0.04,
+          n_ma_severe_scaled = n_ma_severe * 0.04,
+          n_non_ma_severe_scaled = n_non_ma_severe * 0.04)
+
+mild_cases_u1_de <- mild_cases_u1_de %>% 
+  mutate (n_mild_scaled = n_mild * 0.04,
+          n_ma_mild_scaled = n_ma_mild * 0.04,
+          n_non_ma_mild_scaled = n_non_ma_mild * 0.04)
+
 # Plot the numbers
 severe_cases_u1_de %>% filter(!is.na(age_months)) %>% ggplot() +
   geom_point(aes(x = age_months, y = n_severe, colour = season_birth)) +
