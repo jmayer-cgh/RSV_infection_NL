@@ -30,7 +30,10 @@ update(S_wt) <- S_wt + n_M2S_wt - n_SR_wt
 update(R_wt) <- R_wt + n_SR_wt
 
 # Total seroprevalence
-update(R_all) <- R_sp + R_sm + R_au + R_wt
+update(R_all) <- 0.26*R_sp + 
+                0.29*R_sm + 
+                0.24*R_au + 
+                0.20*R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
@@ -242,7 +245,10 @@ initial(S_wt) <- (1-pi) * M1_wt_ini
 initial(R_wt) <- R_wt_ini
 
 # Total
-initial(R_all) <- R_sp_ini + R_sm_ini + R_au_ini + R_wt_ini
+initial(R_all) <- 0.26*R_sp_ini + 
+                  0.29*R_sm_ini + 
+                  0.24*R_au_ini + 
+                  0.20*R_wt_ini
 
 ## User defined parameters - default in parentheses:
 M1_sp_ini <-user(1-2*1e-12) # user (682 * 0.26) #

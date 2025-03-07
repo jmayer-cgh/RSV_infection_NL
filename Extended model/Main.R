@@ -52,7 +52,7 @@ model_data <- particle_filter_data(data = incidence_data,
 case_compare <- function(state, observed, pars = NULL){
   nconv <- observed$n_infection # n seroconverted at each age point  (data)
   N <- observed$N # total N at each age point  (data)
-  prob <- state[18, , drop = T] / colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
+  prob <- state[18, , drop = T] #/ colSums(state[2:17, , drop = T]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total populatoion
   # prob <- observed$prop_seroconv
   
   dbinom(x = nconv,
@@ -79,15 +79,15 @@ autumn_comp <- pmcmc_parameter("autumn_comp", initial = 0.000001, max = 0.1, min
   dunif(p, max = 0.1, min = 0))
 winter_comp <- pmcmc_parameter("winter_comp", initial = 0.000001, max = 0.1, min = 0, prior = function(p)
   dunif(p, max = 0.1, min = 0))
-# pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
-#   dunif(p, max = 1, min = 0))
+pi <- pmcmc_parameter("pi", initial = 0.5, max = 1, min = 0, prior = function(p)
+  dunif(p, max = 1, min = 0))
 
-proposal_matrix <- diag(0.1, 4)
+proposal_matrix <- diag(0.1, 5)
 mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp, 
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
-                                       winter_comp = winter_comp#,
-                                       # pi = pi
+                                       winter_comp = winter_comp,
+                                       pi = pi
                                        ),
                                   proposal_matrix)
 # Chain parameters
@@ -108,8 +108,8 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(
   list(spring_comp = spring_comp, 
        summer_comp = summer_comp,
        autumn_comp = autumn_comp,
-       winter_comp = winter_comp#, 
-       #pi = pi
+       winter_comp = winter_comp, 
+       pi = pi
        ),
   proposal_matrix)
 
@@ -165,15 +165,15 @@ cols <- c(`M1 spring` = "#8c8cd9", `M2 spring` = "turquoise", `S spring` = "#cc0
 
 state <- mcmc_sample$trajectories$state
 
-prop_seroconv <-  t(state[17, , -1])
+prop_seroconv <-  t(state[18, , -1])
 
 par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
 matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1 spring"],
-        ylim = c(0, max(t(state[17, , ])) * 1.2), xlab = "Day", ylab = "Proportion of individuals")
+        ylim = c(0, max(t(state[18, , ])) * 1.2), xlab = "Day", ylab = "Proportion of individuals")
 matlines(times, t(state[3, , ]), lty = 1, col = cols["M2 spring"])
 matlines(times, t(state[4, , ]), lty = 1, col = cols["S spring"])
 matlines(times, t(state[5, , ]), lty = 1, col = cols["R spring"])
-matlines(times, t(state[17, , ]), lty = 1, col = cols["Total prop \nseroconverted"])
+matlines(times, t(state[18, , ]), lty = 1, col = cols["Total prop \nseroconverted"])
 legend("right", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
 matplot(model_data$age_mid_start, prop_seroconv, type = "l", lty = 1, col = grey(0.7, 0.2),
@@ -251,3 +251,4 @@ path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Universität
 write.csv(summary_hpd, paste0(path, "highest probability distribution, assumed mu.csv"), row.names = F)
 write.csv(seroconversion_df, paste0(path, "seroconversion by age, assumed mu.csv"), row.names = F)
 write.csv(incidence_df, paste0(path, "incidence by age, assumed mu.csv"), row.names = F)
+
