@@ -183,14 +183,14 @@ plt %>%
 hosp_prevented_vacc <- severe_cases_u1_de %>% filter(!is.na(age_months)) %>%
   select(season_birth, age_bracket, age_months, age_midpoint, current_season,
          n_ma_severe) %>%
-  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.87 from Ayaka
-                        age_months == 1 ~ 0.70, # 0.83
-                        age_months == 3 ~ 0.50, # 0.66
-                        age_months == 4 ~ 0.35, # 0.45
-                        age_months == 7 ~ 0.125, # 0.32
-                        age_months == 8 ~ 0.10, # 0.26
-                        age_months == 10 ~ 0.06, # 0.17
-                        age_months == 12 ~ 0.04)) # 0.10
+  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.87 from Ayaka // 0.62 from Hodgson
+                        age_months == 1 ~ 0.70, # 0.83 // 0.62
+                        age_months == 3 ~ 0.50, # 0.66 // 0.5
+                        age_months == 4 ~ 0.35, # 0.45 // 0.4
+                        age_months == 7 ~ 0.125, # 0.32 // 0.3
+                        age_months == 8 ~ 0.10, # 0.26 // 0.25
+                        age_months == 10 ~ 0.06, # 0.17 // 0.14
+                        age_months == 12 ~ 0.04)) # 0.10 // 0.10
 
 hosp_prevented_vacc <- hosp_prevented_vacc %>% 
   group_by(season_birth, age_bracket, age_months, age_midpoint, current_season, ve) %>%
@@ -232,14 +232,14 @@ ma_cases_u1_de <- ma_cases_u1_de %>%
 # Now we can get the # of prevented cases
 ma_prevented_vacc <- ma_cases_u1_de %>% 
   select(season_birth, age_months, n_ma_cases, severity) %>%
-  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.65 from Ayaka
-                        age_months == 1 ~ 0.70, # 0.62
-                        age_months == 3 ~ 0.50, # 0.50
-                        age_months == 4 ~ 0.35, # 0.34
-                        age_months == 7 ~ 0.125, # 0.24
-                        age_months == 8 ~ 0.10, # 0.20
-                        age_months == 10 ~ 0.06, # 0.13
-                        age_months == 12 ~ 0.04)) # 0.08
+  mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.65 from Ayaka // 0.9 from Hodgson
+                        age_months == 1 ~ 0.70, # 0.62 // 0.87
+                        age_months == 3 ~ 0.50, # 0.50 // 0.8
+                        age_months == 4 ~ 0.35, # 0.34 // 0.65
+                        age_months == 7 ~ 0.125, # 0.24 // 0.45
+                        age_months == 8 ~ 0.10, # 0.20 // 0.43
+                        age_months == 10 ~ 0.06, # 0.13 // 0.42
+                        age_months == 12 ~ 0.04)) # 0.08 // 0.29
 
 ma_prevented_vacc <- ma_prevented_vacc %>% 
   group_by(season_birth, age_months, severity, ve) %>%
