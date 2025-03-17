@@ -91,8 +91,8 @@ mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp,
                                        ),
                                   proposal_matrix)
 # Chain parameters
-n_steps <- 1e4
-n_burnin <- 500
+n_steps <- 3e4
+n_burnin <- 10000
 control <- pmcmc_control(
   n_steps, 
   save_state = T,
