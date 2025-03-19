@@ -221,14 +221,43 @@ loglik <- function(params) {
   model_output <- model_fun(params)
   
   # Whole data
-  nconv <- data_no_season$nconv[!is.na(data_no_season$nconv)] # n seroconverted at each age point  (data)
-  N <- data_no_season$N[!is.na(data_no_season$nconv)] # total N at each age point  (data) 
-  prob <- model_output$prop_sero_tot[model_output$time %in% data_no_season$agemid] # proportion seroconverted at each age point (model output)
+  nconv_spring <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Spring"] # n seroconverted at each age point  (data)
+  N_spring <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Spring"] # total N at each age point  (data) 
+  prob_spring <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Spring"]] # proportion seroconverted at each age point (model output)
   
-  ll_all <- sum(dbinom(x = nconv,
-                       size = N,
-                       prob = prob,
+  ll_spring <- sum(dbinom(x = nconv_spring,
+                       size = N_spring,
+                       prob = prob_spring,
                        log = TRUE), na.rm = TRUE)
+  
+  nconv_summer <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Summer"] # n seroconverted at each age point  (data)
+  N_summer <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Summer"] # total N at each age point  (data) 
+  prob_summer <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Summer"]] # proportion seroconverted at each age point (model output)
+  
+  ll_summer <- sum(dbinom(x = nconv_summer,
+                       size = N_summer,
+                       prob = prob_summer,
+                       log = TRUE), na.rm = TRUE)
+  
+  nconv_autumn <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Autumn"] # n seroconverted at each age point  (data)
+  N_autumn <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Autumn"] # total N at each age point  (data) 
+  prob_autumn <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Autumn"]] # proportion seroconverted at each age point (model output)
+  
+  ll_autumn <- sum(dbinom(x = nconv_autumn,
+                       size = N_autumn,
+                       prob = prob_autumn,
+                       log = TRUE), na.rm = TRUE)
+  
+  nconv_winter <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Winter"] # n seroconverted at each age point  (data)
+  N_winter <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Winter"] # total N at each age point  (data) 
+  prob_winter <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Winter"]] # proportion seroconverted at each age point (model output)
+  
+  ll_winter <- sum(dbinom(x = nconv_winter,
+                       size = N_winter,
+                       prob = prob_winter,
+                       log = TRUE), na.rm = TRUE)
+  
+  ll_all <- ll_spring + ll_summer + ll_autumn + ll_winter
   
   return(ll_all)
   
@@ -401,8 +430,8 @@ colnames(winter_conv_quantiles) <- c("agemid", "low95", "median", "up95")
 fit <- ggplot() + theme_bw() + ggtitle("Model fit") +
   geom_point(data = data_no_season, aes(x = agemid, y = seroprev_mean)) +
   geom_linerange(data = data_no_season, aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
-  geom_ribbon(data = trajquantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
-  geom_line(data = trajquantiles, aes(x = agemid, y = median), color = "red") +
+  geom_ribbon(data = trajquantiles_inc, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = trajquantiles_inc, aes(x = agemid, y = median), color = "red") +
   xlab("age (days)") + ylab("proportion seroconverted") 
 
 fit
