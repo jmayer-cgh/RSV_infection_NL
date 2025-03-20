@@ -61,10 +61,10 @@ x_df <- as.data.frame(x)
 
 # Add names
 x_df_names <- c("time",
-                "M1_sp", "M2_sp", "S_sp", "R_sp",
-                "M1_sm", "M2_sm", "S_sm", "R_sm",
-                "M1_au", "M2_au", "S_au", "R_au",
-                "M1_wt", "M2_wt", "S_wt", "R_wt", "R_all")
+                "M1_sp", "M2_sp", "M3_sp", "S_sp", "R_sp",
+                "M1_sm", "M2_sm", "M3_sm", "S_sm", "R_sm",
+                "M1_au", "M2_au", "M3_au", "S_au", "R_au",
+                "M1_wt", "M2_wt", "M3_wt", "S_wt", "R_wt", "R_all")
 
 x_df_w_names <- cbind(x_df_names, x_df)
 
@@ -79,10 +79,11 @@ x_transp <- x_transp %>% mutate %>% rowwise() %>%
 ```
 
 ```{r}
-palette <- c("M1" = "#F2862C",  "M2" = "yellow", "S" = "#8c8cd9", "R" = "#999966", "prop_sero_tot" = "pink")
+palette <- c("M1" = "#F2862C",  "M2" = "yellow", "M3" = "lightblue", "S" = "#8c8cd9", "R" = "#999966", "prop_sero_tot" = "pink")
 x_transp %>% ggplot(aes(x = time)) +
   geom_line(aes(y = M1_sp, colour = "M1")) + 
   geom_line(aes(y = M2_sp, colour = "M2")) + 
+  geom_line(aes(y = M3_sp, colour = "M3")) + 
   geom_line(aes(y = S_sp, colour = "S")) + 
   geom_line(aes(y = R_sp, colour = "R")) + 
   geom_line(aes(y = prop_sero_tot, colour = "prop_sero_tot")) + 
@@ -134,10 +135,10 @@ x_transp %>% ggplot(aes(x = time)) +
 ```{r}
 # Check that the total is constant
 x_transp <- x_transp %>% group_by(time) %>%
-  mutate(N = sum(M1_sp, M2_sp, S_sp, R_sp,
-                 M1_sm, M2_sm, S_sm, R_sm,
-                 M1_au, M2_au, S_au, R_au,
-                 M1_wt, M2_wt, S_wt, R_wt))
+  mutate(N = sum(M1_sp, M2_sp, M3_sp, S_sp, R_sp,
+                 M1_sm, M2_sm, M3_sm, S_sm, R_sm,
+                 M1_au, M2_au, M3_au, S_au, R_au,
+                 M1_wt, M2_wt, M3_wt, S_wt, R_wt))
 ```
 
 ```{r}
@@ -170,12 +171,12 @@ test <- msr_test$new(M1_sp_ini = 1191 * 0.25, M1_sm_ini = 1191 * 0.25,
                      M1_au_ini = 1191 * 0.25, M1_wt_ini = 1191 * 0.25, 
                      winter_comp = 0.03,  mu = 0.1)
 
-sir_col <- c("#8c8cd9", "#cc0044", "#999966", "turquoise")
+sir_col <- c("#8c8cd9", "#cc0044", "#999966", "turquoise", "lightyellow")
 x_res <- test$run(0:2000)
 par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-matplot(x_res[, 1], x_res[, 3:6], xlab = "Time", ylab = "Number of individuals",
+matplot(x_res[, 1], x_res[, 3:7], xlab = "Time", ylab = "Number of individuals",
         type = "l", col = sir_col, lty = 1)
-legend("topright", lwd = 1, col = sir_col, legend = c("M1", "M2", "S", "R"), bty = "n")
+legend("topright", lwd = 1, col = sir_col, legend = c("M1", "M2", "M3", "S", "R"), bty = "n")
 ```
 
 ```{r}
@@ -215,7 +216,7 @@ data$xMidpoint <- sapply(data$age_grp, get_midpoint)
 # Get number of cases by age
 incidence_data <- data %>% select (age_grp, age_days, infection, xMidpoint) %>%
   mutate(N_tot = n()) %>%
-  group_by(age_grp) %>% #, xMidpoint) %>%
+  group_by(age_grp, xMidpoint) %>%
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
@@ -228,10 +229,9 @@ incidence_data <- data %>% select (age_grp, age_days, infection, xMidpoint) %>%
                                TRUE ~ 0))
 
 # Get number of cases by age and season of birth
-incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth) %>%#, xMidpoint) %>%
+incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
   mutate(N_tot = n()) %>%
-  group_by(age_grp, #xMidpoint, 
-           season_birth) %>%
+  group_by(age_grp, xMidpoint, season_birth) %>%
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
@@ -243,7 +243,7 @@ incidence_data_season <- data %>% select (age_grp, age_days, infection, season_b
   mutate(incidence = case_when(incidence >= 0 ~ round(incidence),
                                TRUE ~ 0))
 
-incidence_data_season_wide <- incidence_data_season %>% #select (!c(age_mid, age_grp)) %>%
+incidence_data_season_wide <- incidence_data_season %>% select (!c(age_mid, age_grp)) %>%
   pivot_wider(
     names_from = season_birth,
     values_from = c(N , n_infection, prop_seroconv, cum_infection, incidence),
@@ -259,18 +259,16 @@ rmarkdown::paged_table(model_data)
 
 model_data_season <- particle_filter_data(data = incidence_data_season_wide,
                                    initial_time = 0,
-                                   #time = "xMidpoint",
-                                   time = "age_mid",
+                                   time = "xMidpoint",
                                    rate = 1)
 rmarkdown::paged_table(model_data_season)
 ```
 
 ```{r}
 # Plot data by birth cohort
-incidence_data_season %>% filter (age_mid <= 2*365) %>%#(xMidpoint <= 2*365) %>%
+incidence_data_season %>% filter (xMidpoint <= 2*365) %>%
   ggplot() +
-  geom_point(aes(x = age_mid, #xMidpoint, 
-                   y = prop_seroconv)) +
+  geom_point(aes(x = xMidpoint, y = prop_seroconv)) +
   facet_wrap(~season_birth) +
   labs(title = "Proportion seroconverted by age", x = "\nAge (days)",
        y = "Seroconversion (%)\n") +
@@ -304,7 +302,7 @@ case_compare <- function(state, observed, pars = NULL){
    # Data by season of birth
   nconv_spring <- observed$n_infection_spring
   N_spring <- observed$N_spring
-  prob_spring <- state[5, , drop = T]
+  prob_spring <- state[6, , drop = T]
   ll_spring <- dbinom(x = nconv_spring,
                       size = N_spring,
                       prob = prob_spring,
@@ -312,7 +310,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_summer <- observed$n_infection_summer
   N_summer <- observed$N_summer
-  prob_summer <- state[9, , drop = T]
+  prob_summer <- state[11, , drop = T]
   ll_summer <- dbinom(x = nconv_summer,
                       size = N_summer,
                       prob = prob_summer,
@@ -320,7 +318,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_autumn <- observed$n_infection_autumn
   N_autumn <- observed$N_autumn
-  prob_autumn <- state[13, , drop = T]
+  prob_autumn <- state[16, , drop = T]
   ll_autumn <- dbinom(x = nconv_autumn,
                       size = N_autumn,
                       prob = prob_autumn,
@@ -328,7 +326,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_winter <- observed$n_infection_winter
   N_winter <- observed$N_winter
-  prob_winter <- state[17, , drop = T] 
+  prob_winter <- state[21, , drop = T] 
   ll_winter <- dbinom(x = nconv_winter,
                       size = N_winter,
                       prob = prob_winter,
@@ -414,13 +412,13 @@ case_compare_test <- function(state, observed, pars = NULL){
   # Whole data
   nconv <- observed$n_infection # n seroconverted at each age point  (data)
   N <- observed$N # total N at each age point  (data)
-  prob <- state[18, , ] / colSums(state[2:17, ,  ]) # proportion seroconverted at each age point (model output) - all seroconverted divided by total population
+  prob <- state[18, , ]  # proportion seroconverted at each age point (model output) - all seroconverted divided by total population
  # prob <- observed$prop_seroconv
   
    # Data by season of birth
   nconv_spring <- observed$n_infection_spring
   N_spring <- observed$N_spring
-  prob_spring <- state[5, , ]
+  prob_spring <- state[6, , ]  
   ll_spring <- dbinom(x = nconv_spring,
                       size = N_spring,
                       prob = prob_spring,
@@ -428,7 +426,7 @@ case_compare_test <- function(state, observed, pars = NULL){
   
   nconv_summer <- observed$n_infection_summer
   N_summer <- observed$N_summer
-  prob_summer <- state[9, , ]
+  prob_summer <- state[11, , ] 
   ll_summer <- dbinom(x = nconv_summer,
                       size = N_summer,
                       prob = prob_summer,
@@ -436,7 +434,7 @@ case_compare_test <- function(state, observed, pars = NULL){
   
   nconv_autumn <- observed$n_infection_autumn
   N_autumn <- observed$N_autumn
-  prob_autumn <- state[13, , ]
+  prob_autumn <- state[16, , ]
   ll_autumn <- dbinom(x = nconv_autumn,
                       size = N_autumn,
                       prob = prob_autumn,
@@ -444,7 +442,7 @@ case_compare_test <- function(state, observed, pars = NULL){
   
   nconv_winter <- observed$n_infection_winter
   N_winter <- observed$N_winter
-  prob_winter <- state[17, , ] 
+  prob_winter <- state[21, , ]
   ll_winter <- dbinom(x = nconv_winter,
                       size = N_winter,
                       prob = prob_winter,
@@ -452,10 +450,20 @@ case_compare_test <- function(state, observed, pars = NULL){
   
   ll_spring + ll_summer + ll_autumn + ll_winter
   
-  
 }
 
-case_compare_test(x, model_data_season)
+ll <- case_compare_test(x, model_data_season)
+
+isTrue <- function(x){
+  is.logical(x) && length(x) == 1 && !is.na(x) && x
+}
+
+for (i in 0:length(ll)){
+  if (isTrue(ll[i]) & is.infinite(ll[i])){ 
+    print(i)
+  }
+}
+
 ```
 
 ```{r}
@@ -504,15 +512,16 @@ plot_particle_filter <- function(history, true_history, times, obs_end = NULL) {
   }
 
   par(mar = c(4.1, 5.1, 0.5, 0.5), las = 1)
-  cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", S_sp = "#cc0044", R_sp = "#999966", prop_sero_tot = "pink")
+  cols <- c(M1_sp = "#8c8cd9", M2_sp = "turquoise", M3_sp = "lightyellow", S_sp = "#cc0044", R_sp = "#999966", prop_sero_tot = "pink")
   # cols <- c(M_sp = "#8c8cd9", S_sp = "#cc0044", R_sp = "#999966", R_all = "pink")
   matplot(times, t(history[2, , -1]) %>% unique(), type = "l",
           xlab = "Time", ylab = "Number of individuals",
           col = cols[["M1_sp"]], lty = 1, ylim = c(0,2))
   matlines(times, t(history[3, , -1]), col = cols[["M2_sp"]], lty = 1)
-  matlines(times, t(history[4, , -1]), col = cols[["S_sp"]], lty = 1)
-  matlines(times, t(history[5, , -1]), col = cols[["R_sp"]], lty = 1)
-  matlines(times, t(history[18, , -1]), col = cols[["prop_sero_tot"]], lty = 1)
+  matlines(times, t(history[4, , -1]), col = cols[["M3_sp"]], lty = 1)
+  matlines(times, t(history[5, , -1]), col = cols[["S_sp"]], lty = 1)
+  matlines(times, t(history[6, , -1]), col = cols[["R_sp"]], lty = 1)
+  matlines(times, t(history[22, , -1]), col = cols[["prop_sero_tot"]], lty = 1)
   matpoints(t(true_history[1]), t(true_history[14]), pch = 19, cols = c("black", "black"))
   legend("left", lwd = 1, col = cols, legend = names(cols), bty = "n")
   
@@ -558,11 +567,11 @@ mcmc_pars <- pmcmc_parameters$new(list(spring_comp = spring_comp,
                                        summer_comp = summer_comp,
                                        autumn_comp = autumn_comp,
                                        winter_comp = winter_comp,
-                                     # mu = mu,
+                                      # mu = mu,
                                        pi = pi),
                                   proposal_matrix)
 # Chain parameters
-n_steps <- 3e4
+n_steps <- 2*80000
 n_burnin <- 10000
 control <- pmcmc_control(
   n_steps, 
@@ -609,7 +618,7 @@ mcmc_pars <- mcstate::pmcmc_parameters$new(
        summer_comp = summer_comp,
        autumn_comp = autumn_comp,
        winter_comp = winter_comp,
-     #  mu = mu,
+       #mu = mu,
        pi = pi),
   proposal_matrix)
 proposal_matrix
@@ -692,19 +701,20 @@ hist(mcmc_sample$pars[, "pi"], main = "", xlab = "pi",
 ```{r}
 # Compare with the data
 times <- c(0, incidence_data$age_mid)
-cols <- c(`M1 spring` = "#8c8cd9", `M2 spring` = "turquoise", `S spring` = "#cc0044", `R spring` = "#999966", `Total prop \nseroconverted` = "pink")
+cols <- c(`M1 spring` = "#8c8cd9", `M2 spring` = "turquoise", `M3 spring` = "lightyellow", `S spring` = "#cc0044", `R spring` = "#999966", `Total prop \nseroconverted` = "pink")
 
 state <- mcmc_sample$trajectories$state
 
-prop_seroconv <-  t(state[18, , -1])
+prop_seroconv <-  t(state[22, , -1])
 
 par(mfrow = c(1, 2), mar = c(3, 3, 1, 1), mgp = c(1.5, 0.5, 0), bty = "n")
 matplot(times, t(state[2, , ]), type = "l", lty = 1, col = cols["M1 spring"],
-        ylim = c(0, max(t(state[18, , ])) * 1.2), xlab = "Day", ylab = "Proportion of individuals")
+        ylim = c(0, max(t(state[22, , ])) * 1.2), xlab = "Day", ylab = "Proportion of individuals")
 matlines(times, t(state[3, , ]), lty = 1, col = cols["M2 spring"])
-matlines(times, t(state[4, , ]), lty = 1, col = cols["S spring"])
-matlines(times, t(state[5, , ]), lty = 1, col = cols["R spring"])
-matlines(times, t(state[18, , ]), lty = 1, col = cols["Total prop \nseroconverted"])
+matlines(times, t(state[4, , ]), lty = 1, col = cols["M2 spring"])
+matlines(times, t(state[5, , ]), lty = 1, col = cols["S spring"])
+matlines(times, t(state[6, , ]), lty = 1, col = cols["R spring"])
+matlines(times, t(state[22, , ]), lty = 1, col = cols["Total prop \nseroconverted"])
 legend("right", lwd = 1, col = cols, legend = names(cols), bty = "n")
 
 matplot(model_data$age_mid_start, prop_seroconv, type = "l", lty = 1, col = grey(0.7, 0.2),
@@ -715,28 +725,28 @@ points(model_data$age_mid_start, model_data$prop_seroconv, pch = 20)
 ```{r}
 # Compare fit by season of birth
 # Spring
-prop_seroconv_sp <-  t(state[5, , -1])
+prop_seroconv_sp <-  t(state[6, , -1])
 matplot(model_data_season$xMidpoint_start, prop_seroconv_sp, type = "l", lty = 1, col = grey(0.7, 0.2),
         xlab = "Day", ylab = "Proportion of seroconverted children", main = "Spring birth cohort",
         ylim = c(0, 1.2))
 points(model_data_season$xMidpoint_start, model_data_season$prop_seroconv_spring, pch = 20)
 
 # Summer
-prop_seroconv_sm <-  t(state[9, , -1])
+prop_seroconv_sm <-  t(state[11, , -1])
 matplot(model_data_season$xMidpoint_start, prop_seroconv_sm, type = "l", lty = 1, col = grey(0.7, 0.2),
         xlab = "Day", ylab = "Proportion of seroconverted children", main = "Summer birth cohort",
         ylim = c(0, 1.2))
 points(model_data_season$xMidpoint_start, model_data_season$prop_seroconv_summer, pch = 20)
 
 # Autumn
-prop_seroconv_au <-  t(state[13, , -1])
+prop_seroconv_au <-  t(state[16, , -1])
 matplot(model_data_season$xMidpoint_start, prop_seroconv_au, type = "l", lty = 1, col = grey(0.7, 0.2),
         xlab = "Day", ylab = "Proportion of seroconverted children", main = "Autumn birth cohort",
         ylim = c(0, 1.2))
 points(model_data_season$xMidpoint_start, model_data_season$prop_seroconv_autumn, pch = 20)
 
 # Winter
-prop_seroconv_wt <-  t(state[17, , -1])
+prop_seroconv_wt <-  t(state[21, , -1])
 prop_seroconv_wt_test <-  t(state[18, , ])
 matplot(model_data_season$xMidpoint_start, prop_seroconv_wt, type = "l", lty = 1, col = grey(0.7, 0.2),
         xlab = "Day", ylab = "Proportion of seroconverted children", main = "Winter birth cohort",
@@ -794,21 +804,21 @@ seroconversion <- list()
 for (i in 1:length(pmcmc_tuned_run$trajectories$time)){
   age_midpoint <- pmcmc_tuned_run$trajectories$time[i]
   
-  low95_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.05)
-  median_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.5)
-  up95_sp <- quantile(pmcmc_tuned_run$trajectories$state[5, , i], 0.95)
+  low95_sp <- quantile(pmcmc_tuned_run$trajectories$state[6, , i], 0.05)
+  median_sp <- quantile(pmcmc_tuned_run$trajectories$state[6, , i], 0.5)
+  up95_sp <- quantile(pmcmc_tuned_run$trajectories$state[6, , i], 0.95)
   
-  low95_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.05)
-  median_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.5)
-  up95_sm <- quantile(pmcmc_tuned_run$trajectories$state[9, , i], 0.95)
+  low95_sm <- quantile(pmcmc_tuned_run$trajectories$state[11, , i], 0.05)
+  median_sm <- quantile(pmcmc_tuned_run$trajectories$state[11, , i], 0.5)
+  up95_sm <- quantile(pmcmc_tuned_run$trajectories$state[11, , i], 0.95)
   
-  low95_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.05)
-  median_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.5)
-  up95_au <- quantile(pmcmc_tuned_run$trajectories$state[13, , i], 0.95)
+  low95_au <- quantile(pmcmc_tuned_run$trajectories$state[16, , i], 0.05)
+  median_au <- quantile(pmcmc_tuned_run$trajectories$state[16, , i], 0.5)
+  up95_au <- quantile(pmcmc_tuned_run$trajectories$state[16, , i], 0.95)
   
-  low95_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.05)
-  median_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.5)
-  up95_wt <- quantile(pmcmc_tuned_run$trajectories$state[17, , i], 0.95)
+  low95_wt <- quantile(pmcmc_tuned_run$trajectories$state[21, , i], 0.05)
+  median_wt <- quantile(pmcmc_tuned_run$trajectories$state[21, , i], 0.5)
+  up95_wt <- quantile(pmcmc_tuned_run$trajectories$state[21, , i], 0.95)
   
   combined <- data.frame(age_midpoint = age_midpoint,
                          low95_sp, median_sp, up95_sp, 
@@ -827,7 +837,7 @@ rownames(seroconversion_df) <- NULL
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"
 
-write.csv(summary_hpd, paste0(path, "highest probability distribution, seasonal fit.csv"), row.names = F)
-write.csv(seroconversion_df, paste0(path, "seroconversion by age, seasonal fit.csv"), row.names = F)
+write.csv(summary_hpd, paste0(path, "highest probability distribution, seasonal fit 3M.csv"), row.names = F)
+write.csv(seroconversion_df, paste0(path, "seroconversion by age, seasonal fit 3M.csv"), row.names = F)
 ```
 
