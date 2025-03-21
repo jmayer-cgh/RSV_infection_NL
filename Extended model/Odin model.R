@@ -7,61 +7,53 @@ update(time) <- (step + 1) * dt
 ## Core equations for transitions between compartments:
 # spring birth cohort
 update(M1_sp) <- M1_sp - n_M1M2_sp
-update(M2_sp) <- M2_sp + n_M1M2_sp - n_M2M3_sp
-update(M3_sp) <- M3_sp + n_M2M3_sp - n_M3S_sp
-update(S_sp) <- S_sp + n_M3S_sp - n_SR_sp
+update(M2_sp) <- M2_sp + n_M1M2_sp - n_M2S_sp
+update(S_sp) <- S_sp + n_M2S_sp - n_SR_sp
 update(R_sp) <- R_sp + n_SR_sp
 
 # summer birth cohort
 update(M1_sm) <- M1_sm - n_M1M2_sm
-update(M2_sm) <- M2_sm + n_M1M2_sm - n_M2M3_sm
-update(M3_sm) <- M3_sm + n_M2M3_sm - n_M3S_sm
-update(S_sm) <- S_sm + n_M3S_sm - n_SR_sm
+update(M2_sm) <- M2_sm + n_M1M2_sm - n_M2S_sm
+update(S_sm) <- S_sm + n_M2S_sm - n_SR_sm
 update(R_sm) <- R_sm + n_SR_sm
 
 # autumn birth cohort
 update(M1_au) <- M1_au - n_M1M2_au
-update(M2_au) <- M2_au + n_M1M2_au - n_M2M3_au
-update(M3_au) <- M3_au + n_M2M3_au - n_M3S_au
-update(S_au) <- S_au + n_M3S_au - n_SR_au
+update(M2_au) <- M2_au + n_M1M2_au - n_M2S_au
+update(S_au) <- S_au + n_M2S_au - n_SR_au
 update(R_au) <- R_au + n_SR_au
 
 # winter birth cohort
 update(M1_wt) <- M1_wt - n_M1M2_wt
-update(M2_wt) <- M2_wt + n_M1M2_wt - n_M2M3_wt
-update(M3_wt) <- M3_wt + n_M2M3_wt - n_M3S_wt
-update(S_wt) <- S_wt + n_M3S_wt - n_SR_wt
+update(M2_wt) <- M2_wt + n_M1M2_wt - n_M2S_wt
+update(S_wt) <- S_wt + n_M2S_wt - n_SR_wt
 update(R_wt) <- R_wt + n_SR_wt
 
 # Total seroprevalence
 update(R_all) <- 0.26*R_sp + 
-                0.29*R_sm + 
-                0.24*R_au + 
-                0.20*R_wt
+  0.29*R_sm + 
+  0.24*R_au + 
+  0.20*R_wt
 
 ## Individual probabilities of transition:
 # spring birth cohort
 n_M1M2_sp <- mu*2 * dt * M1_sp # M1 to M2
-n_M2M3_sp <- mu*2 * dt * M2_sp # M2 to M3
-n_M3S_sp <- mu*2 * dt * M3_sp # M3 to S
+n_M2S_sp <- mu*2 * dt * M2_sp # M2 to S
 n_SR_sp <- lambda_sp * dt * S_sp # S to R
 
 # summer birth cohort
 n_M1M2_sm <- mu*2 * dt * M1_sm # M1 to M2
-n_M2M3_sm <- mu*2 * dt * M2_sm # M2 to M3
-n_M3S_sm <- mu*2 * dt * M3_sm # M3 to S
+n_M2S_sm <- mu*2 * dt * M2_sm # M2 to S
 n_SR_sm <- lambda_sm * dt * S_sm # S to R
 
 # autumn birth cohort
 n_M1M2_au <- mu*2 * dt * M1_au # M1 to M2
-n_M2M3_au <- mu*2 * dt * M2_au # M2 to M3
-n_M3S_au <- mu*2 * dt * M3_au # M3 to S
+n_M2S_au <- mu*2 * dt * M2_au # M2 to S
 n_SR_au <- lambda_au * dt * S_au # S to R
 
 # winter birth cohort
 n_M1M2_wt <- mu*2 * dt * M1_wt# M1 to M2
-n_M2M3_wt <- mu*2 * dt * M2_wt # M2 to M3
-n_M3S_wt <- mu*2 * dt * M3_wt # M3 to S
+n_M2S_wt <- mu*2 * dt * M2_wt # M2 to S
 n_SR_wt <- lambda_wt * dt * S_wt# S to R
 
 ## Building the FOI
@@ -210,80 +202,72 @@ lambda_sp = (summer_comp + spring_comp) * spring_FOI_sp +
   summer_comp * summer_FOI_sp + 
   (summer_comp + autumn_comp) * autumn_FOI_sp +
   (summer_comp + winter_comp) * winter_FOI_sp #+
- # contact_comp * contacts_sp
+# contact_comp * contacts_sp
 lambda_sm = (summer_comp + spring_comp) * spring_FOI_sm + 
   summer_comp * summer_FOI_sm + 
   (summer_comp + autumn_comp) * autumn_FOI_sm + 
   (summer_comp + winter_comp) * winter_FOI_sm #+
-  #contact_comp * contacts_sm
+#contact_comp * contacts_sm
 lambda_au = (summer_comp + spring_comp) * spring_FOI_au + 
   summer_comp * summer_FOI_au + 
   (summer_comp + autumn_comp) * autumn_FOI_au + 
   (summer_comp + winter_comp) * winter_FOI_au #+
- # contact_comp * contacts_au
+# contact_comp * contacts_au
 lambda_wt = (summer_comp + spring_comp) * spring_FOI_wt + 
   summer_comp * summer_FOI_wt +
   (summer_comp + autumn_comp) * autumn_FOI_wt + 
   (summer_comp + winter_comp) * winter_FOI_wt #+
-  #contact_comp * contacts_wt
+#contact_comp * contacts_wt
 
 ## Initial states:
 # spring cohort
-initial(M1_sp) <- pi * M1_sp_ini # only a proportion of children is born with immunity
+initial(M1_sp) <- pi * M1_sp_ini # only a proportion og children is born
 initial(M2_sp) <- M2_sp_ini
-initial(M3_sp) <- M3_sp_ini
 initial(S_sp) <- (1-pi) * M1_sp_ini
 initial(R_sp) <- R_sp_ini
 
 # summer cohort
 initial(M1_sm) <- pi * M1_sm_ini
 initial(M2_sm) <- M2_sm_ini
-initial(M3_sm) <- M3_sm_ini
 initial(S_sm) <- (1-pi) * M1_sm_ini
 initial(R_sm) <- R_sm_ini
 
 # autumn cohort
 initial(M1_au) <- pi * M1_au_ini
 initial(M2_au) <- M2_au_ini
-initial(M3_au) <- M3_au_ini
 initial(S_au) <- (1-pi) * M1_au_ini
 initial(R_au) <- R_au_ini
 
 # winter cohort
 initial(M1_wt) <- pi * M1_wt_ini
 initial(M2_wt) <- M2_wt_ini
-initial(M3_wt) <- M3_wt_ini
 initial(S_wt) <- (1-pi) * M1_wt_ini
 initial(R_wt) <- R_wt_ini
 
 # Total
 initial(R_all) <- 0.26*R_sp_ini + 
-                  0.29*R_sm_ini + 
-                  0.24*R_au_ini + 
-                  0.20*R_wt_ini
+  0.29*R_sm_ini + 
+  0.24*R_au_ini + 
+  0.20*R_wt_ini
 
 ## User defined parameters - default in parentheses:
 M1_sp_ini <-user(1-2*1e-12) # user (682 * 0.26) #
 M2_sp_ini <- user(1e-12)
-M3_sp_ini <- user(1e-12)
 S_sp_ini <- user(1e-12)
 R_sp_ini <- user(1e-12)
 
 M1_sm_ini <- user(1-2*1e-12) # user (682 * 0.29) #
 M2_sm_ini <- user(1e-12)
-M3_sm_ini <- user(1e-12)
 S_sm_ini <- user(1e-12)
 R_sm_ini <- user(1e-12)
 
 M1_au_ini <-user(1-2*1e-12) # user (682 * 0.24) #
 M2_au_ini <- user(1e-12)
-M3_au_ini <- user(1e-12)
 S_au_ini <- user(1e-12)
 R_au_ini <- user(1e-12)
 
 M1_wt_ini <- user(1-2*1e-12) # user (682 * 0.20) #
 M2_wt_ini <- user(1e-12)
-M3_wt_ini <- user(1e-12)
 S_wt_ini <- user(1e-12)
 R_wt_ini <- user(1e-12)
 
