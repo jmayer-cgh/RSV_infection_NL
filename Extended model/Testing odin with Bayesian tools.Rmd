@@ -316,7 +316,7 @@ bayesianSetup <- createBayesianSetup(likelihood = loglik,
                                     upper = upper,
                                     names = names(theta[index]))
 nchains <- 2
-mcmc_settings <- list(iterations = 10000, 
+mcmc_settings <- list(iterations = 20000, 
                       nrChains = nchains,adapt = T, # running an adaptive MCMC
                       optimize = T)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
