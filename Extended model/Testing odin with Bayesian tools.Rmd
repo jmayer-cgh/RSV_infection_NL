@@ -94,7 +94,8 @@ model_fun <- function (estimates) {
               summer_comp = estimates[2], 
               autumn_comp = estimates[3], 
               winter_comp = estimates[4],
-              pi = estimates[5])
+              pi = estimates[5], 
+              mu = estimates [6])
 msr_model <- gen_msr$new(pars = p_new,
                          time = 1,
                          n_particles = 1L,
@@ -249,7 +250,7 @@ loglik <- function(params) {
   
   model_output <- model_fun(params)
   
-  # Whole data
+  # Spring
   nconv_spring <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Spring"] # n seroconverted at each age point  (data)
   N_spring <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Spring"] # total N at each age point  (data) 
   prob_spring <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Spring"]] # proportion seroconverted at each age point (model output)
@@ -258,7 +259,7 @@ loglik <- function(params) {
                        size = N_spring,
                        prob = prob_spring,
                        log = TRUE), na.rm = TRUE)
-  
+  # Summer
   nconv_summer <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Summer"] # n seroconverted at each age point  (data)
   N_summer <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Summer"] # total N at each age point  (data) 
   prob_summer <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Summer"]] # proportion seroconverted at each age point (model output)
@@ -267,7 +268,7 @@ loglik <- function(params) {
                        size = N_summer,
                        prob = prob_summer,
                        log = TRUE), na.rm = TRUE)
-  
+  # Autumn
   nconv_autumn <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Autumn"] # n seroconverted at each age point  (data)
   N_autumn <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Autumn"] # total N at each age point  (data) 
   prob_autumn <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Autumn"]] # proportion seroconverted at each age point (model output)
@@ -276,7 +277,7 @@ loglik <- function(params) {
                        size = N_autumn,
                        prob = prob_autumn,
                        log = TRUE), na.rm = TRUE)
-  
+  # Winter
   nconv_winter <- data_season$nconv[!is.na(data_season$nconv) & data_season$season_birth == "Winter"] # n seroconverted at each age point  (data)
   N_winter <- data_season$N[!is.na(data_season$nconv) & data_season$season_birth == "Winter"] # total N at each age point  (data) 
   prob_winter <- model_output$R_sp[model_output$time %in% data_season$agemid[data_season$season_birth == "Winter"]] # proportion seroconverted at each age point (model output)
@@ -293,7 +294,7 @@ loglik <- function(params) {
 } 
 
 # Test function
-theta <- c(spring_comp = 0.00001, summer_comp = 0.02002, autumn_comp = 0.00003, winter_comp = 0.00004, pi = 0.5)
+theta <- c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1, pi = 1, mu = 0.2)
 
 loglik(theta)
 
@@ -304,12 +305,12 @@ loglik(theta)
 # summer_comp = mean FOI for children in summer
 # autumn_comp = mean FOI for children in autumn
 # winter_comp = mean FOI for children in winter
-estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", "pi") # parameters to estimate, can be modified
+estpars <- c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", "pi", "mu") # parameters to estimate, can be modified
 index <- which(names(theta) %in% estpars) # index of estimated params
 
 # Priors
-lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0, pi = 0)
-upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1, pi = 1)
+lower = c(spring_comp = 0, summer_comp = 0, autumn_comp = 0, winter_comp = 0, pi = 0, mu = 0)
+upper = c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1, pi = 1, mu = 0.04) # 1/30 = 0.033 
 
 bayesianSetup <- createBayesianSetup(likelihood = loglik, 
                                     lower = lower, 
