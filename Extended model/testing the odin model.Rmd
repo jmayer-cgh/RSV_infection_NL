@@ -302,7 +302,7 @@ case_compare <- function(state, observed, pars = NULL){
    # Data by season of birth
   nconv_spring <- observed$n_infection_spring
   N_spring <- observed$N_spring
-  prob_spring <- state[6, , drop = T]
+  prob_spring <- state[5, , drop = T]
   ll_spring <- dbinom(x = nconv_spring,
                       size = N_spring,
                       prob = prob_spring,
@@ -310,7 +310,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_summer <- observed$n_infection_summer
   N_summer <- observed$N_summer
-  prob_summer <- state[11, , drop = T]
+  prob_summer <- state[9, , drop = T]
   ll_summer <- dbinom(x = nconv_summer,
                       size = N_summer,
                       prob = prob_summer,
@@ -318,7 +318,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_autumn <- observed$n_infection_autumn
   N_autumn <- observed$N_autumn
-  prob_autumn <- state[16, , drop = T]
+  prob_autumn <- state[13, , drop = T]
   ll_autumn <- dbinom(x = nconv_autumn,
                       size = N_autumn,
                       prob = prob_autumn,
@@ -326,7 +326,7 @@ case_compare <- function(state, observed, pars = NULL){
   
   nconv_winter <- observed$n_infection_winter
   N_winter <- observed$N_winter
-  prob_winter <- state[21, , drop = T] 
+  prob_winter <- state[17, , drop = T] 
   ll_winter <- dbinom(x = nconv_winter,
                       size = N_winter,
                       prob = prob_winter,
@@ -418,7 +418,7 @@ case_compare_test <- function(state, observed, pars = NULL){
    # Data by season of birth
   nconv_spring <- observed$n_infection_spring
   N_spring <- observed$N_spring
-  prob_spring <- state[6, , ]  
+  prob_spring <- state[5, , ]  
   ll_spring <- dbinom(x = nconv_spring,
                       size = N_spring,
                       prob = prob_spring,
@@ -479,7 +479,14 @@ filter <- particle_filter$new(data = model_data_season,
 ```{r}
 # Run the filter
 dt = 1
-filter$run(save_history = T, pars = list(dt=dt)) # This is so low! (-90716.07 when using prevalence, -4771.088 for incidence)
+filter$run(save_history = T, pars = list(dt=dt)) 
+filter$run(save_history = T, pars = list (dt = dt, 
+                                          spring_comp = 1e-05, 
+                                          summer_comp = 0.02002, 
+                                          autumn_comp = 3e-05, 
+                                          winter_comp = 4e-05, 
+                                          pi = 0.9, 
+                                          mu = 1/59.50121)) # This is so low! (-90716.07 when using prevalence, -4771.088 for incidence)
 ```
 
 ```{r}
