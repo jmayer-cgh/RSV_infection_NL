@@ -316,7 +316,7 @@ bayesianSetup <- createBayesianSetup(likelihood = loglik,
                                     upper = upper,
                                     names = names(theta[index]))
 nchains <- 2
-mcmc_settings <- list(iterations = 20000, 
+mcmc_settings <- list(iterations = 80000, 
                       nrChains = nchains,adapt = T, # running an adaptive MCMC
                       optimize = T)
 system.time({trace <- runMCMC(bayesianSetup = bayesianSetup, 
@@ -346,7 +346,7 @@ coda::effectiveSize(tracefinal)
 summary(tracefinal)
 
 # save the trace
-saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Odin model with 1 M.rds")
+saveRDS(trace, "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Odin model with seasonal fit.rds")
 ```
 
 ```{r}
@@ -386,21 +386,21 @@ colnames(trajquantiles_inc) <- c("agemid", "low95", "median", "up95")
 
 
 # FOI per birth cohort
-lambda_spquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
-                                  function(x) quantile(x[,"lambda_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T))
-colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
-
-lambda_smquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
-                                  function(x) quantile(x[,"lambda_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T))
-colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
-
-lambda_auquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
-                                  function(x) quantile(x[,"lambda_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T))
-colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
-
-lambda_wtquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
-                                  function(x) quantile(x[,"lambda_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T))
-colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
+# lambda_spquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+#                                   function(x) quantile(x[,"lambda_spring"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+# colnames(lambda_spquantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# lambda_smquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+#                                   function(x) quantile(x[,"lambda_summer"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+# colnames(lambda_smquantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# lambda_auquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+#                                   function(x) quantile(x[,"lambda_autumn"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+# colnames(lambda_auquantiles) <- c("agemid", "low95", "median", "up95")
+# 
+# lambda_wtquantiles <- plyr::ddply(.data = trajsim, .variables = "time",
+#                                   function(x) quantile(x[,"lambda_winter"], prob = c(0.025, 0.5, 0.975), na.rm=T))
+# colnames(lambda_wtquantiles) <- c("agemid", "low95", "median", "up95")
 
 # Parameter estimates
 Pquantiles <- plyr::ddply(.data = trajsim, .variables = "time", 
@@ -467,6 +467,43 @@ fit
 ```
 
 ```{r}
+# Fit by season of birth
+# Spring
+ggplot() + theme_bw() + ggtitle("Model fit for the spring cohort") +
+  geom_point(data = subset(data_season, season_birth == "Spring"), aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = subset(data_season, season_birth == "Spring"), aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = spring_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = spring_conv_quantiles, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+# Summer
+ggplot() + theme_bw() + ggtitle("Model fit for the summer cohort") +
+  geom_point(data = subset(data_season, season_birth == "Summer"), aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = subset(data_season, season_birth == "Summer"), aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = summer_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = summer_conv_quantiles, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+# Autumn
+ggplot() + theme_bw() + ggtitle("Model fit for the autumn cohort") +
+  geom_point(data = subset(data_season, season_birth == "Autumn"), aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = subset(data_season, season_birth == "Autumn"), aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = autumn_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = autumn_conv_quantiles, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+
+# Winter
+ggplot() + theme_bw() + ggtitle("Model fit for the winter cohort") +
+  geom_point(data = subset(data_season, season_birth == "Winter"), aes(x = agemid, y = seroprev_mean)) +
+  geom_linerange(data = subset(data_season, season_birth == "Winter"), aes(x = agemid, ymin = seroprev_low95, ymax = seroprev_up95)) +
+  geom_ribbon(data = winter_conv_quantiles, aes(x = agemid, ymin = low95, ymax = up95), fill = "red", alpha = 0.3) +
+  geom_line(data = winter_conv_quantiles, aes(x = agemid, y = median), color = "red") +
+  xlab("age (days)") + ylab("proportion seroconverted") 
+```
+
+
+
+```{r}
 # Saving the useful files ------------------------------------------------------------
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/"
 # write.csv(lambda_spquantiles, paste0(path, "strat_lambda_sp.csv"))
@@ -480,7 +517,7 @@ write.csv(Aquantiles, paste0(path, "strat_Aquantiles.csv"))
 write.csv(Wquantiles, paste0(path, "strat_Wquantiles.csv"))
 
 # Cumulative seroconversion
-write.csv(trajquantiles, paste0(path, "strat_trajquantiles.csv"))
+write.csv(trajquantiles, paste0(path, "strat_trajquantiles_inc.csv"))
 write.csv(trajsim, paste0(path, "strat_trajsim.csv"))
 write.csv(spring_conv_quantiles, paste0(path, "strat_spring_conv_tot.csv"))
 write.csv(summer_conv_quantiles, paste0(path, "strat_summer_conv_tot.csv"))
