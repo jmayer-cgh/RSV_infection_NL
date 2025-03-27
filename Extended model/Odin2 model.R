@@ -1,7 +1,7 @@
 ## Definition of the time-step and output as "time"
-dt <- user(1)
-initial(time) <- 1
-update(time) <- (step + 1) * dt
+#dt <- parameter(1)
+#initial(time) <- 1
+#update(time) <- (step + 1) * dt
 
 
 ## Core equations for transitions between compartments:
@@ -221,27 +221,27 @@ lambda_wt = (summer_comp + spring_comp) * spring_FOI_wt +
 
 ## Initial states:
 # spring cohort
-initial(M1_sp) <- pi * M1_sp_ini # only a proportion og children is born
+initial(M1_sp) <- prop * M1_sp_ini # only a proportion og children is born
 initial(M2_sp) <- M2_sp_ini
-initial(S_sp) <- (1-pi) * M1_sp_ini
+initial(S_sp) <- (1-prop) * M1_sp_ini
 initial(R_sp) <- R_sp_ini
 
 # summer cohort
-initial(M1_sm) <- pi * M1_sm_ini
+initial(M1_sm) <- prop * M1_sm_ini
 initial(M2_sm) <- M2_sm_ini
-initial(S_sm) <- (1-pi) * M1_sm_ini
+initial(S_sm) <- (1-prop) * M1_sm_ini
 initial(R_sm) <- R_sm_ini
 
 # autumn cohort
-initial(M1_au) <- pi * M1_au_ini
+initial(M1_au) <- prop * M1_au_ini
 initial(M2_au) <- M2_au_ini
-initial(S_au) <- (1-pi) * M1_au_ini
+initial(S_au) <- (1-prop) * M1_au_ini
 initial(R_au) <- R_au_ini
 
 # winter cohort
-initial(M1_wt) <- pi * M1_wt_ini
+initial(M1_wt) <- prop * M1_wt_ini
 initial(M2_wt) <- M2_wt_ini
-initial(S_wt) <- (1-pi) * M1_wt_ini
+initial(S_wt) <- (1-prop) * M1_wt_ini
 initial(R_wt) <- R_wt_ini
 
 # Total
@@ -253,22 +253,18 @@ initial(R_all) <- 0.26*R_sp_ini +
 ## User defined parameters - default in parentheses:
 M1_sp_ini <- parameter(1 - 2 * 1e-12)
 M2_sp_ini <- parameter(1e-12)
-S_sp_ini <- parameter(1e-12)
 R_sp_ini <- parameter(1e-12)
 
 M1_sm_ini <- parameter(1 - 2 * 1e-12)
 M2_sm_ini <- parameter(1e-12)
-S_sm_ini <- parameter(1e-12)
 R_sm_ini <- parameter(1e-12)
 
 M1_au_ini <- parameter(1 - 2 * 1e-12)
 M2_au_ini <- parameter(1e-12)
-S_au_ini <- parameter(1e-12)
 R_au_ini <- parameter(1e-12)
 
 M1_wt_ini <- parameter(1 - 2 * 1e-12)
 M2_wt_ini <- parameter(1e-12)
-S_wt_ini <- parameter(1e-12)
 R_wt_ini <- parameter(1e-12)
 
 
@@ -281,4 +277,10 @@ winter_comp <- parameter(4e-05)
 #contact_comp <- user(0.02)
 
 # Proportion born with maternal immunity
-pi <- parameter(1)
+prop <- parameter(1)
+
+# Comparison function?
+N <- data()
+n_infection <- data()
+prop_seroconv <- data()
+prop_seroconv ~ Binomial(N, R_all)
