@@ -113,7 +113,7 @@ points(prop_seroconv ~ time, incidence_data, pch = 19, col = "red")
 packer <- monty_packer(c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", "prop"))
 
 # Likelihood
-likelihood <- dust_likelihood_monty(filter, packer)
+likelihood <- dust_likelihood_monty(filter, packer, save_trajectories = T)
 
 # Priors
 prior <- monty_dsl({
@@ -144,4 +144,7 @@ matplot(samples$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 ```
 
+```{r}
+# Other diagnostic tools must be imported from other packages
+```
 
