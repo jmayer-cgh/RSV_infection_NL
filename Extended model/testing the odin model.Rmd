@@ -479,14 +479,14 @@ filter <- particle_filter$new(data = model_data_season,
 ```{r}
 # Run the filter
 dt = 1
-filter$run(save_history = T, pars = list(dt=dt)) 
+# filter$run(save_history = T, pars = list(dt=dt)) 
 filter$run(save_history = T, pars = list (dt = dt, 
-                                          spring_comp = 1e-05, 
-                                          summer_comp = 0.02002, 
-                                          autumn_comp = 3e-05, 
-                                          winter_comp = 4e-05, 
-                                          pi = 0.9, 
-                                          mu = 1/59.50121)) # This is so low! (-90716.07 when using prevalence, -4771.088 for incidence)
+                                          spring_comp = 0.00076, 
+                                          summer_comp = 0.0002, 
+                                          autumn_comp = 0.0063, 
+                                          winter_comp = 0.00741, 
+                                          pi = 0.98, 
+                                          mu = 0.05)) 
 ```
 
 ```{r}
