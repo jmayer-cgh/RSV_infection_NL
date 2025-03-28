@@ -294,7 +294,7 @@ loglik <- function(params) {
 } 
 
 # Test function
-theta <- c(spring_comp = 0.1, summer_comp = 0.1, autumn_comp = 0.1, winter_comp = 0.1, pi = 1, mu = 0.2)
+theta <- c(spring_comp = 0.00076, summer_comp = 0.0002, autumn_comp = 0.0063, winter_comp = 0.00741, pi = 0.98, mu = 0.05)
 # theta <- c(spring_comp = 1e-05, summer_comp = 0.02002, autumn_comp = 3e-05, winter_comp = 4e-05, pi = 0.9, mu = 1/59.50121)
 loglik(theta)
 
@@ -330,7 +330,7 @@ system.time({trace <- runMCMC(bayesianSetup = bayesianSetup,
 plot(trace) 
 
 # burn-in
-nburn <- 10000
+nburn <- 15000
 plot(trace, parametersOnly = TRUE, start = nburn)
 
 # check convergence and correlations
