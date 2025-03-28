@@ -283,4 +283,5 @@ prop <- parameter(1)
 N <- data()
 n_infection <- data()
 prop_seroconv <- data()
-prop_seroconv ~ Binomial(N, R_all)
+# model_seroconv <- N * R_all # number of seroconverted children using the model outputs
+n_infection ~ Binomial(N, R_all) # we compare it to the data
