@@ -170,6 +170,20 @@ mcmc_hist(draws_array)
 ```
 
 ```{r}
+# Trajectories
+trajectories <- dust_unpack_state(filter,
+                                  samples$observations$trajectories)
+sero_conv <- array(trajectories$R_all, c(19, 1000))
+```
+
+```{r}
+# Plot the fit
+matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+```
+
+```{r}
 # Tune the sampler
 # Define a sampler (random walk)
 vcv_tuned <- cov(draws[1:5])
@@ -184,10 +198,18 @@ samples_tuned <- monty_sample(posterior, sampler_tuned, 80000,
 
 ```{r}
 # Check mixing
-# Check mixing
 matplot(samples_tuned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density", ylim = c(-80, -20))
 ```
+
+```{r}
+# Thin and check mixing
+samples_tuned <- monty_samples_thin(samples_tuned, burnin = 800)
+
+matplot(samples_tuned$density, type = "l", lty = 1,
+        xlab = "Sample", ylab = "Log posterior probability density")
+```
+
 
 ```{r}
 # Check trace
@@ -212,3 +234,18 @@ mcmc_intervals(draws_array_tuned, pars = "prop")
 # Univariate marginal posterior distributions
 mcmc_hist(draws_array_tuned)
 ```
+
+```{r}
+# Trajectories
+trajectories <- dust_unpack_state(filter,
+                                  samples_tuned$observations$trajectories)
+sero_conv <- array(trajectories$R_all, c(19, 1000))
+```
+
+```{r}
+# Plot the fit
+matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+```
+
