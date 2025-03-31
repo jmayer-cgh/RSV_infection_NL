@@ -164,7 +164,7 @@ samples <- monty_sample(posterior, sampler, 80000,
 ```{r}
 # Check mixing
 matplot(samples$density, type = "l", lty = 1,
-        xlab = "Sample", ylab = "Log posterior probability density", ylim = c(-80, -20))
+        xlab = "Sample", ylab = "Log posterior probability density")
 ```
 
 ```{r}
@@ -218,58 +218,58 @@ samples_tuned <- monty_sample(posterior, sampler_tuned, 80000,
 ```{r}
 # Check mixing
 matplot(samples_tuned$density, type = "l", lty = 1,
-        xlab = "Sample", ylab = "Log posterior probability density", ylim = c(-80, -20))
+        xlab = "Sample", ylab = "Log posterior probability density")
 ```
 
 ```{r}
 # Thin and check mixing
-samples_tuned <- monty_samples_thin(samples_tuned, burnin = 800)
+samples_tunned <- monty_samples_thin(samples_tuned, burnin = 800)
 
-matplot(samples_tuned$density, type = "l", lty = 1,
+matplot(samples_tunned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log post.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log posterior season.png");
 dev.off ()
 ```
 
 
 ```{r}
 # Check trace
-draws_tuned <- as_draws_df(samples_tuned)
-mcmc_trace(draws_tuned, facet_args = list(ncol = 1, strip.position = "left"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters.png");
+draws_tunned <- as_draws_df(samples_tunned)
+mcmc_trace(draws_tunned, facet_args = list(ncol = 1, strip.position = "left"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters season.png");
 dev.off ()
 ```
 
 ```{r}
 # Summary
-summarise_draws(draws_tuned)
+summarise_draws(draws_tunned)
 ```
 
 ```{r}
-draws_array_tuned <- as_draws_array(draws_tuned)
+draws_array_tuned <- as_draws_array(draws_tunned)
 # Posterior uncertainty intervals
 # Plot them separetly because the values are very difference
 mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI season.png");
 dev.off ()
 
 mcmc_intervals(draws_array_tuned, pars = "prop")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi season.png");
 dev.off ()
 ```
 
 ```{r}
 # Univariate marginal posterior distributions
 mcmc_hist(draws_array_tuned)
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions season.png");
 dev.off ()
 ```
 
 ```{r}
 # Trajectories
 trajectories <- dust_unpack_state(filter,
-                                  samples_tuned$observations$trajectories)
+                                  samples_tunned$observations$trajectories)
 sero_conv <- array(trajectories$R_all, c(19, 1000))
 ```
 
@@ -279,7 +279,52 @@ matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion")
 points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season.png");
+dev.off ()
+```
+
+```{r}
+# By season
+# Spring
+sero_conv_spring <- array(trajectories$R_sp, c(19, 1000))
+matplot(incidence_data_season_wide$time, sero_conv_spring, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_spring, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season spring.png");
+dev.off ()
+```
+
+```{r}
+# Spring
+sero_conv_summer <- array(trajectories$R_sm, c(19, 1000))
+matplot(incidence_data_season_wide$time, sero_conv_summer, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_summer, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season summer.png");
+dev.off ()
+```
+
+```{r}
+# Autumn
+sero_conv_autumn <- array(trajectories$R_au, c(19, 1000))
+matplot(incidence_data_season_wide$time, sero_conv_autumn, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_autumn, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season autumn.png");
+dev.off ()
+```
+
+```{r}
+# Winter
+sero_conv_winter <- array(trajectories$R_wt, c(19, 1000))
+matplot(incidence_data_season_wide$time, sero_conv_winter, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion")
+points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_winter, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season winter.png");
 dev.off ()
 ```
 
