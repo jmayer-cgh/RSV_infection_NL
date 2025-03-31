@@ -131,20 +131,84 @@ posterior <- likelihood + prior
 vcv <- diag(5) * 0.0004
 sampler <- monty_sampler_random_walk(vcv)
 
+# Parallelise the process
+runner <- monty_runner_callr(2)
+
 # Sample
 samples <- monty_sample(posterior, sampler, 80000, 
                         initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.5),
-                        n_chains = 2)
+                        n_chains = 2,
+                        runner = runner)
 
 ```
 
 ```{r}
 # Check mixing
 matplot(samples$density, type = "l", lty = 1,
-        xlab = "Sample", ylab = "Log posterior probability density")
+        xlab = "Sample", ylab = "Log posterior probability density", ylim = c(-80, -20))
 ```
 
 ```{r}
 # Other diagnostic tools must be imported from other packages
+library(posterior)
+library(bayesplot)
+draws <- as_draws_df(samples)
+summarise_draws(draws)
+mcmc_trace(draws, facet_args = list(ncol = 1, strip.position = "left"))
+```
+```{r}
+draws_array <- as_draws_array(draws)
+# Posterior uncertainty intervals
+# Plot them separetly because the values are very difference
+mcmc_intervals(draws_array, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
+mcmc_intervals(draws_array, pars = "prop")
 ```
 
+```{r}
+# Univariate marginal posterior distributions
+mcmc_hist(draws_array)
+```
+
+```{r}
+# Tune the sampler
+# Define a sampler (random walk)
+vcv_tuned <- cov(draws[1:5])
+sampler_tuned <- monty_sampler_random_walk(vcv_tuned)
+
+# Sample
+samples_tuned <- monty_sample(posterior, sampler_tuned, 80000, 
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.5),
+                              n_chains = 2,
+                              runner = runner)
+```
+
+```{r}
+# Check mixing
+# Check mixing
+matplot(samples_tuned$density, type = "l", lty = 1,
+        xlab = "Sample", ylab = "Log posterior probability density", ylim = c(-80, -20))
+```
+
+```{r}
+# Check trace
+draws_tuned <- as_draws_df(samples_tuned)
+mcmc_trace(draws_tuned, facet_args = list(ncol = 1, strip.position = "left"))
+```
+
+```{r}
+# Summary
+summarise_draws(draws_tuned)
+```
+
+```{r}
+draws_array_tuned <- as_draws_array(draws_tuned)
+# Posterior uncertainty intervals
+# Plot them separetly because the values are very difference
+mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
+mcmc_intervals(draws_array_tuned, pars = "prop")
+```
+
+```{r}
+# Univariate marginal posterior distributions
+mcmc_hist(draws_array_tuned)
+```
