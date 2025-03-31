@@ -83,18 +83,37 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   ungroup() %>% 
   distinct()
 
-head(incidence_data)
+incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
+  mutate(N_tot = n()) %>%
+  group_by(age_grp, xMidpoint, season_birth) %>%
+  summarise(age_mid = round(median(age_days)), 
+            N = n(),
+            n_infection = sum(infection),
+            prop_seroconv = n_infection/N,
+            cum_infection = prop_seroconv * N_tot) %>%
+  ungroup() %>% 
+  distinct()
+
+incidence_data_season_wide <- incidence_data_season %>% select (!c(age_mid, age_grp)) %>%
+  pivot_wider(
+    names_from = season_birth,
+    values_from = c(N , n_infection, prop_seroconv, cum_infection),
+    values_fill = 0
+  ) %>%
+  rename(time = "xMidpoint")
+
+head(incidence_data_season_wide)
 ```
 
 
 ```{r}
 # Build a filter and test it
-filter <- dust_filter_create(msr, time_start = 0, data = incidence_data, n_particles = 1000)
+filter <- dust_filter_create(msr, time_start = 0, data = incidence_data_season_wide, n_particles = 1000)
 dust_likelihood_run(filter, list(spring_comp = 0.003478,
                                 summer_comp = 0.00060,
                                 autumn_comp = 0.00264,
                                 winter_comp = 0.00692, 
-                                prop = 0.98),
+                                prop = 0),
                     save_trajectories = T)
 ```
 
@@ -208,6 +227,9 @@ samples_tuned <- monty_samples_thin(samples_tuned, burnin = 800)
 
 matplot(samples_tuned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log post.png");
+dev.off ()
 ```
 
 
@@ -215,6 +237,8 @@ matplot(samples_tuned$density, type = "l", lty = 1,
 # Check trace
 draws_tuned <- as_draws_df(samples_tuned)
 mcmc_trace(draws_tuned, facet_args = list(ncol = 1, strip.position = "left"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters.png");
+dev.off ()
 ```
 
 ```{r}
@@ -227,12 +251,19 @@ draws_array_tuned <- as_draws_array(draws_tuned)
 # Posterior uncertainty intervals
 # Plot them separetly because the values are very difference
 mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI.png");
+dev.off ()
+
 mcmc_intervals(draws_array_tuned, pars = "prop")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi.png");
+dev.off ()
 ```
 
 ```{r}
 # Univariate marginal posterior distributions
 mcmc_hist(draws_array_tuned)
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions.png");
+dev.off ()
 ```
 
 ```{r}
@@ -247,5 +278,8 @@ sero_conv <- array(trajectories$R_all, c(19, 1000))
 matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion")
 points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit.png");
+dev.off ()
 ```
 

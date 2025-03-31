@@ -279,9 +279,20 @@ winter_comp <- parameter(4e-05)
 # Proportion born with maternal immunity
 prop <- parameter(1)
 
-# Comparison function?
-N <- data()
-n_infection <- data()
-prop_seroconv <- data()
-# model_seroconv <- N * R_all # number of seroconverted children using the model outputs
-n_infection ~ Binomial(N, R_all) # we compare it to the data
+# Comparison function
+# By season
+N_spring <- data()
+n_infection_spring <- data()
+n_infection_spring ~ Binomial(N_spring, R_sp)
+
+N_summer <- data()
+n_infection_summer <- data()
+n_infection_summer ~ Binomial(N_summer, R_sm)
+
+N_autumn <- data()
+n_infection_autumn <- data()
+n_infection_autumn ~ Binomial(N_autumn, R_au)
+
+N_winter <- data()
+n_infection_winter <- data()
+n_infection_winter ~ Binomial(N_winter, R_wt)
