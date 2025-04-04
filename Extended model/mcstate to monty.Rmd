@@ -150,16 +150,28 @@ posterior <- likelihood + prior
 
 # Define a sampler (random walk)
 vcv <- diag(6) * 0.0004
-sampler <- monty_sampler_random_walk(vcv)
+#sampler <- monty_sampler_random_walk(vcv)
+# sampler <- monty_sampler_parallel_tempering(5, vcv, base = NULL)
+# sampler <- monty_sampler_hmc(epsilon = 0.1, n_integration_steps = 10)
+sampler <- monty_sampler_adaptive(vcv)
 
 # Parallelise the process
 runner <- monty_runner_callr(3)
 
 # Sample
-samples <- monty_sample(posterior, sampler, 120000, 
-                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
-                        n_chains = 2,
-                        runner = runner)
+# samples <- monty_sample(posterior, sampler, 80000, 
+#                         initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+#                         n_chains = 2,
+#                         runner = runner)
+
+properties <- monty_model_properties(has_gradient = NULL,
+                                     has_direct_sample = NULL,
+                                     is_stochastic = F,
+                                     has_parameter_groups = NULL,
+                                     has_observer = NULL,
+                                     allow_multiple_parameters = NULL)
+model <- monty_model(posterior, properties = properties)
+samples <- monty_sample(model, sampler, 80000, initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5))
 
 ```
 
@@ -210,13 +222,16 @@ points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col 
 # Tune the sampler
 # Define a sampler (random walk)
 vcv_tuned <- cov(draws[1:6])
-sampler_tuned <- monty_sampler_random_walk(vcv_tuned)
+# sampler_tuned <- monty_sampler_random_walk(vcv_tuned)
+# 
+# # Sample
+# samples_tuned <- monty_sample(posterior, sampler_tuned, 120000, 
+#                               initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+#                               n_chains = 2,
+#                               runner = runner)
 
-# Sample
-samples_tuned <- monty_sample(posterior, sampler_tuned, 120000, 
-                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
-                              n_chains = 2,
-                              runner = runner)
+sampler_tuned <- monty_sampler_adaptive(vcv_tuned)
+samples_tuned <- monty_sample(model, sampler_tuned, 80000, initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5))
 ```
 
 ```{r}
@@ -334,5 +349,109 @@ points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_
 
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season winter.png");
 dev.off ()
+```
+
+```{r}
+# Tune the sampler again
+# Define a sampler (random walk)
+vcv_tuned2 <- cov(draws_thinned[1:6])
+sampler_tuned2 <- monty_sampler_random_walk(vcv_tuned2)
+
+# Sample
+samples_tuned2 <- monty_sample(posterior, sampler_tuned2, 120000, 
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+                              n_chains = 2,
+                              runner = runner)
+```
+
+```{r}
+# Check mixing
+matplot(samples_tuned2$density, type = "l", lty = 1,
+        xlab = "Sample", ylab = "Log posterior probability density")
+```
+
+
+```{r}
+# Thin and check mixing
+samples_thinned2 <- monty_samples_thin(samples_tuned2, burnin = 2000)
+
+matplot(samples_thinned2$density, type = "l", lty = 1,
+        xlab = "Sample", ylab = "Log posterior probability density")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log posterior season mu 2.png");
+dev.off ()
+```
+
+```{r}
+# Check trace
+draws_thinned2 <- as_draws_df(samples_thinned2)
+mcmc_trace(draws_thinned2, facet_args = list(ncol = 1, strip.position = "left"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters season mu 2.png");
+dev.off ()
+```
+
+```{r}
+# Summary
+summarise_draws(draws_thinned2)
+```
+
+```{r}
+draws_array_tuned2 <- as_draws_array(draws_thinned2)
+# Posterior uncertainty intervals
+# Plot them separetly because the values are very difference
+mcmc_intervals(draws_array_tuned2, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI season mu 2.png");
+dev.off ()
+
+mcmc_intervals(draws_array_tuned2, pars = "mu")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty mu season mu 2.png");
+dev.off ()
+
+mcmc_intervals(draws_array_tuned2, pars = "prop")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi season mu 2.png");
+dev.off ()
+```
+
+```{r}
+# Univariate marginal posterior distributions
+mcmc_hist(draws_array_tuned2)
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions season mu 2.png");
+dev.off ()
+```
+
+```{r}
+# Trajectories
+trajectories2 <- dust_unpack_state(filter,
+                                  samples_thinned2$observations$trajectories)
+sero_conv2 <- array(trajectories2$R_all, c(19, 1000))
+```
+
+```{r}
+# Plot the fit
+matplot(incidence_data$time, sero_conv2, type = "l", col = "#00000044", lty = 1,
+        xlab = "Age", ylab = "Sero-conversion", main = "Model fit")
+points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season mu 2.png");
+dev.off ()
+```
+
+```{r}
+# Trying another sampler
+# Define a sampler (parallel tempering)
+vcv_par_temp <- cov(draws[1:6])
+sampler_par_temp <- monty_sampler_parallel_tempering(n_rungs = 4, vcv = vcv_par_temp)
+
+# Sample
+samples_par_temp <- monty_sample(posterior, sampler_par_temp, 80000, 
+                              n_chains = 1)
+
+# Define a sampler (adaptive MCMC)
+#vcv_mcmc <- cov(draws[1:6])
+sampler_mcmc <- monty_sampler_hmc(vcv_mcmc)
+
+# Sample
+samples_mcmc <- monty_sample(posterior, sampler_mcmc, 80000, 
+                              n_chains = 2)
 ```
 
