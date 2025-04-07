@@ -83,6 +83,11 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   ungroup() %>% 
   distinct()
 
+# Calculate seroprevalence and binomial confidence intervals
+incidence_data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                             incidence_data$N,
+                                                                                             method="exact")[,c("mean","lower","upper")]
+
 incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
   mutate(N_tot = n()) %>%
   group_by(age_grp, xMidpoint, season_birth) %>%
@@ -94,10 +99,15 @@ incidence_data_season <- data %>% select (age_grp, age_days, infection, season_b
   ungroup() %>% 
   distinct()
 
-incidence_data_season_wide <- incidence_data_season %>% select (!c(age_mid, age_grp)) %>%
+incidence_data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom.confint(incidence_data_season$n_infection, 
+                                                                                             incidence_data_season$N, 
+                                                                                             method="exact")[,c("mean","lower","upper")]
+
+incidence_data_season_wide <- incidence_data_season %>% 
+  select (!c(age_mid, age_grp, seroprev_mean)) %>%
   pivot_wider(
     names_from = season_birth,
-    values_from = c(N , n_infection, prop_seroconv, cum_infection),
+    values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, cum_infection),
     values_fill = 0
   ) %>%
   rename(time = "xMidpoint")
@@ -121,16 +131,23 @@ dust_likelihood_run(filter, list(spring_comp = 0.003478,
 ```{r}
 # Plot the fit
 h <- dust_likelihood_last_trajectories(filter)
-matplot(incidence_data$time, t(dust_unpack_state(filter, h)$R_all), type = "l",
-        lty = 1, col = "#00000044",
-        xlab = "Age", ylab = "Proportion seroconverted")
-points(prop_seroconv ~ time, incidence_data, pch = 19, col = "red")
+
+trajectories <- t(dust_unpack_state(filter, h)$R_all)
+sero_conv <- data.frame(incidence_data$time, trajectories[,1])
+colnames(sero_conv) <- c("time", "seroconversion")
+
+sero_conv %>% ggplot() +
+  geom_line(aes(x = time, y = seroconversion)) +
+  geom_point(data = incidence_data, aes(x = time, y = prop_seroconv), col = "red") +
+  geom_errorbar(data = incidence_data, aes(x = time, ymax = seroprev_up95, ymin = seroprev_low95), col = "red") +
+  labs(x = "Age (days)", y = " Proportion seroconverted\n")
 ```
 
 ```{r}
 # Now trying to run an MCMC
 # List of inputs
-packer <- monty_packer(c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", "mu", "prop"))
+packer <- monty_packer(c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", 
+                         "mu", "prop"))
 
 # Likelihood
 likelihood <- dust_likelihood_monty(filter, packer, save_trajectories = T)
@@ -148,7 +165,7 @@ prior <- monty_dsl({
 # Posterior
 posterior <- likelihood + prior
 
-# Define a sampler (random walk)
+# Define a sampler (adaptive MCMC)
 vcv <- diag(6) * 0.0004
 #sampler <- monty_sampler_random_walk(vcv)
 # sampler <- monty_sampler_parallel_tempering(5, vcv, base = NULL)
@@ -156,7 +173,7 @@ vcv <- diag(6) * 0.0004
 sampler <- monty_sampler_adaptive(vcv)
 
 # Parallelise the process
-runner <- monty_runner_callr(3)
+runner <- monty_runner_callr(2)
 
 # Sample
 # samples <- monty_sample(posterior, sampler, 80000, 
@@ -164,14 +181,12 @@ runner <- monty_runner_callr(3)
 #                         n_chains = 2,
 #                         runner = runner)
 
-properties <- monty_model_properties(has_gradient = NULL,
-                                     has_direct_sample = NULL,
-                                     is_stochastic = F,
-                                     has_parameter_groups = NULL,
-                                     has_observer = NULL,
-                                     allow_multiple_parameters = NULL)
+properties <- monty_model_properties(is_stochastic = F)
 model <- monty_model(posterior, properties = properties)
-samples <- monty_sample(model, sampler, 80000, initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5))
+samples <- monty_sample(model, sampler, 80000, 
+                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+                        n_chains = 2,
+                        runner = runner)
 
 ```
 
@@ -216,6 +231,9 @@ sero_conv <- array(trajectories$R_all, c(19, 1000))
 matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion")
 points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+arrows(x0 = incidence_data$time, y0 = incidence_data$seroprev_low95, 
+       x1 = incidence_data$time, y1 = incidence_data$seroprev_up95, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 ```
 
 ```{r}
@@ -231,7 +249,9 @@ vcv_tuned <- cov(draws[1:6])
 #                               runner = runner)
 
 sampler_tuned <- monty_sampler_adaptive(vcv_tuned)
-samples_tuned <- monty_sample(model, sampler_tuned, 80000, initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5))
+samples_tuned <- monty_sample(model, sampler_tuned, 80000, 
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+                              n_chains = 2)
 ```
 
 ```{r}
@@ -242,12 +262,12 @@ matplot(samples_tuned$density, type = "l", lty = 1,
 
 ```{r}
 # Thin and check mixing
-samples_thinned <- monty_samples_thin(samples_tuned, burnin = 20000)
+samples_thinned <- monty_samples_thin(samples_tuned, burnin = 22000)
 
 matplot(samples_thinned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log posterior season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace log posterior season mu adaptive.png");
 dev.off ()
 ```
 
@@ -256,7 +276,7 @@ dev.off ()
 # Check trace
 draws_thinned <- as_draws_df(samples_thinned)
 mcmc_trace(draws_thinned, facet_args = list(ncol = 1, strip.position = "left"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Trace parameters season mu adaptive.png");
 dev.off ()
 ```
 
@@ -270,22 +290,22 @@ draws_array_tuned <- as_draws_array(draws_thinned)
 # Posterior uncertainty intervals
 # Plot them separetly because the values are very difference
 mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty FOI season mu adaptive.png");
 dev.off ()
 
 mcmc_intervals(draws_array_tuned, pars = "mu")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty mu season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty mu season mu adaptive.png");
 dev.off ()
 
 mcmc_intervals(draws_array_tuned, pars = "prop")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Uncertainty pi season mu adaptive.png");
 dev.off ()
 ```
 
 ```{r}
 # Univariate marginal posterior distributions
 mcmc_hist(draws_array_tuned)
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Marginal posterior distributions season mu adaptive.png");
 dev.off ()
 ```
 
@@ -301,8 +321,11 @@ sero_conv <- array(trajectories$R_all, c(19, 1000))
 matplot(incidence_data$time, sero_conv, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion", main = "Model fit")
 points(x = incidence_data$time, y = incidence_data$prop_seroconv, pch = 19, col = "red")
+arrows(x0 = incidence_data$time, y0 = incidence_data$seroprev_low95, 
+       x1 = incidence_data$time, y1 = incidence_data$seroprev_up95, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season mu adaptive.png");
 dev.off ()
 ```
 
@@ -313,8 +336,11 @@ sero_conv_spring <- array(trajectories$R_sp, c(19, 1000))
 matplot(incidence_data_season_wide$time, sero_conv_spring, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion", main = "Model fit - spring")
 points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_spring, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_spring, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_spring, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season spring mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season spring mu adaptive.png");
 dev.off ()
 ```
 
@@ -324,8 +350,11 @@ sero_conv_summer <- array(trajectories$R_sm, c(19, 1000))
 matplot(incidence_data_season_wide$time, sero_conv_summer, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion", main = "Model fit - summer")
 points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_summer, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_summer, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_summer, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season summer mu.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season summer mu adaptive.png");
 dev.off ()
 ```
 
@@ -335,8 +364,11 @@ sero_conv_autumn <- array(trajectories$R_au, c(19, 1000))
 matplot(incidence_data_season_wide$time, sero_conv_autumn, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion", main = "Model fit - autumn")
 points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_autumn, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_autumn, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_autumn, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season autumn.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season autumn adaptive.png");
 dev.off ()
 ```
 
@@ -346,8 +378,11 @@ sero_conv_winter <- array(trajectories$R_wt, c(19, 1000))
 matplot(incidence_data_season_wide$time, sero_conv_winter, type = "l", col = "#00000044", lty = 1,
         xlab = "Age", ylab = "Sero-conversion", main = "Model fit - winter")
 points(x = incidence_data_season_wide$time, y = incidence_data_season_wide$prop_seroconv_winter, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_winter, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_winter, 
+       angle = 90, code = 3, length = 0.1, col = "red")
 
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season winter.png");
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/mcstate/Model fit season winter adaptive.png");
 dev.off ()
 ```
 
