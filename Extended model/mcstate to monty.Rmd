@@ -264,7 +264,7 @@ matplot(samples_tuned$density, type = "l", lty = 1,
 
 ```{r}
 # Thin and check mixing
-samples_thinned <- monty_samples_thin(samples_tuned, burnin = 12000)
+samples_thinned <- monty_samples_thin(samples_tuned, burnin = 16000)
 
 matplot(samples_thinned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
@@ -290,7 +290,7 @@ summarise_draws(draws_thinned)
 ```{r}
 draws_array_tuned <- as_draws_array(draws_thinned)
 # Posterior uncertainty intervals
-# Plot them separetly because the values are very difference
+# Plot them separately because the values are very difference
 mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty FOI season mu adaptive.png");
 dev.off ()
