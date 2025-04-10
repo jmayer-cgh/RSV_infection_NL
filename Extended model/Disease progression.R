@@ -5,7 +5,7 @@ library(ggplot2)
 
 # Define useful paths
 path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
-path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/mcstate/"  #Where model outputs are stored
+path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
   
 # Read in RSV-illness numbers
 mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
@@ -37,13 +37,13 @@ illness_type <- mild_illness %>%
   ungroup()
 
 # Read in model estimate
-conversion_rate <- read.csv(paste0(path_model, "incidence by age, assumed mu.csv")) 
+conversion_rate <- read.csv(paste0(path_model, "incidence by age.csv")) 
 
 # Convert into a long format
 conversion <- conversion_rate 
 
 # Convert ages to the same units
-conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30.4375)) %>% # turn age into months
+conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30)) %>% # turn age into months
   arrange(age_midpoint) # arrange by age instead of by season of birth
 
 # Put ages in the same categories as the disease progression data
