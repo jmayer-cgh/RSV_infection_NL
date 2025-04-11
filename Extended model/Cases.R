@@ -182,7 +182,7 @@ plt %>%
 # Hospitalisations
 hosp_prevented_vacc <- severe_cases_u1_de %>% filter(!is.na(age_months)) %>%
   select(season_birth, age_bracket, age_months, age_midpoint, current_season,
-         n_ma_severe) %>%
+         n_ma_severe_scaled) %>%
   mutate(ve = case_when(age_months == 0 ~ 0.75, # 0.87 from Ayaka // 0.62 from Hodgson
                         age_months == 1 ~ 0.70, # 0.83 // 0.62
                         age_months == 3 ~ 0.50, # 0.66 // 0.5
@@ -194,8 +194,8 @@ hosp_prevented_vacc <- severe_cases_u1_de %>% filter(!is.na(age_months)) %>%
 
 hosp_prevented_vacc <- hosp_prevented_vacc %>% 
   group_by(season_birth, age_bracket, age_months, age_midpoint, current_season, ve) %>%
-  summarise(n_ma_severe_vacc = n_ma_severe * (1-ve), # number of cases despite vaccination
-            n_ma_severe_averted = n_ma_severe * ve)
+  summarise(n_ma_severe_vacc = n_ma_severe_scaled * (1-ve), # number of cases despite vaccination
+            n_ma_severe_averted = n_ma_severe_scaled * ve)
 
 hosp_prevented_vacc <- hosp_prevented_vacc %>% 
   rbind(
@@ -212,14 +212,14 @@ hosp_prevented_vacc <- hosp_prevented_vacc %>%
 # Medically assisted cases
 # First, we need to combine mild and severe MA cases
 ma_cases_u1_de <- mild_cases_u1_de %>% filter(!is.na(age_months)) %>%
-  select (season_birth, age_months, n_ma_mild) %>%
+  select (season_birth, age_months, n_ma_mild_scaled) %>%
   mutate(severity = "mild") %>%
-  rename(n_ma_cases = "n_ma_mild") %>%
+  rename(n_ma_cases = "n_ma_mild_scaled") %>%
   rbind(
     severe_cases_u1_de %>% filter(!is.na(age_months)) %>%
-      select (season_birth, age_months, n_ma_severe) %>%
+      select (season_birth, age_months, n_ma_severe_scaled) %>%
       mutate(severity = "severe") %>%
-      rename(n_ma_cases = "n_ma_severe")
+      rename(n_ma_cases = "n_ma_severe_scaled")
   )
 
 ma_cases_u1_de <- ma_cases_u1_de %>%
@@ -431,8 +431,8 @@ ma_prevented_age_long_nirs %>% ggplot() +
 # Get the numbers
 total_hosp_intervention <- severe_cases_u1_de %>%
   filter(season_birth == "all") %>%
-  select(season_birth, age_bracket, n_ma_severe) %>%
-  rename(n_hospitalisations = n_ma_severe) %>%
+  select(season_birth, age_bracket, n_ma_severe_scaled) %>%
+  rename(n_hospitalisations = n_ma_severe_scaled) %>%
   mutate(prevented_hospitalisations = 0,
          intervention = "No immunisation") %>%
   rbind(
