@@ -254,4 +254,5 @@ ggplot(data = dat_combined, aes(x = Tmid, y = VEmid, ymin = VElo, ymax = VEhi)) 
 dat_combined %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Erlang waning/VE.csv")
 
 model_outputs <- rbind(model_ve, model_ve_less)
-model_outputs %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Erlang waning/Model outputs.csv")
+model_outputs %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Erlang waning/Model outputs.csv",
+                            row.names = F)
