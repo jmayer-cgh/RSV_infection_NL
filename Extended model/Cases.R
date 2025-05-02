@@ -528,6 +528,10 @@ total_hosp_intervention_plt %>% ggsave(filename = "/Users/juliamayer/Library/Clo
                                        device='png')
 
 # Save outputs
+# Estimated cases
+severe_cases_u1_de %>% write.csv(paste0(path_output, "Severe cases DE.csv"), row.names = F)
+mild_cases_u1_de %>% write.csv(paste0(path_output, "Mild cases DE.csv"), row.names = F)
+
 # Vaccination
 hosp_prevented_vacc %>% write.csv(paste0(path_output, "Prevented hospitalisations vaccine.csv"), row.names = F)
 ma_prevented_vacc %>% write.csv(paste0(path_output, "Prevented MA cases vaccine.csv"), row.names = F)
