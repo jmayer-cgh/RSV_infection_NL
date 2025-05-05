@@ -65,7 +65,7 @@ LL = function(x){
 }
 LL_freq = function(x) -LL(x)
 
-#### run fitting ####
+#### run fitting - estimating VE0_s, VE0_l, and T####
 # Bayesian
 bayesianSetup = createBayesianSetup(likelihood = LL, lower = c(0.001,0.001,0.001), upper = c(.99,.99,.99)) # Limits for priors for VE0_s, VE0_l, T are 0.001 and 0.99
 iter = 100000
@@ -80,11 +80,16 @@ out_ba[[1]]$chain[seq(1,iter,by=10),1:3] %>% # 10000 samples from chain 1?
   mutate(group = case_match(group, '1'~'severe', '2'~'LRTI')) -> resp
 
 # Outputs by severity of disease
+# This gives the distribution of VE over time based on the initial values and T fitted above
 model_ve_runs <- resp %>%
   rowwise() %>%
   mutate(VE_t = list(VE = erlang.decay(VE0 = VE0, T = T, t=1:365))) %>%
   unnest(VE_t) %>%
   mutate(t = rep(1:365, times=dim(resp)[1]))
+
+# Identify which numbers were generated from the same initial values
+model_ve_runs_t <- model_ve_runs %>%
+  mutate(iter = rep(1:ceiling(nrow(model_ve_runs) / 730), each = 730)[1:nrow(model_ve_runs)])
 
 # Severe
 model_ve_severe_sum <- model_ve_runs %>%
@@ -104,3 +109,5 @@ model_ve_less_sum <- model_ve_runs %>%
 
 # Combine the two into one dataframe
 model_outputs_sum <- rbind(model_ve_severe_sum, model_ve_less_sum)
+
+
