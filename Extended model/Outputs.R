@@ -14,6 +14,45 @@ path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Univers
 # --------- Read in files ------------------------------------------------------
 # Cases in Germany
 # Model outputs
+new_seroconv_age <- function (index){
+  converted_all_rand <- converted_all[,index]
+  converted_sp_rand <- converted_sp[,index]
+  converted_sm_rand <- converted_sm[,index]
+  converted_au_rand <- converted_au[,index]
+  converted_wt_rand <- converted_wt[,index]
+  
+  converted <- data.frame(age_midpoint = incidence_data_season_wide$time,
+                          sero_all = converted_all_rand,
+                          sero_sp = converted_sp_rand,
+                          sero_sm = converted_sm_rand,
+                          sero_au = converted_au_rand,
+                          sero_wt = converted_wt_rand)
+  
+  incidence_df <- data.frame(age_midpoint = converted$age_midpoint,
+                             incidence = c(0, diff(converted$sero_sp)),
+                             season_birth = "spring") %>%
+    rbind(
+      data.frame(age_midpoint = converted$age_midpoint,
+                 incidence = c(0, diff(converted$sero_sm)),
+                 season_birth = "summer")
+    ) %>%
+    rbind(
+      data.frame(age_midpoint = converted$age_midpoint,
+                 incidence = c(0, diff(converted$sero_au)),
+                 season_birth = "autumn")
+    ) %>%
+    rbind(
+      data.frame(age_midpoint = converted$age_midpoint,
+                 incidence = c(0, diff(converted$sero_wt)),
+                 season_birth = "winter")
+    ) %>%
+    rbind(
+      data.frame(age_midpoint = converted$age_midpoint,
+                 incidence = c(0, diff(converted$sero_all)),
+                 season_birth = "all")
+    )
+}
+
 # Read in RSV-illness numbers
 mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
   janitor::clean_names()
@@ -44,7 +83,7 @@ illness_type <- mild_illness %>%
   ungroup()
 
 # Read in model estimates
-conversion <- read.csv(paste0(path_model, "incidence by age.csv")) 
+# conversion <- read.csv(paste0(path_model, "incidence by age.csv")) 
 
 # ------------------------------------------------------------------------------
 
@@ -358,8 +397,14 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
 
 # Combine the estimates
 #for (i in 1:100){
+  # ------ Calculate number of RSV cases by age in Germany ------------
+  # Proportion of newly seroconverted children at a given age
+  # Take one random iteration of the model
+  rand <- sample(1:10000, 1)
+  # And extract the values for it
+  conversion <- new_seroconv_age (rand)
 
-  # Proportion of children with RSV at a given age
+  # Proportion of children with RSV at a given age (seroconversion to disease)
   severe_illness <- progression_format (conversion, illness_type)
   mild_illness <- read.csv(paste0(path_output, "Proportion mild illness by age.csv")) %>%
     select (!current_season) # Change this later
@@ -367,7 +412,7 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
   severe_illness_de <- cases_format(severe_illness, mild_illness)
   
   # ------ Maternal vaccination -----------------------------------------------
-  # Take one random iteration
+  # Take one random iteration of the model
   draw <- sample(1:10000, 1)
   # And extract the values for it
   VE_distribution <- model_ve_runs_t %>% filter(iter == draw)
@@ -382,6 +427,25 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
   total_hosp_intervention <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
 #}
 
+# Plot
+# VE_distribution %>% ggplot(aes(x = t, y = VE_t, col = group)) +
+#   geom_line()
 
-VE_distribution %>% ggplot(aes(x = t, y = VE_t, col = group)) +
-  geom_line()
+palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
+             "Nirsevimab for spring births" = "#88BBA0",
+             "Nirsevimab for summer births" = "#85D4E3",
+             "Nirsevimab for spring and summer births" = "#B39BC8")
+
+total_hosp_intervention %>% ggplot() +
+  geom_col(aes(x = intervention, y = n_hospitalisations, fill = intervention), position="dodge") +
+  labs(x = "\nIntervention",
+       y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
+  theme_light() +
+  theme (#axis.text.y=element_blank(), 
+    axis.ticks.y=element_blank(),
+    legend.position = "None",
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    title = element_text(size = 20)) +
+  scale_fill_manual(values = palette)
