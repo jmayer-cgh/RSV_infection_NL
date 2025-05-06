@@ -1,3 +1,5 @@
+# The whole script takes just over 3 hours (3:07)
+
 # Housekeeping
 rm(list=ls())
 
@@ -16,8 +18,38 @@ path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Univers
 path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
 
 # --------- Read in files ------------------------------------------------------
-# Cases in Germany
-# Model outputs
+# Read in birth numbers for 2023
+suppressMessages(births_de <- read_excel(paste0(path_pop, "Births.xlsx"))) 
+colnames(births_de)[2] <- "Month"
+colnames(births_de)[5] <- "Value"
+births_de <- births_de %>% select(Month, Value) %>% 
+  filter(grepl(".0", Value)) %>%
+  mutate(Value = as.numeric(Value))
+
+births_de <- births_de %>%
+  mutate(season = case_when(
+    Month == "January" | Month == "February" | Month == "December" ~ "winter",
+    Month == "March" | Month == "April" | Month == "May" ~ "spring",
+    Month == "June" | Month == "July" | Month == "August" ~ "summer",
+    Month == "September" | Month == "October" | Month == "November" ~ "autumn"))
+
+# Get % births by season
+births_de <- births_de %>% 
+  mutate(N = sum(Value)) %>%
+  group_by(season, N) %>%
+  reframe(total = sum(Value),
+          prop = total/N) %>%
+  unique()
+
+# Read in RSV-illness estimates
+mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
+  janitor::clean_names()
+severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>% 
+  janitor::clean_names()
+# ------------------------------------------------------------------------------
+
+# --------- Define our functions ----------------------------------------------
+# Newly seroconverted at a given age
 new_seroconv_age <- function (index){
   converted_all_rand <- converted_all[,index]
   converted_sp_rand <- converted_sp[,index]
@@ -57,12 +89,6 @@ new_seroconv_age <- function (index){
     )
 }
 
-# Read in RSV-illness numbers
-mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
-  janitor::clean_names()
-severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>% 
-  janitor::clean_names()
-
 # Get proportion of cases that are mild, severe, MA, non-MA
 illness_type <- mild_illness %>% 
   merge(severe_illness, by = "age_months") %>%
@@ -89,9 +115,6 @@ illness_type <- mild_illness %>%
 # Read in model estimates
 # conversion <- read.csv(paste0(path_model, "incidence by age.csv")) 
 
-# ------------------------------------------------------------------------------
-
-# --------- Define functions --------------------------------------------------
 # ----- Data processing
 progression_format <- function (conversion, illness_type) {
   # Convert ages to the same units
@@ -135,29 +158,6 @@ cases_format <- function (severe_illness, mild_illness) {
   # Restrict to < 1 year
   severe_illness_u1 <- severe_illness %>% filter (age_months <= 12)
   mild_illness_u1 <- mild_illness %>% filter (age_months <= 12)
-  
-  # Read in birth numbers for 2023
-  suppressMessages(births_de <- read_excel(paste0(path_pop, "Births.xlsx"))) 
-  colnames(births_de)[2] <- "Month"
-  colnames(births_de)[5] <- "Value"
-  births_de <- births_de %>% select(Month, Value) %>% 
-    filter(grepl(".0", Value)) %>%
-    mutate(Value = as.numeric(Value))
-  
-  births_de <- births_de %>%
-    mutate(season = case_when(
-      Month == "January" | Month == "February" | Month == "December" ~ "winter",
-      Month == "March" | Month == "April" | Month == "May" ~ "spring",
-      Month == "June" | Month == "July" | Month == "August" ~ "summer",
-      Month == "September" | Month == "October" | Month == "November" ~ "autumn"))
-  
-  # Get % births by season
-  births_de <- births_de %>% 
-    mutate(N = sum(Value)) %>%
-    group_by(season, N) %>%
-    reframe(total = sum(Value),
-            prop = total/N) %>%
-    unique()
   
   # Add pop size in <1 y.o by season
   severe_cases_u1_de <- severe_illness_u1 %>%
@@ -397,7 +397,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
 
 # --------- Run the models once -----------------------------------------------
 source(paste0(path_code, "VE estimates.R")) # takes about 10 min 
-source(paste0(path_code, "Seroconversion fit.R")) # takes about 10 min 
+source(paste0(path_code, "Seroconversion fit.R")) # takes about 3 hours 
 # -----------------------------------------------------------------------------
 
 # Combine the estimates
@@ -448,9 +448,30 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             hosp_up_95 = quantile(n_hospitalisations, 0.95),
             prev_low_95 = quantile(prevented_hospitalisations, 0.05),
             prev_median = quantile(prevented_hospitalisations, 0.5),
-            prev_up_95 = quantile(prevented_hospitalisations, 0.95))
+            prev_up_95 = quantile(prevented_hospitalisations, 0.95)) %>%
+  ungroup()
 
-# Plot
+# Get NNV
+nnv <- total_hosp_intervention_int %>% select(intervention, prev_low_95, 
+                                              prev_median, prev_up_95) %>%
+  mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
+                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_low_95,
+                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
+                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_low_95,
+                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_low_95),
+         NNV_median = case_when (intervention == "No immusination" ~ NA,
+                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_median,
+                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_median,
+                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_median,
+                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_median),
+         NNV_up_95 = case_when (intervention == "No immusination" ~ NA,
+                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_up_95,
+                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_up_95,
+                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_up_95,
+                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_up_95))
+
+
+# ------ Plot and save outputs -----------------------------------------------
 # VE_distribution %>% ggplot(aes(x = t, y = VE_t, col = group)) +
 #   geom_line()
 
@@ -492,9 +513,32 @@ plt <- total_hosp_intervention_int %>% ggplot() +
 
 plt
 
+plt_nnv <- nnv %>% filter (intervention != "No immunisation") %>% 
+  ggplot() +
+  geom_col(aes(x = intervention, y = NNV_median, fill = intervention), position = "dodge") +
+  geom_errorbar(aes(x = intervention, ymin = NNV_low_95, ymax = NNV_up_95), 
+                width = 0.2, position = "dodge") +
+  labs(x = "\nIntervention",
+       y = "NNV to prevent one hospitalisation\n") +
+  theme_light() +
+  theme (axis.ticks.y=element_blank(),
+         legend.position = "None",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20)) +
+  scale_fill_manual(values = palette)
+
+plt_nnv
+
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
 write.csv(total_hosp_intervention_int, paste0(path, "Final outputs.csv"), row.names = F)
+write.csv(nnv, paste0(path, "Final outputs NNV hosp.csv"), row.names = F)
+
 plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Hosp by intervention CI.png",
            width = 14, height = 16, units = "in", 
            device='png')
+plt_nnv %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/NNV hosp by intervention CI.png",
+               width = 14, height = 16, units = "in", 
+               device='png')
