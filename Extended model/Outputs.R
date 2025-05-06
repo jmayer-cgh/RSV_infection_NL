@@ -1,3 +1,6 @@
+# Housekeeping
+rm(list=ls())
+
 # Load libraries
 library(dplyr)
 library(readxl)
@@ -472,7 +475,7 @@ total_hosp_intervention_df %>% filter (iter == 3) %>% ggplot() +
   scale_fill_manual(values = palette)
 
 # All with CI
-total_hosp_intervention_int %>% ggplot() +
+plt <- total_hosp_intervention_int %>% ggplot() +
   geom_col(aes(x = intervention, y = hosp_median, fill = intervention), position = "dodge") +
   geom_errorbar(aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
                 width = 0.2, position = "dodge") +
@@ -486,3 +489,12 @@ total_hosp_intervention_int %>% ggplot() +
     axis.title.y = element_text(size = 20),
     title = element_text(size = 20)) +
   scale_fill_manual(values = palette)
+
+plt
+
+# Save files
+path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
+write.csv(total_hosp_intervention_int, paste0(path, "Final outputs.csv"), row.names = F)
+plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Hosp by intervention CI.png",
+           width = 14, height = 16, units = "in", 
+           device='png')

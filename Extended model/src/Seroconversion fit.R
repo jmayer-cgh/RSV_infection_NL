@@ -1,8 +1,5 @@
 # Fitting the odin model to the data
 
-# Housekeeping
-rm(list=ls())
-
 # Load libraries
 library(dust2)
 library(odin2)
