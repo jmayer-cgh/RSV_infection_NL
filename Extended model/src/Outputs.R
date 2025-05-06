@@ -112,9 +112,6 @@ illness_type <- mild_illness %>%
             prop_non_ma_cases = total_non_ma_cases / total_cases) %>%
   ungroup()
 
-# Read in model estimates
-# conversion <- read.csv(paste0(path_model, "incidence by age.csv")) 
-
 # ----- Data processing
 progression_format <- function (conversion, illness_type) {
   # Convert ages to the same units
@@ -228,6 +225,7 @@ cases_format <- function (severe_illness, mild_illness) {
 }
 
 # ----- Interventions
+# Effect of maternal vaccination
 hosp_vacc <- function (cases, VE_distribution){
   # Add the estimated VE to the number of cases
   hosp_prevented_vacc <- cases %>% filter(!is.na(age_months)) %>%
@@ -258,7 +256,7 @@ hosp_vacc <- function (cases, VE_distribution){
   return (hosp_prevented_vacc)
 }
 
-
+# Effect of mAB
 hosp_mAB <- function (hosp_prevented_vacc) {
   nirs_eff_hosp <- runif(1, 0.623, 0.852)
   
@@ -333,6 +331,7 @@ hosp_mAB <- function (hosp_prevented_vacc) {
   return (hosp_prevented_age)
 }
 
+# Summarisising the outputs
 hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
   # Get the numbers
   total_hosp_intervention <- cases %>%
@@ -400,7 +399,7 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
 source(paste0(path_code, "Seroconversion fit.R")) # takes about 3 hours 
 # -----------------------------------------------------------------------------
 
-# Combine the estimates
+# --------- Combine the estimates ---------------------------------------------
 # Define where we're going to store the outputs
 total_hosp_intervention <- list()
 
@@ -434,8 +433,6 @@ for (i in 1:100){
   # Get total hospitalisations by intervention
   total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
   total_hosp_intervention[[i]]$iter <- rep(i, each=5) # save index in case we want to check one iteration
-
-  
 }
   
 total_hosp_intervention_df <- do.call("rbind", total_hosp_intervention)
@@ -451,7 +448,7 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             prev_up_95 = quantile(prevented_hospitalisations, 0.95)) %>%
   ungroup()
 
-# Get NNV
+# Get NNV to prevent one hospitalisation
 nnv <- total_hosp_intervention_int %>% select(intervention, prev_low_95, 
                                               prev_median, prev_up_95) %>%
   mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
