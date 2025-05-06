@@ -3,6 +3,7 @@ library(dplyr)
 library(readxl)
 library(ggplot2)
 library(tidyr)
+options(dplyr.summarise.inform = FALSE)
 
 # Path to files
 path_output <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
@@ -133,7 +134,7 @@ cases_format <- function (severe_illness, mild_illness) {
   mild_illness_u1 <- mild_illness %>% filter (age_months <= 12)
   
   # Read in birth numbers for 2023
-  births_de <- read_excel(paste0(path_pop, "Births.xlsx")) 
+  suppressMessages(births_de <- read_excel(paste0(path_pop, "Births.xlsx"))) 
   colnames(births_de)[2] <- "Month"
   colnames(births_de)[5] <- "Value"
   births_de <- births_de %>% select(Month, Value) %>% 
@@ -393,10 +394,14 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
 
 # --------- Run the models once -----------------------------------------------
 source(paste0(path_code, "VE estimates.R")) # takes about 10 min 
+source(paste0(path_code, "Seroconversion fit.R")) # takes about 10 min 
 # -----------------------------------------------------------------------------
 
 # Combine the estimates
-#for (i in 1:100){
+# Define where we're going to store the outputs
+total_hosp_intervention <- list()
+
+for (i in 1:100){
   # ------ Calculate number of RSV cases by age in Germany ------------
   # Proportion of newly seroconverted children at a given age
   # Take one random iteration of the model
@@ -424,8 +429,23 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
   hosp_prevented_age <- hosp_mAB(hosp_prevented_vacc)
   
   # Get total hospitalisations by intervention
-  total_hosp_intervention <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
-#}
+  total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
+  total_hosp_intervention[[i]]$iter <- rep(i, each=5) # save index in case we want to check one iteration
+
+  
+}
+  
+total_hosp_intervention_df <- do.call("rbind", total_hosp_intervention)
+
+# Compute 95% CI
+total_hosp_intervention_int <- total_hosp_intervention_df %>% 
+  group_by(intervention) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
+            hosp_median = quantile(n_hospitalisations, 0.5),
+            hosp_up_95 = quantile(n_hospitalisations, 0.95),
+            prev_low_95 = quantile(prevented_hospitalisations, 0.05),
+            prev_median = quantile(prevented_hospitalisations, 0.5),
+            prev_up_95 = quantile(prevented_hospitalisations, 0.95))
 
 # Plot
 # VE_distribution %>% ggplot(aes(x = t, y = VE_t, col = group)) +
@@ -436,13 +456,30 @@ palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
              "Nirsevimab for summer births" = "#85D4E3",
              "Nirsevimab for spring and summer births" = "#B39BC8")
 
-total_hosp_intervention %>% ggplot() +
+# One iteration
+total_hosp_intervention_df %>% filter (iter == 3) %>% ggplot() +
   geom_col(aes(x = intervention, y = n_hospitalisations, fill = intervention), position="dodge") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
   theme_light() +
   theme (#axis.text.y=element_blank(), 
     axis.ticks.y=element_blank(),
+    legend.position = "None",
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    title = element_text(size = 20)) +
+  scale_fill_manual(values = palette)
+
+# All with CI
+total_hosp_intervention_int %>% ggplot() +
+  geom_col(aes(x = intervention, y = hosp_median, fill = intervention), position = "dodge") +
+  geom_errorbar(aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
+                width = 0.2, position = "dodge") +
+  labs(x = "\nIntervention",
+       y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
+  theme_light() +
+  theme (axis.ticks.y=element_blank(),
     legend.position = "None",
     axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
     axis.title.x = element_text(size = 20),
