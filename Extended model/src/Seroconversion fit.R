@@ -155,8 +155,12 @@ trajectories <- dust_unpack_state(filter,
                                   samples_thinned$observations$trajectories) # 17 states, 19 time points, 80000 - 16000 = 64000 samples, 6 chains
 
 # Extract seroconversion numbers by season from all samples of one chain
-converted_all <-  array(trajectories$R_all, c(19, 64000))
+converted_all <- array(trajectories$R_all, c(19, 64000))
 converted_sp <-  array(trajectories$R_sp, c(19, 64000))
 converted_sm <-  array(trajectories$R_sm, c(19, 64000))
 converted_au <-  array(trajectories$R_au, c(19, 64000))
 converted_wt <-  array(trajectories$R_wt, c(19, 64000))
+
+# Save the outputs in case we don't want to run the whole model again
+converted_summary <- list(converted_all, converted_sp, converted_sm, converted_au, converted_wt)
+saveRDS(converted_summary, file = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion model outputs.rds")
