@@ -398,7 +398,7 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                prev_spring_10 = sum(n_ma_severe_averted_nirs[age_months >= 10 & season_birth == "spring"], na.rm = T),
                prev_summer_4 = sum(n_ma_severe_averted_nirs[age_months >= 4 & season_birth == "summer"], na.rm = T),
                prev_autumn_3 = sum(n_ma_severe_averted_nirs[age_months >= 3 & season_birth == "autumn"], na.rm = T),
-               prev_winter_0 = sum(n_ma_severe_averted_nirs[age_months >= 0 & season_birth == "winter"], na.rm = T),
+               prev_winter_11 = sum(n_ma_severe_averted_nirs[age_months >= 11 & season_birth == "winter"], na.rm = T),
                # remaining hospitalisations
                hosp_u1 = sum(n_ma_severe_nirs),
                hosp_1 = sum(n_ma_severe_nirs[age_months >= 1], na.rm = T) + sum(n_ma_severe_vacc[age_months < 1], na.rm = T),
@@ -417,8 +417,8 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                                       TRUE ~ prev_4 + hosp_4),
            hosp_autumn_3 = case_when (season_birth == "autumn" ~ hosp_3,
                                       TRUE ~ prev_3 + hosp_3),
-           hosp_winter_0 = case_when (season_birth == "winter" ~ hosp_u1,
-                                      TRUE ~ prev_u1 + hosp_u1)) %>%
+           hosp_winter_11 = case_when (season_birth == "winter" ~ hosp_11,
+                                      TRUE ~ prev_11 + hosp_11)) %>%
     rbind(
       data.frame(season_birth = "all",
                  # averted hospitalisations
@@ -434,7 +434,7 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                  prev_spring_10 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 10 & hosp_prevented$season_birth == "spring"], na.rm = T),
                  prev_summer_4 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 4 & hosp_prevented$season_birth == "summer"], na.rm = T),
                  prev_autumn_3 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 3 & hosp_prevented$season_birth == "autumn"], na.rm = T),
-                 prev_winter_0 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 0 & hosp_prevented$season_birth == "winter"], na.rm = T),
+                 prev_winter_11 = sum(hosp_prevented$n_ma_severe_averted_nirs[hosp_prevented$age_months >= 11 & hosp_prevented$season_birth == "winter"], na.rm = T),
                  # remaining hospitalisations
                  hosp_u1 = sum(hosp_prevented$n_ma_severe_nirs),
                  hosp_1 = sum(hosp_prevented$n_ma_severe_nirs[hosp_prevented$age_months >= 1], na.rm = T),
@@ -447,7 +447,7 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                  hosp_spring_10 = 0,
                  hosp_summer_4 = 0,
                  hosp_autumn_3 = 0,
-                 hosp_winter_0 = 0) %>%# placeholder
+                 hosp_winter_11 = 0) %>%# placeholder
         ungroup()
     ) %>%
     mutate(hosp_spring_10 = case_when (season_birth == "all" ~ sum(hosp_spring_10),
@@ -456,8 +456,8 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                                       TRUE ~ hosp_summer_4),
            hosp_autumn_3 = case_when (season_birth == "all" ~ sum(hosp_autumn_3),
                                       TRUE ~ hosp_autumn_3),
-           hosp_winter_0 = case_when (season_birth == "all" ~ sum(hosp_winter_0),
-                                      TRUE ~ hosp_winter_0))
+           hosp_winter_11 = case_when (season_birth == "all" ~ sum(hosp_winter_11),
+                                      TRUE ~ hosp_winter_11))
   
   return (hosp_prevented_age)
 }
@@ -488,7 +488,7 @@ ma_mAB <- function (ma_prevented_vacc) {
                prev_spring_10 = sum(n_ma_cases_averted_nirs[age_months >= 10 & season_birth == "spring"], na.rm = T),
                prev_summer_4 = sum(n_ma_cases_averted_nirs[age_months >= 4 & season_birth == "summer"], na.rm = T),
                prev_autumn_3 = sum(n_ma_cases_averted_nirs[age_months >= 3 & season_birth == "autumn"], na.rm = T),
-               prev_winter_0 = sum(n_ma_cases_averted_nirs[age_months >= 0 & season_birth == "winter"], na.rm = T),
+               prev_winter_11 = sum(n_ma_cases_averted_nirs[age_months >= 11 & season_birth == "winter"], na.rm = T),
                # remaining cases
                ma_u1 = sum(n_ma_cases_nirs),
                ma_1 = sum(n_ma_cases_nirs[age_months >= 1], na.rm = T) + sum(n_ma_cases_vacc[age_months < 1], na.rm = T),
@@ -509,9 +509,9 @@ ma_mAB <- function (ma_prevented_vacc) {
            ma_autumn_3 = case_when (season_birth == "autumn" ~ ma_3,
                                     season_birth == "all"  ~ 0,
                                     TRUE ~ prev_3 + ma_3),
-           ma_winter_0 = case_when (season_birth == "winter" ~ ma_u1,
+           ma_winter_11 = case_when (season_birth == "winter" ~ ma_11,
                                     season_birth == "all"  ~ 0,
-                                    TRUE ~ prev_u1 + ma_u1)) %>%
+                                    TRUE ~ prev_11 + ma_11)) %>%
         ungroup() %>%
     group_by(severity) %>%
     mutate(ma_spring_10 = case_when (season_birth == "all" ~ sum(ma_spring_10),
@@ -520,16 +520,16 @@ ma_mAB <- function (ma_prevented_vacc) {
                                       TRUE ~ ma_summer_4),
            ma_autumn_3 = case_when (season_birth == "all" ~ sum(ma_autumn_3),
                                     TRUE ~ ma_autumn_3),
-           ma_winter_0 = case_when (season_birth == "all" ~ sum(ma_winter_0),
-                                    TRUE ~ ma_winter_0),
+           ma_winter_11 = case_when (season_birth == "all" ~ sum(ma_winter_11),
+                                    TRUE ~ ma_winter_11),
            prev_spring_10 = case_when (season_birth == "all" ~ prev_spring_10[season_birth == "spring"],
                                      TRUE ~ prev_spring_10),
            prev_summer_4 = case_when (season_birth == "all" ~ prev_summer_4[season_birth == "summer"],
                                     TRUE ~ prev_summer_4),
            prev_autumn_3 = case_when (season_birth == "all" ~ prev_autumn_3[season_birth == "autumn"],
                                       TRUE ~ prev_autumn_3),
-           prev_winter_0 = case_when (season_birth == "all" ~ prev_winter_0[season_birth == "winter"],
-                                      TRUE ~ prev_winter_0)
+           prev_winter_11 = case_when (season_birth == "all" ~ prev_winter_11[season_birth == "winter"],
+                                      TRUE ~ prev_winter_11)
     ) %>%
     ungroup()
   
@@ -540,7 +540,6 @@ ma_mAB <- function (ma_prevented_vacc) {
 hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
   # Get the numbers
   total_hosp_intervention <- cases %>%
-    filter(season_birth == "all") %>%
     select(season_birth, age_bracket, n_ma_severe_scaled) %>%
     rename(n_hospitalisations = n_ma_severe_scaled) %>%
     mutate(prevented_hospitalisations = 0,
@@ -549,6 +548,16 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
         ungroup() %>%
         select(season_birth, age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
+                  n_hospitalisations = sum(n_ma_severe_vacc),
+                  prevented_hospitalisations = sum(n_ma_severe_averted),
+                  intervention = "Maternal vaccination")
+    ) %>%
+    rbind(
+      hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
+        ungroup() %>%
+        select(age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
         summarise(season_birth = "all",
                   age_bracket = "all",
                   n_hospitalisations = sum(n_ma_severe_vacc),
@@ -556,51 +565,46 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
                   intervention = "Maternal vaccination")
     ) %>%
     rbind(
-      hosp_prevented_age %>% filter(season_birth == "all") %>%
-        ungroup() %>%
-        select(hosp_spring_10, prev_spring_10) %>%
-        summarise(season_birth = "all",
-                  age_bracket = "all",
+      hosp_prevented_age %>%
+        select(hosp_spring_10, prev_spring_10, season_birth) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
                   n_hospitalisations = hosp_spring_10,
                   prevented_hospitalisations = prev_spring_10,
                   intervention = "Nirsevimab for spring births")
     ) %>%
     rbind(
-      hosp_prevented_age %>% filter(season_birth == "all") %>%
-        ungroup() %>%
-        select(hosp_summer_4, prev_summer_4) %>%
-        summarise(season_birth = "all",
-                  age_bracket = "all",
+      hosp_prevented_age %>%
+        select(season_birth, hosp_summer_4, prev_summer_4) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
                   n_hospitalisations = hosp_summer_4,
                   prevented_hospitalisations = prev_summer_4,
                   intervention = "Nirsevimab for summer births")
     ) %>%
     rbind(
-      hosp_prevented_age %>% filter(season_birth == "all") %>%
-        ungroup() %>%
-        select(hosp_autumn_3, prev_autumn_3) %>%
-        summarise(season_birth = "all",
-                  age_bracket = "all",
+      hosp_prevented_age %>% 
+        select(season_birth, hosp_autumn_3, prev_autumn_3) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
                   n_hospitalisations = hosp_autumn_3,
                   prevented_hospitalisations = prev_autumn_3,
                   intervention = "Nirsevimab for autumn births")
     ) %>%
     rbind(
-      hosp_prevented_age %>% filter(season_birth == "all") %>%
-        ungroup() %>%
-        select(hosp_winter_0, prev_winter_0) %>%
-        summarise(season_birth = "all",
-                  age_bracket = "all",
-                  n_hospitalisations = hosp_winter_0,
-                  prevented_hospitalisations = prev_winter_0,
+      hosp_prevented_age %>% 
+        select(season_birth, hosp_winter_11, prev_winter_11) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
+                  n_hospitalisations = hosp_winter_11,
+                  prevented_hospitalisations = prev_winter_11,
                   intervention = "Nirsevimab for winter births")
     ) %>%
     rbind(
-      hosp_prevented_age %>% filter(season_birth == "all") %>%
-        ungroup() %>%
-        select(hosp_summer_4, prev_summer_4, hosp_spring_10, prev_spring_10) %>%
-        summarise(season_birth = "all",
-                  age_bracket = "all",
+      hosp_prevented_age %>% 
+        select(season_birth, hosp_summer_4, prev_summer_4, hosp_spring_10, prev_spring_10) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
                   n_hospitalisations = 0, # we need to calculate this later
                   prevented_hospitalisations = prev_summer_4 + prev_spring_10,
                   intervention = "Nirsevimab for spring and summer births")
@@ -613,6 +617,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
                                                   "Nirsevimab for spring and summer births")))
   
   total_hosp_intervention <- total_hosp_intervention %>%
+    group_by(season_birth) %>%
     mutate(n_hospitalisations = case_when (intervention == "Nirsevimab for spring and summer births" ~
                                              n_hospitalisations[intervention == "Maternal vaccination"] - prevented_hospitalisations[intervention == "Nirsevimab for spring and summer births"],
                                            TRUE ~ n_hospitalisations))
@@ -623,20 +628,22 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
 ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
   # Get the numbers
   total_ma_intervention <- cases %>%
-    filter(season_birth == "all" & severity == "all") %>%
+    filter(severity == "all") %>%
     select(season_birth, n_ma_cases, severity) %>%
     rename(n_cases = n_ma_cases) %>%
-    summarise(season_birth = "all",
+    group_by(season_birth) %>% 
+    summarise(#season_birth = "all",
               age_bracket = "all",
               n_cases = sum(n_cases),
               prevented_cases = 0,
               severity = "all",
               intervention = "No immunisation") %>%
     rbind(
-      ma_prevented_vacc %>% filter(age_bracket == "all" & severity == "all" & season_birth == "all") %>%
+      ma_prevented_vacc %>% filter(age_bracket == "all" & severity == "all") %>%
         ungroup() %>%
         select(season_birth, severity, n_ma_cases_vacc, n_ma_cases_averted) %>%
-        summarise(season_birth = "all",
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
                   n_cases = sum(n_ma_cases_vacc),
                   prevented_cases = sum(n_ma_cases_averted),
@@ -644,10 +651,11 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   intervention = "Maternal vaccination")
     ) %>%
     rbind(
-      ma_prevented_age %>% filter(season_birth == "all" & severity == "all") %>%
+      ma_prevented_age %>% filter(severity == "all") %>%
         ungroup() %>%
-        select(ma_spring_10, prev_spring_10) %>%
-        summarise(season_birth = "all",
+        select(season_birth, ma_spring_10, prev_spring_10) %>%
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
                   n_cases = ma_spring_10,
                   prevented_cases = prev_spring_10,
@@ -655,10 +663,11 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   intervention = "Nirsevimab for spring births")
     ) %>%
     rbind(
-      ma_prevented_age %>% filter(season_birth == "all" & severity == "all") %>%
+      ma_prevented_age %>% filter(severity == "all") %>%
         ungroup() %>%
-        select(ma_summer_4, prev_summer_4) %>%
-        summarise(season_birth = "all",
+        select(ma_summer_4, prev_summer_4, season_birth) %>%
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
                   n_cases = ma_summer_4,
                   prevented_cases = prev_summer_4,
@@ -666,10 +675,11 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   intervention = "Nirsevimab for summer births")
     ) %>%
     rbind(
-      ma_prevented_age %>% filter(season_birth == "all" & severity == "all") %>%
+      ma_prevented_age %>% filter(severity == "all") %>%
         ungroup() %>%
-        select(ma_autumn_3, prev_autumn_3) %>%
-        summarise(season_birth = "all",
+        select(, season_birth,ma_autumn_3, prev_autumn_3) %>%
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
                   n_cases = ma_autumn_3,
                   prevented_cases = prev_autumn_3,
@@ -677,21 +687,23 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   intervention = "Nirsevimab for autumn births")
     ) %>%
     rbind(
-      ma_prevented_age %>% filter(season_birth == "all" & severity == "all") %>%
+      ma_prevented_age %>% filter(severity == "all") %>%
         ungroup() %>%
-        select(ma_winter_0, prev_winter_0) %>%
-        summarise(season_birth = "all",
+        select(season_birth, ma_winter_11, prev_winter_11) %>%
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
-                  n_cases = ma_winter_0,
-                  prevented_cases = prev_winter_0,
+                  n_cases = ma_winter_11,
+                  prevented_cases = prev_winter_11,
                   severity = "all",
                   intervention = "Nirsevimab for winter births")
     ) %>%
     rbind(
-      ma_prevented_age %>% filter(season_birth == "all" & severity == "all") %>%
+      ma_prevented_age %>% filter(severity == "all") %>%
         ungroup() %>%
-        select(ma_summer_4, prev_summer_4, ma_spring_10, prev_spring_10) %>%
-        summarise(season_birth = "all",
+        select(season_birth, ma_summer_4, prev_summer_4, ma_spring_10, prev_spring_10) %>%
+        group_by(season_birth) %>%
+        summarise(#season_birth = "all",
                   age_bracket = "all",
                   n_cases = 0, # we need to calculate this later
                   prevented_cases = prev_summer_4 + prev_spring_10,
@@ -706,6 +718,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                                                   "Nirsevimab for spring and summer births")))
   
   total_ma_intervention <- total_ma_intervention %>%
+    group_by(season_birth) %>%
     mutate(n_cases = case_when (intervention == "Nirsevimab for spring and summer births" ~
                                              n_cases[intervention == "Maternal vaccination"] - prevented_cases[intervention == "Nirsevimab for spring and summer births"],
                                            TRUE ~ n_cases))
@@ -768,11 +781,11 @@ for (i in 1:100){
   
   # Get total hospitalisations by intervention
   total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
-  total_hosp_intervention[[i]]$iter <- rep(i, each=7) # save index in case we want to check one iteration
+  total_hosp_intervention[[i]]$iter <- rep(i, each = 55) # save index in case we want to check one iteration
   
   # Get total MA cases by intervention
   total_ma_intervention[[i]] <- ma_intervention(ma_cases, ma_prevented_vacc, ma_prevented_age)
-  total_ma_intervention[[i]]$iter <- rep(i, each=7) # save index in case we want to check one iteration
+  total_ma_intervention[[i]]$iter <- rep(i, each = 35) # save index in case we want to check one iteration
 }
   
 total_hosp_intervention_df <- do.call("rbind", total_hosp_intervention)
@@ -780,7 +793,7 @@ total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 
 # Compute 95% CI
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
-  group_by(intervention) %>%
+  group_by(intervention, season_birth) %>%
   summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
             hosp_median = quantile(n_hospitalisations, 0.5),
             hosp_up_95 = quantile(n_hospitalisations, 0.95),
@@ -790,7 +803,7 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
   ungroup()
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
-  group_by(intervention) %>%
+  group_by(intervention, season_birth) %>%
   summarise(cases_low_95 = quantile(n_cases, 0.05),
             cases_median = quantile(n_cases, 0.5),
             cases_up_95 = quantile(n_cases, 0.95),
@@ -800,8 +813,8 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
   ungroup()
 
 # Get NNV to prevent one hospitalisation
-nnv <- total_hosp_intervention_int %>% select(intervention, prev_low_95, 
-                                              prev_median, prev_up_95) %>%
+nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
+                                              prev_low_95, prev_median, prev_up_95) %>%
   mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
                                  intervention == "Maternal vaccination" ~ births_de$N[1]/prev_low_95,
                                  intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
@@ -826,8 +839,8 @@ nnv <- total_hosp_intervention_int %>% select(intervention, prev_low_95,
 
 
 # Get NNV to prevent one MA cases
-nnv_ma <- total_ma_intervention_int %>% select(intervention, prev_low_95, 
-                                              prev_median, prev_up_95) %>%
+nnv_ma <- total_ma_intervention_int %>% select(intervention, season_birth, 
+                                               prev_low_95, prev_median, prev_up_95) %>%
   mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
                                  intervention == "Maternal vaccination" ~ births_de$N[1]/prev_low_95,
                                  intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
@@ -862,9 +875,13 @@ palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
              "Nirsevimab for winter births" = "#B479E0",
              "Nirsevimab for spring and summer births" = "#B39BC8")
 
+palette_season <- c("autumn" = "#88BBA0", "winter" = "#B39BC8", 
+                    "spring" = "#13D4C7", "summer" = "#B479E0")
+
 # One iteration
 total_hosp_intervention_df %>% filter (iter == 1) %>% ggplot() +
-  geom_col(aes(x = intervention, y = n_hospitalisations, fill = intervention), position="dodge") +
+  geom_col(aes(x = intervention, y = n_hospitalisations, fill = season_birth), 
+           position="stack") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
   theme_light() +
@@ -877,24 +894,27 @@ total_hosp_intervention_df %>% filter (iter == 1) %>% ggplot() +
     title = element_text(size = 20)) +
   scale_fill_manual(values = palette)
 
-total_ma_intervention_df %>% filter (iter == 3) %>% ggplot() +
-  geom_col(aes(x = intervention, y = n_cases, fill = intervention), position="dodge") +
+total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>% 
+  ggplot() +
+  geom_col(aes(x = intervention, y = n_cases, fill = season_birth), position="stack") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated MA cases in children under the age of 1 year\n") +
   theme_light() +
   theme (#axis.text.y=element_blank(), 
     axis.ticks.y=element_blank(),
-    legend.position = "None",
+    legend.position = "right",
     axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
     title = element_text(size = 20)) +
-  scale_fill_manual(values = palette)
+  scale_fill_manual(values = palette_season)
 
 # All with CI
-plt <- total_hosp_intervention_int %>% ggplot() +
-  geom_col(aes(x = intervention, y = hosp_median, fill = intervention), position = "dodge") +
-  geom_errorbar(aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
+plt <- total_hosp_intervention_int %>% # filter (season_birth != "all") %>%
+  ggplot() +
+  geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), position = "stack") +
+  geom_errorbar(data = subset(total_ma_intervention_int, season_birth == "all"),
+                aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
@@ -909,20 +929,22 @@ plt <- total_hosp_intervention_int %>% ggplot() +
 
 plt
 
-plt_ma <- total_ma_intervention_int %>% ggplot() +
-  geom_col(aes(x = intervention, y = cases_median, fill = intervention), position = "dodge") +
-  geom_errorbar(aes(x = intervention, ymin = cases_low_95, ymax = cases_up_95), 
+plt_ma <- total_ma_intervention_int %>% filter (season_birth != "all") %>% 
+  ggplot() +
+  geom_col(aes(x = intervention, y = cases_median, fill = season_birth), position = "stack") +
+  geom_errorbar(data = subset(total_ma_intervention_int, season_birth == "all"),
+                aes(x = intervention, ymin = cases_low_95, ymax = cases_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated MA cases in children under the age of 1 year\n") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
-         legend.position = "None",
+         legend.position = "right",
          axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
          axis.title.x = element_text(size = 20),
          axis.title.y = element_text(size = 20),
          title = element_text(size = 20)) +
-  scale_fill_manual(values = palette)
+  scale_fill_manual(values = palette_season)
 
 plt_ma
 
@@ -944,16 +966,17 @@ plt_nnv <- nnv %>% filter (intervention != "No immunisation") %>%
 
 plt_nnv
 
-plt_nnv_cases <- nnv_ma %>% filter (intervention != "No immunisation") %>% 
+plt_nnv_cases <- nnv_ma %>% filter (intervention != "No immunisation" & season_birth == "all") %>% 
   ggplot() +
-  geom_col(aes(x = intervention, y = NNV_median, fill = intervention), position = "dodge") +
+  geom_col(aes(x = intervention, y = NNV_median, fill = intervention), 
+           position = "stack") +
   geom_errorbar(aes(x = intervention, ymin = NNV_low_95, ymax = NNV_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
        y = "NNV to prevent one MA case\n") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
-         legend.position = "None",
+         legend.position = "none",
          axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
          axis.title.x = element_text(size = 20),
          axis.title.y = element_text(size = 20),
