@@ -545,6 +545,24 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
     mutate(prevented_hospitalisations = 0,
            intervention = "No immunisation") %>%
     rbind(
+      cases %>% filter (age_bracket == "all") %>%
+        select(age_bracket, n_ma_severe_scaled) %>%
+        summarise(age_bracket = "all",
+                  season_birth = "all",
+                  n_hospitalisations = sum(n_ma_severe_scaled),
+                  prevented_hospitalisations = 0,
+                  intervention = "No immunisation")
+    ) %>%
+    rbind(
+      cases %>% filter (age_bracket != "all") %>%
+        select(season_birth, n_ma_severe_scaled) %>%
+        group_by(season_birth) %>%
+        summarise(age_bracket = "all",
+                  n_hospitalisations = sum(n_ma_severe_scaled),
+                  prevented_hospitalisations = 0,
+                  intervention = "No immunisation")
+    ) %>%
+    rbind(
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
         ungroup() %>%
         select(season_birth, age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
@@ -781,7 +799,7 @@ for (i in 1:100){
   
   # Get total hospitalisations by intervention
   total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
-  total_hosp_intervention[[i]]$iter <- rep(i, each = 55) # save index in case we want to check one iteration
+  total_hosp_intervention[[i]]$iter <- rep(i, each = 60) # save index in case we want to check one iteration
   
   # Get total MA cases by intervention
   total_ma_intervention[[i]] <- ma_intervention(ma_cases, ma_prevented_vacc, ma_prevented_age)
@@ -793,6 +811,7 @@ total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 
 # Compute 95% CI
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
+  filter (age_bracket == "all") %>%
   group_by(intervention, season_birth) %>%
   summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
             hosp_median = quantile(n_hospitalisations, 0.5),
@@ -875,11 +894,12 @@ palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
              "Nirsevimab for winter births" = "#B479E0",
              "Nirsevimab for spring and summer births" = "#B39BC8")
 
-palette_season <- c("autumn" = "#88BBA0", "winter" = "#B39BC8", 
-                    "spring" = "#13D4C7", "summer" = "#B479E0")
+palette_season <- c("autumn" = "#88BBA0", "winter" = "#13D4C7", 
+                    "spring" = "#B39BC8", "summer" = "#B479E0")
 
 # One iteration
-total_hosp_intervention_df %>% filter (iter == 1) %>% ggplot() +
+total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>% 
+  ggplot() +
   geom_col(aes(x = intervention, y = n_hospitalisations, fill = season_birth), 
            position="stack") +
   labs(x = "\nIntervention",
@@ -892,7 +912,7 @@ total_hosp_intervention_df %>% filter (iter == 1) %>% ggplot() +
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
     title = element_text(size = 20)) +
-  scale_fill_manual(values = palette)
+  scale_fill_manual(values = palette_season)
 
 total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>% 
   ggplot() +
@@ -910,22 +930,23 @@ total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>%
   scale_fill_manual(values = palette_season)
 
 # All with CI
-plt <- total_hosp_intervention_int %>% # filter (season_birth != "all") %>%
+plt <- total_hosp_intervention_int %>% filter (season_birth != "all") %>%
   ggplot() +
   geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), position = "stack") +
-  geom_errorbar(data = subset(total_ma_intervention_int, season_birth == "all"),
+  geom_errorbar(data = subset(total_hosp_intervention_int, season_birth == "all"),
                 aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
-       y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
+       y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n",
+       fill = "Season of birth") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
-    legend.position = "None",
+    legend.position = "right",
     axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
     title = element_text(size = 20)) +
-  scale_fill_manual(values = palette)
+  scale_fill_manual(values = palette_season)
 
 plt
 
@@ -936,7 +957,8 @@ plt_ma <- total_ma_intervention_int %>% filter (season_birth != "all") %>%
                 aes(x = intervention, ymin = cases_low_95, ymax = cases_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
-       y = "Number of RSV-associated MA cases in children under the age of 1 year\n") +
+       y = "Number of RSV-associated MA cases in children under the age of 1 year\n",
+       fill = "Season of birth") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
          legend.position = "right",
@@ -948,7 +970,7 @@ plt_ma <- total_ma_intervention_int %>% filter (season_birth != "all") %>%
 
 plt_ma
 
-plt_nnv <- nnv %>% filter (intervention != "No immunisation") %>% 
+plt_nnv <- nnv %>% filter (intervention != "No immunisation" & season_birth == "all") %>% 
   ggplot() +
   geom_col(aes(x = intervention, y = NNV_median, fill = intervention), position = "dodge") +
   geom_errorbar(aes(x = intervention, ymin = NNV_low_95, ymax = NNV_up_95), 
