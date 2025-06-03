@@ -174,6 +174,39 @@ plt %>%
          width = 14, height = 16, units = "in", 
          device='png')
 
+severe_cases_u1_de %>% filter(!is.na(age_months)) %>% 
+  group_by(age_midpoint) %>%
+  mutate(total = sum(n_severe_scaled)) %>%
+  ggplot(aes(x = age_months, y = total)) +
+  geom_point(size = 3.5) + 
+  labs(title = "Number of severe RSV cases", x = "Age (months)",
+       y = "Cases") +
+  theme_light() +
+  theme (axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20),
+         legend.text = element_text (size = 25),
+         legend.title = element_text (size = 25),
+         strip.text.x = element_text(size = 20, color = "black"))
+
+severe_illness_u1 %>% filter(!is.na(age_months)) %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("spring", "summer", "autumn", "winter"))) %>%
+  ggplot(aes(x = age_months, y = total_ma_severe_cases_prop)) +
+  geom_point(size = 3.5) + 
+  labs(title = "Proportion of severe disease among RSV cases", x = "Age (months)",
+       y = "Proportion of cases") +
+  theme_light() +
+  theme (axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20),
+         legend.text = element_text (size = 25),
+         legend.title = element_text (size = 25),
+         strip.text.x = element_text(size = 20, color = "black")) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap(~season_birth, scales = "free")
 
 # ------------- Abrysvo ----------------------------------------------------
 # We have estimates of VE by age so we will use those

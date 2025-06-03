@@ -819,7 +819,9 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             prev_low_95 = quantile(prevented_hospitalisations, 0.05),
             prev_median = quantile(prevented_hospitalisations, 0.5),
             prev_up_95 = quantile(prevented_hospitalisations, 0.95)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("winter", "spring", "summer", "autumn")))
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
   group_by(intervention, season_birth) %>%
@@ -829,7 +831,9 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
             prev_low_95 = quantile(prevented_cases, 0.05),
             prev_median = quantile(prevented_cases, 0.5),
             prev_up_95 = quantile(prevented_cases, 0.95)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("winter", "spring", "summer", "autumn")))
 
 # Get NNV to prevent one hospitalisation
 nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
