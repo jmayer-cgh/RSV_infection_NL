@@ -303,21 +303,29 @@ rownames(seroconversion_df) <- NULL
 
 # Get incident cases
 incidence_df <- data.frame(age_midpoint = seroconversion_df$age_midpoint,
-                           incidence = c(0, diff(seroconversion_df$median_sp)),
+                           incidence_median = c(0, diff(seroconversion_df$median_sp)),
+                           incidence_low95 = c(0, diff(seroconversion_df$low95_sp)), # is this right?
+                           incidence_up95 = c(0, diff(seroconversion_df$up95_sp)),
                            season_birth = "spring") %>%
   rbind(
     data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence = c(0, diff(seroconversion_df$median_sm)),
+               incidence_median = c(0, diff(seroconversion_df$median_sm)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_sm)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_sm)),
                season_birth = "summer")
   ) %>%
   rbind(
     data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence = c(0, diff(seroconversion_df$median_au)),
+               incidence_median = c(0, diff(seroconversion_df$median_au)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_au)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_au)),
                season_birth = "autumn")
   ) %>%
   rbind(
     data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence = c(0, diff(seroconversion_df$median_wt)),
+               incidence_median = c(0, diff(seroconversion_df$median_wt)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_wt)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_wt)),
                season_birth = "winter")
   )
 

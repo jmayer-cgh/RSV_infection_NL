@@ -821,7 +821,8 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             prev_up_95 = quantile(prevented_hospitalisations, 0.95)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
-                               levels = c("winter", "spring", "summer", "autumn")))
+                               levels = c("winter", "spring", "summer", "autumn",
+                                          "all")))
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
   group_by(intervention, season_birth) %>%
@@ -833,7 +834,8 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
             prev_up_95 = quantile(prevented_cases, 0.95)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
-                               levels = c("winter", "spring", "summer", "autumn")))
+                               levels = c("winter", "spring", "summer", "autumn",
+                                          "all")))
 
 # Get NNV to prevent one hospitalisation
 nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
@@ -947,9 +949,11 @@ plt <- total_hosp_intervention_int %>% filter (season_birth != "all") %>%
   theme (axis.ticks.y=element_blank(),
     legend.position = "right",
     axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+    axis.text.y = element_text(size = 18),
     axis.title.x = element_text(size = 20),
     axis.title.y = element_text(size = 20),
-    title = element_text(size = 20)) +
+    title = element_text(size = 20),
+    legend.text = element_text(size = 18)) +
   scale_fill_manual(values = palette_season)
 
 plt
@@ -967,9 +971,11 @@ plt_ma <- total_ma_intervention_int %>% filter (season_birth != "all") %>%
   theme (axis.ticks.y=element_blank(),
          legend.position = "right",
          axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.text.y = element_text(size = 18),
          axis.title.x = element_text(size = 20),
          axis.title.y = element_text(size = 20),
-         title = element_text(size = 20)) +
+         title = element_text(size = 20),
+         legend.text = element_text(size = 18)) +
   scale_fill_manual(values = palette_season)
 
 plt_ma
