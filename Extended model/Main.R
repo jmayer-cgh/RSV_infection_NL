@@ -257,13 +257,14 @@ dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charite�
 dev.off ()
 
 # ----------- Estimates --------------------------------------------------------
-hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, prob = c(0.025, 0.5, 0.975), na.rm=T) 
+# hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, prob = c(0.025, 0.5, 0.975), na.rm=T) 
+hpd <- apply(samples_tuned$pars, 2, quantile, prob = c(0.025, 0.5, 0.975), na.rm=T) 
 rownames(hpd) <- c("low95", "median", "up95")
 
 # Get the mean highest probability distribution
-mean_hpd <- apply(pmcmc_tuned_run$pars, 2, mean)
-lower_95_hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, probs = 0.05)
-upper_95_hpd <- apply(pmcmc_tuned_run$pars, 2, quantile, probs = 0.95)
+mean_hpd <- apply(samples_tuned$pars, 2, mean)
+lower_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.05)
+upper_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.95)
 summary_hpd <- rbind(mean_hpd, lower_95_hpd, upper_95_hpd)
 summary_hpd
 
@@ -289,11 +290,16 @@ for (i in 1:length(incidence_data_season_wide$time)){
   median_wt <- quantile(trajectories$R_wt[i, , ], 0.5)
   up95_wt <- quantile(trajectories$R_wt[i, , ], 0.95)
   
+  low95_all <- quantile(trajectories$R_all[i, , ], 0.05)
+  median_all <- quantile(trajectories$R_all[i, , ], 0.5)
+  up95_all <- quantile(trajectories$R_all[i, , ], 0.95)
+  
   combined <- data.frame(age_midpoint = age_midpoint,
                          low95_sp, median_sp, up95_sp, 
                          low95_sm, median_sm, up95_sm, 
                          low95_au, median_au, up95_au, 
-                         low95_wt, median_wt, up95_wt)
+                         low95_wt, median_wt, up95_wt,
+                         low95_all, median_all, up95_all)
   
   seroconversion[[i]] <- combined
 }
@@ -302,32 +308,65 @@ seroconversion_df <- do.call("rbind", seroconversion)
 rownames(seroconversion_df) <- NULL
 
 # Get incident cases
-incidence_df <- data.frame(age_midpoint = seroconversion_df$age_midpoint,
-                           incidence_median = c(0, diff(seroconversion_df$median_sp)),
-                           incidence_low95 = c(0, diff(seroconversion_df$low95_sp)), # is this right?
-                           incidence_up95 = c(0, diff(seroconversion_df$up95_sp)),
-                           season_birth = "spring") %>%
-  rbind(
-    data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence_median = c(0, diff(seroconversion_df$median_sm)),
-               incidence_low95 = c(0, diff(seroconversion_df$low95_sm)), # is this right?
-               incidence_up95 = c(0, diff(seroconversion_df$up95_sm)),
-               season_birth = "summer")
-  ) %>%
-  rbind(
-    data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence_median = c(0, diff(seroconversion_df$median_au)),
-               incidence_low95 = c(0, diff(seroconversion_df$low95_au)), # is this right?
-               incidence_up95 = c(0, diff(seroconversion_df$up95_au)),
-               season_birth = "autumn")
-  ) %>%
-  rbind(
-    data.frame(age_midpoint = seroconversion_df$age_midpoint,
-               incidence_median = c(0, diff(seroconversion_df$median_wt)),
-               incidence_low95 = c(0, diff(seroconversion_df$low95_wt)), # is this right?
-               incidence_up95 = c(0, diff(seroconversion_df$up95_wt)),
-               season_birth = "winter")
-  )
+incidence <- list()
+
+for (i in 1:length(incidence_data_season_wide$time)){
+  age_midpoint <- incidence_data_season_wide$time[i]
+  
+  if(i>1){
+    low95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.05)
+    median_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.5)
+    up95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.95)
+    
+    low95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.05)
+    median_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.5)
+    up95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.95)
+    
+    low95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.05)
+    median_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.5)
+    up95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.95)
+    
+    low95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.05)
+    median_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.5)
+    up95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.95)
+    
+    low95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.05)
+    median_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.5)
+    up95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.95)
+  } else{
+    low95_sp <- 0
+    median_sp <- 0
+    up95_sp <- 0
+    
+    low95_sm <- 0
+    median_sm <- 0
+    up95_sm <- 0
+    
+    low95_au <- 0
+    median_au <- 0
+    up95_au <- 0
+    
+    low95_wt <- 0
+    median_wt <- 0
+    up95_wt <- 0
+    
+    low95_all <- 0
+    median_all <- 0
+    up95_all <- 0
+  }
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_sp, median_sp, up95_sp, 
+                         low95_sm, median_sm, up95_sm, 
+                         low95_au, median_au, up95_au, 
+                         low95_wt, median_wt, up95_wt,
+                         low95_all, median_all, up95_all)
+  
+  incidence[[i]] <- combined
+}
+
+incidence_test <- do.call("rbind", incidence)
+rownames(incidence_test) <- NULL
 
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
@@ -335,3 +374,55 @@ path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-Universität
 write.csv(params_est, paste0(path, "highest probability distribution.csv"), row.names = F)
 write.csv(seroconversion_df, paste0(path, "seroconversion by age.csv"), row.names = F)
 write.csv(incidence_df, paste0(path, "incidence by age.csv"), row.names = F)
+
+incidence_test %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_sp)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_sp, ymax = up95_sp)) +
+  labs(title = "Proportion of newly seroconverted children (spring)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence spring.png");
+dev.off ()
+
+incidence_test %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_sm)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_sm, ymax = up95_sm)) +
+  labs(title = "Proportion of newly seroconverted children (summer)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence summer.png");
+dev.off ()
+
+incidence_test %>% ggplot() +
+  geom_point(aes(x = age_midpoint, y = median_au)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_au, ymax = up95_au)) +
+  labs(title = "Proportion of newly seroconverted children (autumn)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence autumn.png");
+dev.off ()
+
+incidence_test %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_wt)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_wt, ymax = up95_wt)) +
+  labs(title = "Proportion of newly seroconverted children (winter)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence winter.png");
+dev.off ()
+
+
+incidence_test %>% filter(age_midpoint <= 365) %>%
+  ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_all)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_all, ymax = up95_all)) +
+  labs(title = "Proportion of seroconverted children (all)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence all.png");
+dev.off ()

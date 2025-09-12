@@ -211,18 +211,18 @@ conversion_formated <- conversion_formated %>%
 # By age
 mild_illness_progression <- conversion_formated %>%
   merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
-  mutate(total_mild_cases_prop = incidence * prop_mild_cases,
-         total_ma_mild_cases_prop = incidence * prop_ma_mild_cases,
-         total_non_ma_mild_cases_prop = incidence * prop_non_ma_mild_cases) %>%
-  select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
+  mutate(total_mild_cases_prop = incidence_median * prop_mild_cases,
+         total_ma_mild_cases_prop = incidence_median * prop_ma_mild_cases,
+         total_non_ma_mild_cases_prop = incidence_median * prop_non_ma_mild_cases) %>%
+  select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence_median, 
          total_mild_cases_prop, total_ma_mild_cases_prop, total_non_ma_mild_cases_prop)
 
 severe_illness_progression <- conversion_formated %>%
   merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
-  mutate(total_severe_cases_prop = incidence * prop_severe_cases,
-         total_ma_severe_cases_prop = incidence * prop_ma_severe_cases,
-         total_non_ma_severe_cases_prop = incidence * prop_non_ma_severe_cases) %>%
-  select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence, 
+  mutate(total_severe_cases_prop = incidence_median * prop_severe_cases,
+         total_ma_severe_cases_prop = incidence_median * prop_ma_severe_cases,
+         total_non_ma_severe_cases_prop = incidence_median * prop_non_ma_severe_cases) %>%
+  select(age_bracket, age_months, age_midpoint, season_birth, current_season, incidence_median, 
          total_severe_cases_prop, total_ma_severe_cases_prop, total_non_ma_severe_cases_prop)
 
 # By season in the first year of life

@@ -107,3 +107,112 @@ points(prop_seroconv ~ time, incidence_data, pch = 19, col = "red")
 arrows(x0 = incidence_data$time, y0 = incidence_data$lower_CI, 
        x1 = incidence_data$time, y1 = incidence_data$upper_CI, 
        angle = 90, code = 3, length = 0.1, col = "blue")
+
+# --------- Checking seroconversion predictions -------------------------------
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
+
+seroconversion_df <- read.csv(paste0(path, "seroconversion by age.csv"))
+seroconversion_df <- seroconversion_df %>%
+  mutate(median_all = 0.26*median_sp + 
+           0.29*median_sm + 
+           0.24*median_au + 
+           0.20*median_wt)
+
+# Get incident cases
+incidence_df <- data.frame(age_midpoint = seroconversion_df$age_midpoint,
+                           incidence_median = c(0, diff(seroconversion_df$median_sp)),
+                           incidence_low95 = c(0, diff(seroconversion_df$low95_sp)), # is this right?
+                           incidence_up95 = c(0, diff(seroconversion_df$up95_sp)),
+                           season_birth = "spring") %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence_median = c(0, diff(seroconversion_df$median_sm)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_sm)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_sm)),
+               season_birth = "summer")
+  ) %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence_median = c(0, diff(seroconversion_df$median_au)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_au)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_au)),
+               season_birth = "autumn")
+  ) %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence_median = c(0, diff(seroconversion_df$median_wt)),
+               incidence_low95 = c(0, diff(seroconversion_df$low95_wt)), # is this right?
+               incidence_up95 = c(0, diff(seroconversion_df$up95_wt)),
+               season_birth = "winter")
+  ) %>%
+  rbind(
+    data.frame(age_midpoint = seroconversion_df$age_midpoint,
+               incidence_median = c(0, diff(seroconversion_df$median_all)),
+               incidence_low95 = NA,
+               incidence_up95 = NA,
+               season_birth = "All")
+  )
+
+seroconversion_df %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_sp)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_sp, ymax = up95_sp)) +
+  labs(title = "Proportion of seroconverted children (spring)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+seroconversion_df %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_sm)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_sm, ymax = up95_sm)) +
+  labs(title = "Proportion of seroconverted children (summer)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+seroconversion_df %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_au)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_au, ymax = up95_au)) +
+  labs(title = "Proportion of seroconverted children (autumn)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+seroconversion_df %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_wt)) +
+  geom_errorbar(aes(x = age_midpoint, ymin = low95_wt, ymax = up95_wt)) +
+  labs(title = "Proportion of seroconverted children (winter)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+
+seroconversion_df %>% ggplot()+
+  geom_point(aes(x = age_midpoint, y = median_all)) +
+  labs(title = "Proportion of seroconverted children (all)", x = "Age (days)",
+       y = "% seroconverted") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_df %>% filter(age_midpoint <= 365 & season_birth != "All") %>%
+  ggplot()+
+  geom_point(aes(x = age_midpoint, y = incidence_median, col = season_birth)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = incidence_low95, ymax = incidence_up95,
+                    col = season_birth)) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversion", col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth)
+
+incidence_df %>% filter(age_midpoint <= 500 & season_birth == "All") %>%
+  ggplot()+
+  geom_point(aes(x = age_midpoint, y = incidence_median, col = season_birth)) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth)
