@@ -1017,6 +1017,34 @@ plt_nnv_cases <- nnv_ma %>% filter (intervention != "No immunisation" & season_b
 
 plt_nnv_cases
 
+# Plot outcomes by age
+total_hosp_no_int_age <- total_hosp_intervention_df %>%
+  filter(age_bracket != "all" & intervention == 'No immunisation') %>%
+  group_by(age_bracket, iter, intervention) %>%
+  summarise(season_birth = "all",
+         n_hospitalisations = sum(n_hospitalisations)) %>%
+  rbind(total_hosp_intervention_df %>%
+          filter(age_bracket != "all" & intervention == 'No immunisation')) %>%
+  group_by(age_bracket, intervention, season_birth) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
+            hosp_median = quantile(n_hospitalisations, 0.5),
+            hosp_up_95 = quantile(n_hospitalisations, 0.95)) %>%
+  ungroup() %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("winter", "spring", "summer", "autumn",
+                                          "all")),
+         age_bracket = factor(age_bracket, 
+                               levels = c("1", "3", "5", "7", "9", "11")))
+
+plt_hosp <- total_hosp_no_int_age %>% ggplot() +
+            geom_point(aes(x = age_bracket, y = hosp_median)) +
+            geom_errorbar(aes(x = age_bracket, ymin = hosp_low_95, ymax = hosp_up_95)) +
+            labs(x = "\nAge (months)",
+                 y = "Hospitalisations\n",
+                 title = "Total hospitalisations without intervention") +
+            theme_light() +
+            facet_wrap(~season_birth)
+
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
 write.csv(total_hosp_intervention_int, paste0(path, "Final outputs hospitalisations.csv"), row.names = F)
@@ -1040,3 +1068,7 @@ plt_nnv %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-C
 plt_nnv_cases %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/NNV cases by intervention CI.png",
                    width = 14, height = 16, units = "in", 
                    device='png')
+
+plt_hosp %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Hospitalisations no intervention.png",
+                         width = 14, height = 16, units = "in", 
+                         device='png')
