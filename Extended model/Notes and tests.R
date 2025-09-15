@@ -242,3 +242,215 @@ incidence_data_season %>% filter(xMidpoint <= 365) %>%
   scale_y_continuous(labels = scales::percent) +
   theme_light() +
   facet_wrap(~season_birth)
+
+
+# Seroconversion estimates
+seroconversion <- list()
+
+for (i in 1:length(incidence_data_season_wide$time)){
+  age_midpoint <- incidence_data_season_wide$time[i]
+  
+  low95_sp <- quantile(t(converted_sp[i,]), 0.05, na.rm = T)
+  median_sp <- quantile(t(converted_sp[i,]), 0.5, na.rm = T)
+  up95_sp <- quantile(t(converted_sp[i,]), 0.95, na.rm = T)
+  
+  low95_sm <- quantile(t(converted_sm[i,]), 0.05, na.rm = T)
+  median_sm <- quantile(t(converted_sm[i,]), 0.5, na.rm = T)
+  up95_sm <- quantile(t(converted_sm[i,]), 0.95, na.rm = T)
+  
+  low95_au <- quantile(t(converted_au[i,]), 0.05, na.rm = T)
+  median_au <- quantile(t(converted_au[i,]), 0.5, na.rm = T)
+  up95_au <- quantile(t(converted_au[i,]), 0.95, na.rm = T)
+  
+  low95_wt <- quantile(t(converted_wt[i,]), 0.05, na.rm = T)
+  median_wt <- quantile(t(converted_wt[i,]), 0.5, na.rm = T)
+  up95_wt <- quantile(t(converted_wt[i,]), 0.95, na.rm = T)
+  
+  low95_all <- quantile(t(converted_all[i,]), 0.05, na.rm = T)
+  median_all <- quantile(t(converted_all[i,]), 0.5, na.rm = T)
+  up95_all <- quantile(t(converted_all[i,]), 0.95, na.rm = T)
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_sp, median_sp, up95_sp, 
+                         low95_sm, median_sm, up95_sm, 
+                         low95_au, median_au, up95_au, 
+                         low95_wt, median_wt, up95_wt,
+                         low95_all, median_all, up95_all)
+  
+  seroconversion[[i]] <- combined
+}
+
+seroconversion_df <- do.call("rbind", seroconversion)
+rownames(seroconversion_df) <- NULL
+
+
+# Get incident cases
+incidence <- list()
+
+for (i in 1:length(incidence_data_season_wide$time)){
+  age_midpoint <- incidence_data_season_wide$time[i]
+  
+  if(i>1){
+    low95_spring <- quantile(
+                        (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,])),
+                        0.05)
+    median_spring <- quantile(
+                          (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,]))
+                          , 0.5)
+    up95_spring <- quantile(
+      (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,])),
+      0.95)
+    
+    low95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
+                         0.05)
+    median_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
+                          0.5)
+    up95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
+                        0.95)
+    
+    low95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
+                         0.05)
+    median_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
+                          0.5)
+    up95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
+                        0.95)
+    
+    low95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
+                         0.05)
+    median_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
+                          0.5)
+    up95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
+                        0.95)
+    
+    low95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
+                          0.05)
+    median_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
+                           0.5)
+    up95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
+                         0.95)
+  } else{
+    low95_spring <- 0
+    median_spring <- 0
+    up95_spring <- 0
+    
+    low95_summer <- 0
+    median_summer <- 0
+    up95_summer <- 0
+    
+    low95_autumn <- 0
+    median_autumn <- 0
+    up95_autumn <- 0
+    
+    low95_winter <- 0
+    median_winter <- 0
+    up95_winter <- 0
+    
+    low95_all <- 0
+    median_all <- 0
+    up95_all <- 0
+  }
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_spring, median_spring, up95_spring, 
+                         low95_summer, median_summer, up95_summer, 
+                         low95_autumn, median_autumn, up95_autumn, 
+                         low95_winter, median_winter, up95_winter,
+                         low95_all, median_all, up95_all)
+  
+  incidence[[i]] <- combined
+}
+
+incidence_test <- do.call("rbind", incidence)
+rownames(incidence_test) <- NULL
+
+incidence_test %>% filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median_spring)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95_spring, ymax = up95_spring)) +
+  labs(title = "Proportion of new seroconversions in springring", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_test %>% filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median_summer)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95_summer, ymax = up95_summer)) +
+  labs(title = "Proportion of new seroconversions in summer", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_test %>% filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median_autumn)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95_autumn, ymax = up95_autumn)) +
+  labs(title = "Proportion of new seroconversions in autumn", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_test %>% filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median_winter)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95_winter, ymax = up95_winter)) +
+  labs(title = "Proportion of new seroconversions in winter", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_test %>% #filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median_all)) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95_all, ymax = up95_all)) +
+  labs(title = "Proportion of new seroconversions (all)", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_test_long <- incidence_test %>%
+  pivot_longer(
+    cols = -age_midpoint,  # keep age as is
+    names_to = c("measure", "season"),  # split column names into two parts
+    names_sep = "_",  # separator is underscore (e.g. "low95_sp")
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = measure,  # now spread low95, median, up95 into columns
+    values_from = value
+  ) %>%
+  mutate(season = factor(season, levels = c("spring", "summer", "autumn", "winter")))
+
+path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
+incidence_test_long %>% write.csv(paste0(path_model, "incidence by age2.csv")) 
+
+
+plt <- incidence_test_long %>% filter(age_midpoint <= 365 & season != "all") %>%
+        ggplot() + 
+        geom_point(aes(x = age_midpoint, y = median, col = season)) +
+        geom_errorbar(aes(x = age_midpoint, 
+                          ymin = low95, ymax = up95,
+                          col = season)) +
+        labs(title = "New RSV seroconversions by age", x = "Age (days)",
+             y = "% new seroconversions",
+             col = "Season of birth") +
+        scale_y_continuous(labels = scales::percent) +
+        theme_light() +
+        facet_wrap(~season, scale = "free") +
+  theme (axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 20),
+         axis.title.y = element_text(size = 20),
+         title = element_text(size = 20),
+         legend.text = element_text (size = 25),
+         legend.title = element_text (size = 25),
+         strip.text.x = element_text(size = 20, color = "black"))
+
+plt %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by season of birth and age.png",
+         width = 20, height = 14, units = "in", 
+         device='png')

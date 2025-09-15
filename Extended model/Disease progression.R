@@ -37,10 +37,10 @@ illness_type <- mild_illness %>%
   ungroup()
 
 # Read in model estimate
-conversion_rate <- read.csv(paste0(path_model, "incidence by age.csv")) 
+conversion_rate <- read.csv(paste0(path_model, "incidence by age2.csv")) 
 
 # Convert into a long format
-conversion <- conversion_rate 
+conversion <- conversion_rate %>% rename(season_birth = "season", incidence_median = median)
 
 # Convert ages to the same units
 conversion_formated <- conversion %>% mutate(age_months = trunc(age_midpoint/30)) %>% # turn age into months

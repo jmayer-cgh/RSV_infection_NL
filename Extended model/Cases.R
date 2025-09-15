@@ -77,7 +77,7 @@ severe_cases_u1_de <- severe_cases_u1_de %>% rbind(
                                     age_months = NA,
                                     age_midpoint = NA,
                                     current_season = "all",
-                                    incidence = NA,
+                                    incidence_median = NA,
                                     total_severe_cases_prop = NA,
                                     total_ma_severe_cases_prop = NA,
                                     total_non_ma_severe_cases_prop = NA,
@@ -93,7 +93,7 @@ mild_cases_u1_de <- mild_cases_u1_de %>% rbind(
                                     age_months = NA,
                                     age_midpoint = NA,
                                     current_season = "all",
-                                    incidence = NA,
+                                    incidence_median = NA,
                                     total_mild_cases_prop = NA,
                                     total_ma_mild_cases_prop = NA,
                                     total_non_ma_mild_cases_prop = NA,
@@ -190,7 +190,7 @@ severe_cases_u1_de %>% filter(!is.na(age_months)) %>%
          legend.title = element_text (size = 25),
          strip.text.x = element_text(size = 20, color = "black"))
 
-severe_illness_u1 %>% filter(!is.na(age_months)) %>%
+severe_illness_u1 %>% filter(!is.na(age_months) & !is.na(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("spring", "summer", "autumn", "winter"))) %>%
   ggplot(aes(x = age_months, y = total_ma_severe_cases_prop)) +

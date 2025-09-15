@@ -95,11 +95,11 @@ incidence_data_season[,c("incidence_mean","incidence_low95","incidence_up95")] <
 
 
 incidence_data_season_wide <- incidence_data_season %>% 
-  select (!c(age_mid, age_grp, seroprev_mean, incidence_mean)) %>%
+  select (!c(age_mid, age_grp, seroprev_mean, incidence_mean, cum_pop)) %>%
   pivot_wider(
     names_from = season_birth,
     values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, 
-                    incidence_low95,incidence_up95),
+                    incidence, incidence_low95,incidence_up95),
     values_fill = 0
   ) %>%
   rename(time = "xMidpoint")
