@@ -180,7 +180,8 @@ seroconversion_df %>% ggplot()+
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
-seroconversion_df %>% ggplot()+
+seroconversion_df %>% 
+  ggplot()+
   geom_point(aes(x = age_midpoint, y = median_wt)) +
   geom_errorbar(aes(x = age_midpoint, ymin = low95_wt, ymax = up95_wt)) +
   labs(title = "Proportion of seroconverted children (winter)", x = "Age (days)",
@@ -189,7 +190,8 @@ seroconversion_df %>% ggplot()+
   theme_light()
 
 
-seroconversion_df %>% ggplot()+
+seroconversion_df %>% filter (age_midpoint <= 395) %>%
+  ggplot()+
   geom_point(aes(x = age_midpoint, y = median_all)) +
   labs(title = "Proportion of seroconverted children (all)", x = "Age (days)",
        y = "% seroconverted") +
@@ -206,13 +208,37 @@ incidence_df %>% filter(age_midpoint <= 365 & season_birth != "All") %>%
        y = "% additional seroconversion", col = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() +
-  facet_wrap(~season_birth)
+  facet_wrap(~season_birth, scales = "free")
 
 incidence_df %>% filter(age_midpoint <= 500 & season_birth == "All") %>%
   ggplot()+
   geom_point(aes(x = age_midpoint, y = incidence_median, col = season_birth)) +
   labs(title = "Proportion of new seroconversions", x = "Age (days)",
        y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth)
+
+# -----------------------------------------------------------------------------
+incidence_data %>% filter(time <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = time, y = incidence_mean)) +
+  geom_errorbar(aes(x = time, 
+                    ymin = incidence_low95, ymax = incidence_up95)) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light()
+
+incidence_data_season %>% filter(xMidpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = xMidpoint, y = incidence_mean, col = season_birth)) +
+  geom_errorbar(aes(x = xMidpoint, 
+                    ymin = incidence_low95, ymax = incidence_up95,
+                    col = season_birth)) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversion",
+       col = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() +
   facet_wrap(~season_birth)

@@ -54,15 +54,22 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   reframe(time = round(median(age_days)), 
           N = n(),
           n_infection = sum(infection),
-          prop_seroconv = n_infection/N,
-          cum_infection = prop_seroconv * N_tot) %>%
+          prop_seroconv = n_infection/N) %>%
   ungroup() %>% 
-  distinct()
+  distinct() %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
 
 # Calculate seroprevalence and binomial confidence intervals
 incidence_data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data$n_infection, 
                                                                                              incidence_data$N,
                                                                                              method="exact")[,c("mean","lower","upper")]
+
+# Calculate incidence and binomial confidence intervals
+incidence_data[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                             incidence_data$cum_pop,
+                                                                                             method="exact")[,c("mean","lower","upper")]
+
 
 incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
   mutate(N_tot = n()) %>%
@@ -70,20 +77,29 @@ incidence_data_season <- data %>% select (age_grp, age_days, infection, season_b
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
-            prop_seroconv = n_infection/N,
-            cum_infection = prop_seroconv * N_tot) %>%
+            prop_seroconv = n_infection/N) %>%
   ungroup() %>% 
-  distinct()
+  distinct() %>%
+  group_by(season_birth) %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
 
 incidence_data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
                                                                                                     incidence_data_season$N, 
                                                                                                     method="exact")[,c("mean","lower","upper")]
 
+# Calculate incidence and binomial confidence intervals
+incidence_data_season[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
+                                                                                                       incidence_data_season$cum_pop,
+                                                                                                method="exact")[,c("mean","lower","upper")]
+
+
 incidence_data_season_wide <- incidence_data_season %>% 
-  select (!c(age_mid, age_grp, seroprev_mean)) %>%
+  select (!c(age_mid, age_grp, seroprev_mean, incidence_mean)) %>%
   pivot_wider(
     names_from = season_birth,
-    values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, cum_infection),
+    values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, 
+                    incidence_low95,incidence_up95),
     values_fill = 0
   ) %>%
   rename(time = "xMidpoint")
