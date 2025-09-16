@@ -46,7 +46,96 @@ mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.
   janitor::clean_names()
 severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>% 
   janitor::clean_names()
-# ------------------------------------------------------------------------------
+
+# ----------- Data -------------------------------------------------------------
+# Read in and the data and put it in the right format
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
+                 sep=",")
+
+# Group age into intervals 
+# bi-monthly for 0-2 years and 6-monthly for 2-5 years
+data$age_grp <- cut(data$age_days,
+                    breaks = c(seq(0,730, by = 30.25*2),
+                               seq(909,2000, by = 30.25*6)), 
+                    include.lowest = T, right = F)
+
+# Divide by season of birth
+spring <- c(3, 4, 5)
+summer <- c(6, 7, 8)
+autumn <- c (9, 10, 11)
+winter <- c(1, 2, 12)
+
+data <- data %>%
+  mutate(
+    Birth_mo = birthday %>% lubridate::month(),
+    season_birth = case_when (Birth_mo %in% spring ~ "spring",
+                              Birth_mo %in% summer ~ "summer",
+                              Birth_mo %in% autumn ~ "autumn",
+                              Birth_mo %in% winter ~ "winter"))
+
+get_midpoint <- function(cut_label) {
+  round(mean(as.numeric(unlist(strsplit(gsub("\\(|\\)|\\[|\\]", "", as.character(cut_label)), ",")))))
+}
+
+data$xMidpoint <- sapply(data$age_grp, get_midpoint)
+
+# Different groupings
+# Get number of cases by age
+incidence_data <- data %>% select (age_grp, age_days, infection) %>%
+  mutate(N_tot = n()) %>%
+  group_by(age_grp) %>%
+  reframe(time = round(median(age_days)), 
+          N = n(),
+          n_infection = sum(infection),
+          prop_seroconv = n_infection/N) %>%
+  ungroup() %>% 
+  distinct() %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
+
+# Calculate seroprevalence and binomial confidence intervals
+incidence_data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                             incidence_data$N,
+                                                                                             method="exact")[,c("mean","lower","upper")]
+
+# Calculate incidence and binomial confidence intervals
+incidence_data[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                                incidence_data$cum_pop,
+                                                                                                method="exact")[,c("mean","lower","upper")]
+
+
+incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
+  mutate(N_tot = n()) %>%
+  group_by(age_grp, xMidpoint, season_birth) %>%
+  summarise(age_mid = round(median(age_days)), 
+            N = n(),
+            n_infection = sum(infection),
+            prop_seroconv = n_infection/N) %>%
+  ungroup() %>% 
+  distinct() %>%
+  group_by(season_birth) %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
+
+incidence_data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
+                                                                                                    incidence_data_season$N, 
+                                                                                                    method="exact")[,c("mean","lower","upper")]
+
+# Calculate incidence and binomial confidence intervals
+incidence_data_season[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
+                                                                                                       incidence_data_season$cum_pop,
+                                                                                                       method="exact")[,c("mean","lower","upper")]
+
+
+incidence_data_season_wide <- incidence_data_season %>% 
+  select (!c(age_mid, age_grp, seroprev_mean, incidence_mean, cum_pop)) %>%
+  pivot_wider(
+    names_from = season_birth,
+    values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, 
+                    incidence, incidence_low95,incidence_up95),
+    values_fill = 0
+  ) %>%
+  rename(time = "xMidpoint")
 
 # --------- Define our functions ----------------------------------------------
 # Newly seroconverted at a given age
@@ -206,11 +295,12 @@ s_cases_format <- function (severe_illness) {
   
   # Scale the numbers to have them match Fabienne's paper
   # About 22,000 hospitalisations in 2019, of which about 12% in year 1 --> 2,640 
-  # Model predicts about 65,000 hospitalisations --> scale by 0.04
+  # But we had 10,564 in 2024 according to InEKDatenBrowser for 28 days - 1 year
+  # Model predicts about 65,000 hospitalisations --> scale by 0.04 for Fabienne and by 0.163 for InEKDatenBrowser
   severe_cases_u1_de <- severe_cases_u1_de %>% 
-    mutate (n_severe_scaled = n_severe * 0.04,
-            n_ma_severe_scaled = n_ma_severe * 0.04,
-            n_non_ma_severe_scaled = n_non_ma_severe * 0.04)
+    mutate (n_severe_scaled = n_severe * 0.163, # 0.04,
+            n_ma_severe_scaled = n_ma_severe * 0.163, # 0.04,
+            n_non_ma_severe_scaled = n_non_ma_severe * 0.163) # 0.04)
   
   return (severe_cases_u1_de)
 }
@@ -248,11 +338,12 @@ m_cases_format <- function (mild_illness) {
   
   # Scale the numbers to have them match Fabienne's paper
   # About 22,000 hospitalisations in 2019, of which about 12% in year 1 --> 2,640 
-  # Model predicts about 65,000 hospitalisations --> scale by 0.04
+  # But we had 10,564 in 2024 according to InEKDatenBrowser for 28 days - 1 year
+  # Model predicts about 65,000 hospitalisations --> scale by 0.04 for Fabienne and by 0.163 for InEKDatenBrowser
   mild_cases_u1_de <- mild_cases_u1_de %>% 
-    mutate (n_mild_scaled = n_mild * 0.04,
-            n_ma_mild_scaled = n_ma_mild * 0.04,
-            n_non_ma_mild_scaled = n_non_ma_mild * 0.04)
+    mutate (n_mild_scaled = n_mild * 0.163, # 0.04,
+            n_ma_mild_scaled = n_ma_mild * 0.163, #0.04,
+            n_non_ma_mild_scaled = n_non_ma_mild * 0.163) #0.04)
   
   return (mild_cases_u1_de)
 }
