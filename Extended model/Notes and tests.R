@@ -15,7 +15,7 @@ n_infection ~ Binomial(N_tot, R_all)
 # ------------------------------------------------------------------------------
 # Plotting CIs
 # ------------------------------------------------------------------------------
-
+# Read in and the data and put it in the right format
 data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
                  sep=",")
 
@@ -54,10 +54,22 @@ incidence_data <- data %>% select (age_grp, age_days, infection) %>%
   reframe(time = round(median(age_days)), 
           N = n(),
           n_infection = sum(infection),
-          prop_seroconv = n_infection/N,
-          cum_infection = prop_seroconv * N_tot) %>%
+          prop_seroconv = n_infection/N) %>%
   ungroup() %>% 
-  distinct()
+  distinct() %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
+
+# Calculate seroprevalence and binomial confidence intervals
+incidence_data[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                             incidence_data$N,
+                                                                                             method="exact")[,c("mean","lower","upper")]
+
+# Calculate incidence and binomial confidence intervals
+incidence_data[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data$n_infection, 
+                                                                                                incidence_data$cum_pop,
+                                                                                                method="exact")[,c("mean","lower","upper")]
+
 
 incidence_data_season <- data %>% select (age_grp, age_days, infection, season_birth, xMidpoint) %>%
   mutate(N_tot = n()) %>%
@@ -65,29 +77,75 @@ incidence_data_season <- data %>% select (age_grp, age_days, infection, season_b
   summarise(age_mid = round(median(age_days)), 
             N = n(),
             n_infection = sum(infection),
-            prop_seroconv = n_infection/N,
-            cum_infection = prop_seroconv * N_tot) %>%
+            prop_seroconv = n_infection/N) %>%
   ungroup() %>% 
-  distinct()
+  distinct() %>%
+  group_by(season_birth) %>%
+  mutate(cum_pop = cumsum(N),
+         incidence = n_infection/cum_pop)
 
-# Calculate seroprevalence and binomial confidence intervals
-incidence_data[,c("seroprev_mean","lower_CI","upper_CI")] <- binom::binom.confint(incidence_data$n_infection, incidence_data$N, method="exact")[,c("mean","lower","upper")]
+incidence_data_season[,c("seroprev_mean","seroprev_low95","seroprev_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
+                                                                                                    incidence_data_season$N, 
+                                                                                                    method="exact")[,c("mean","lower","upper")]
+
+# Calculate incidence and binomial confidence intervals
+incidence_data_season[,c("incidence_mean","incidence_low95","incidence_up95")] <- binom::binom.confint(incidence_data_season$n_infection, 
+                                                                                                       incidence_data_season$cum_pop,
+                                                                                                       method="exact")[,c("mean","lower","upper")]
 
 
-incidence_data_season[,c("seroprev_mean","lower_CI","upper_CI")] <- binom::binom.confint(incidence_data_season$n_infection, 
-                                                                                         incidence_data_season$N, 
-                                                                                         method="exact")[,c("mean","lower","upper")]
-
-
-incidence_data_season_wide <- incidence_data_season %>% select (!c(age_mid, age_grp, seroprev_mean)) %>%
+incidence_data_season_wide <- incidence_data_season %>% 
+  select (!c(age_mid, age_grp, seroprev_mean, incidence_mean, cum_pop)) %>%
   pivot_wider(
     names_from = season_birth,
-    values_from = c(N , n_infection, prop_seroconv, lower_CI, upper_CI, cum_infection),
+    values_from = c(N , n_infection, prop_seroconv, seroprev_low95, seroprev_up95, 
+                    incidence, incidence_low95,incidence_up95),
     values_fill = 0
   ) %>%
   rename(time = "xMidpoint")
 
+# Plot number of children by age and season
+incidence_data_season %>% filter (xMidpoint <= 365) %>%
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  ggplot()+
+  geom_bar(aes(x = xMidpoint/30, y = N, fill = season_birth), 
+           stat = "identity", position = "dodge") +
+  scale_x_continuous(breaks=c(1, 3, 5, 7, 9, 11, 13),
+                     labels=c("1","3","5", "7", "9", "11", "13")) +
+  labs(title = "Number of children by age and season of birth", x = "Age (months)",
+       y = "Number of children", fill = "Season of birth") +
+  theme_light()
 
+# Plot seroprevalence by age and season
+plt_season <- incidence_data_season %>% 
+  filter (xMidpoint <= 365) %>%
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  ggplot()+
+  geom_point(aes(x = xMidpoint, y = seroprev_mean, col = season_birth), size = 3) +
+  geom_errorbar(aes(x = xMidpoint, ymin = seroprev_low95, ymax = seroprev_up95,
+                    col = season_birth), width = 10, linewidth = 1) +
+  labs(title = "Proportion of seroconverted children by age and season of birth", x = "Age (days)",
+       y = "% seroconverted\n", col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth, scales = "free") +
+  theme (axis.ticks.y = element_blank(),
+       legend.position = "none",
+       axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+       axis.text.y = element_text(size = 20),
+       axis.title.x = element_text(size = 25),
+       axis.title.y = element_text(size = 25),
+       title = element_text(size = 25),
+       strip.text.x = element_text(size = 25, color = "black"))
+
+plt_season
+
+plt_season  %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by season of birth and age data.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
+
+# ------------------------------------------------------------------------------
 # Build a filter and test it
 filter <- dust_filter_create(msr, time_start = 0, data = incidence_data_season_wide, n_particles = 1000)
 dust_likelihood_run(filter, list(spring_comp = 0.003478,
@@ -230,21 +288,43 @@ incidence_data %>% filter(time <= 365) %>%
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 
-incidence_data_season %>% filter(xMidpoint <= 365) %>%
+plt_incidence <- incidence_data_season %>% 
+  filter(xMidpoint <= 365) %>%
   ggplot() + 
-  geom_point(aes(x = xMidpoint, y = incidence_mean, col = season_birth)) +
+  geom_point(aes(x = xMidpoint, y = incidence_mean, col = season_birth), size = 3) +
   geom_errorbar(aes(x = xMidpoint, 
                     ymin = incidence_low95, ymax = incidence_up95,
-                    col = season_birth)) +
+                    col = season_birth), width = 10, linewidth = 1) +
   labs(title = "Proportion of new seroconversions", x = "Age (days)",
-       y = "% additional seroconversion",
+       y = "% additional seroconversions\n",
        col = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
   theme_light() +
-  facet_wrap(~season_birth)
+  facet_wrap(~season_birth) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
 
+plt_incidence
+
+plt_incidence %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Incidence by season of birth and age data.png",
+         width = 22, height = 14, units = "in", 
+         device='png')
 
 # Seroconversion estimates
+converted_summary <- readRDS("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion model outputs.rds")
+converted_all <- do.call(rbind.data.frame, converted_summary[1])
+converted_sp <- do.call(rbind.data.frame, converted_summary[2])
+converted_sm <- do.call(rbind.data.frame, converted_summary[3])
+converted_au <- do.call(rbind.data.frame, converted_summary[4])
+converted_wt <- do.call(rbind.data.frame, converted_summary[5])
+
 seroconversion <- list()
 
 for (i in 1:length(incidence_data_season_wide$time)){
@@ -368,7 +448,7 @@ incidence_test %>% filter(age_midpoint <= 365) %>%
   geom_point(aes(x = age_midpoint, y = median_spring)) +
   geom_errorbar(aes(x = age_midpoint, 
                     ymin = low95_spring, ymax = up95_spring)) +
-  labs(title = "Proportion of new seroconversions in springring", x = "Age (days)",
+  labs(title = "Proportion of new seroconversions in spring", x = "Age (days)",
        y = "% additional seroconversion") +
   scale_y_continuous(labels = scales::percent) +
   theme_light()
@@ -424,7 +504,7 @@ incidence_test_long <- incidence_test %>%
     names_from = measure,  # now spread low95, median, up95 into columns
     values_from = value
   ) %>%
-  mutate(season = factor(season, levels = c("spring", "summer", "autumn", "winter")))
+  mutate(season = factor(season, levels = c("spring", "summer", "autumn", "winter", "all")))
 
 path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
 incidence_test_long %>% write.csv(paste0(path_model, "incidence by age2.csv")) 
@@ -432,25 +512,80 @@ incidence_test_long %>% write.csv(paste0(path_model, "incidence by age2.csv"))
 
 plt <- incidence_test_long %>% filter(age_midpoint <= 365 & season != "all") %>%
         ggplot() + 
-        geom_point(aes(x = age_midpoint, y = median, col = season)) +
+        geom_point(aes(x = age_midpoint, y = median, col = season), size = 3) +
         geom_errorbar(aes(x = age_midpoint, 
                           ymin = low95, ymax = up95,
-                          col = season)) +
+                          col = season),width = 10, linewidth = 1) +
         labs(title = "New RSV seroconversions by age", x = "Age (days)",
              y = "% new seroconversions",
              col = "Season of birth") +
         scale_y_continuous(labels = scales::percent) +
         theme_light() +
         facet_wrap(~season, scale = "free") +
-  theme (axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 20),
-         axis.title.y = element_text(size = 20),
-         title = element_text(size = 20),
-         legend.text = element_text (size = 25),
-         legend.title = element_text (size = 25),
-         strip.text.x = element_text(size = 20, color = "black"))
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
+plt
 
 plt %>%
   ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by season of birth and age.png",
          width = 20, height = 14, units = "in", 
+         device='png')
+
+plt_all <- incidence_test_long %>% 
+  filter(season == "all") %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median, col = season), size = 5) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95, ymax = up95,
+                    col = season), width = 45, linewidth = 1.5) +
+  labs(title = "New RSV seroconversions by age", x = "Age (days)",
+       y = "% new seroconversions\n") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_x_continuous(breaks = c(0, 365, 730, 1095, 1460, 1825)) +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 30),
+         axis.text.y = element_text(size = 30),
+         axis.title.x = element_text(size = 45),
+         axis.title.y = element_text(size = 45),
+         title = element_text(size = 35))
+  
+plt_all
+
+plt_all %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by age all.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
+
+plt_all <- incidence_test_long %>% 
+  filter(age_midpoint <= 365 & season == "all") %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median, col = season), size = 3) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95, ymax = up95,
+                    col = season),width = 10, linewidth = 1) +
+  labs(title = "New RSV seroconversions by age", x = "Age (days)",
+       y = "% new seroconversions\n") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25))
+
+plt_all
+
+plt_all %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by age all <1.png",
+         width = 22, height = 14, units = "in", 
          device='png')

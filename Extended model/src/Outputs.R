@@ -1037,9 +1037,10 @@ total_hosp_no_int_age <- total_hosp_intervention_df %>%
                                levels = c("1", "3", "5", "7", "9", "11")))
 
 plt_hosp <- total_hosp_no_int_age %>% ggplot() +
-            geom_point(aes(x = age_bracket, y = hosp_median, col = season_birth)) +
+            geom_point(aes(x = age_bracket, y = hosp_median, col = season_birth),
+                       size = 3) +
             geom_errorbar(aes(x = age_bracket, ymin = hosp_low_95, ymax = hosp_up_95,
-                              col = season_birth)) +
+                              col = season_birth), width = 0.5, linewidth = 1) +
             labs(x = "\nAge (months)",
                  y = "Hospitalisations\n",
                  title = "Total hospitalisations without intervention",
@@ -1048,11 +1049,13 @@ plt_hosp <- total_hosp_no_int_age %>% ggplot() +
             facet_wrap(~season_birth) +
   theme (axis.ticks.y=element_blank(),
          legend.position = "none",
-         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 20),
-         axis.title.y = element_text(size = 20),
-         title = element_text(size = 20),
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 25),
+         axis.text.y = element_text(size = 25),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
          strip.text.x = element_text(size = 20, color = "black")) 
+plt_hosp
 
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
