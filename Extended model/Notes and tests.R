@@ -671,3 +671,47 @@ plt_all %>%
   ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by age all <1.png",
          width = 22, height = 14, units = "in", 
          device='png')
+
+# --------------------------------- Scaling hospitalisations -------------------
+library(readxl)
+path_paper <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Helpful papers/" # Where results from other studies are saved
+path_model <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"  #Where model outputs are stored
+
+# Read in RSV-illness numbers
+# mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness numbers") %>% 
+#   janitor::clean_names()
+severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Pooled severe illness") %>% 
+  janitor::clean_names() %>%
+  select(age_days, total_severe_illness_rate, total_severe_illness_lower_ci, 
+         total_severe_illness_upper_ci)
+
+severe_illness_progression <- incidence_test_long %>%
+  merge(severe_illness, by.x = "age_midpoint", by.y = "age_days") %>%
+  mutate(cases = case_when(age_midpoint == 30 ~ 0,
+                           T ~ (total_severe_illness_rate/100000) / median)) %>%
+  select(age_midpoint, season, cases)
+
+plt_progression <- severe_illness_progression %>% ggplot() +
+  geom_point(aes(x = age_midpoint/30.25, y = cases/100, col = season), size = 5) +
+  facet_wrap(~season) +
+  labs(title = "New RSV hospitalisations by age", x = "Age (months)",
+       y = "% new hospitalisations\n",
+       colour = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"),
+         legend.text = element_text(size = 20))
+
+plt_progression
+
+plt_progression %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Hosp by age and season.png",
+         width = 22, height = 14, units = "in", 
+         device='png')
