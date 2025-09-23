@@ -145,6 +145,59 @@ plt_season  %>%
          width = 20, height = 14, units = "in", 
          device='png')
 
+plt_season_all <- incidence_data_season %>% 
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  ggplot()+
+  geom_point(aes(x = xMidpoint, y = seroprev_mean, col = season_birth), size = 3) +
+  geom_errorbar(aes(x = xMidpoint, ymin = seroprev_low95, ymax = seroprev_up95,
+                    col = season_birth), width = 10, linewidth = 1) +
+  geom_vline(xintercept = 500, linetype = "dashed", color = "orange", size = 1.5) +
+  annotate("text", x = 900, y = 0.01, label = "Switch from IgA to IgG", color = "orange", size = 8) +
+  labs(title = "Proportion of seroconverted children by age and season of birth", x = "Age (days)",
+       y = "% seroconverted\n", col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth, scales = "free") +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
+
+plt_season_all
+
+plt_season_all  %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Seroconversion by season of birth and age data with Ig.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
+
+# Plot incidence by age and season
+plt_season_inc <- incidence_data_season %>% 
+  filter (xMidpoint <= 365) %>%
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  ggplot()+
+  geom_point(aes(x = xMidpoint, y = incidence_mean, col = season_birth), size = 3) +
+  geom_errorbar(aes(x = xMidpoint, ymin = incidence_low95, ymax = incidence_up95,
+                    col = season_birth), width = 10, linewidth = 1) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversion\n", col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
+
+plt_season_inc
+
 # ------------------------------------------------------------------------------
 # Build a filter and test it
 filter <- dust_filter_create(msr, time_start = 0, data = incidence_data_season_wide, n_particles = 1000)
@@ -372,42 +425,27 @@ for (i in 1:length(incidence_data_season_wide$time)){
   
   if(i>1){
     low95_spring <- quantile(
-                        (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,])),
-                        0.05)
+                        (t(converted_sp[i,]) - t(converted_sp[i-1,])), 0.05)
     median_spring <- quantile(
-                          (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,]))
-                          , 0.5)
+                          (t(converted_sp[i,]) - t(converted_sp[i-1,])), 0.5)
     up95_spring <- quantile(
-      (t(converted_sp[i,]) - t(converted_sp[i-1,]))/(1 - t(converted_sp[i-1,])),
-      0.95)
+      (t(converted_sp[i,]) - t(converted_sp[i-1,])), 0.95)
     
-    low95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
-                         0.05)
-    median_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
-                          0.5)
-    up95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,]))/(1 - t(converted_sm[i-1,])),
-                        0.95)
+    low95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,])), 0.05)
+    median_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,])), 0.5)
+    up95_summer <- quantile((t(converted_sm[i,]) - t(converted_sm[i-1,])), 0.95)
     
-    low95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
-                         0.05)
-    median_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
-                          0.5)
-    up95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,]))/(1 - t(converted_au[i-1,])),
-                        0.95)
+    low95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,])), 0.05)
+    median_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,])), 0.5)
+    up95_autumn <- quantile((t(converted_au[i,]) - t(converted_au[i-1,])), 0.95)
     
-    low95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
-                         0.05)
-    median_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
-                          0.5)
-    up95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,]))/(1 - t(converted_wt[i-1,])),
-                        0.95)
+    low95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,])), 0.05)
+    median_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,])), 0.5)
+    up95_winter <- quantile((t(converted_wt[i,]) - t(converted_wt[i-1,])), 0.95)
     
-    low95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
-                          0.05)
-    median_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
-                           0.5)
-    up95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,]))/(1 - t(converted_all[i-1,])),
-                         0.95)
+    low95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,])), 0.05)
+    median_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,])), 0.5)
+    up95_all <- quantile((t(converted_all[i,]) - t(converted_all[i-1,])), 0.95)
   } else{
     low95_spring <- 0
     median_spring <- 0
@@ -537,8 +575,52 @@ plt %>%
          width = 20, height = 14, units = "in", 
          device='png')
 
+# Plot this together with true estimates
+incidence_comp <- incidence_data_season %>% 
+  filter (xMidpoint <= 365) %>%
+  mutate(data = "Data") %>%
+  rbind(
+    incidence_test_long %>% 
+      filter(age_midpoint <= 365 & season != "all") %>%
+      rename(xMidpoint = age_midpoint) %>%
+      mutate(season_birth = season,
+             incidence_mean = median,
+             incidence_low95 = low95,
+             incidence_up95 = up95,
+             data = "Model") %>%
+      select(c(xMidpoint, season_birth, incidence_mean, incidence_low95, incidence_up95, data))
+  )
+
+plt_incidence_comp <- incidence_comp %>%
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  ggplot()+
+  geom_point(aes(x = xMidpoint, y = incidence_mean, col = data, shape = data), size = 3) +
+  geom_errorbar(aes(x = xMidpoint, ymin = incidence_low95, ymax = incidence_up95,
+                    col = data, linetype = data), width = 10, linewidth = 1) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% additional seroconversions\n", col = "Data",
+       shape = "Data", linetype = "Data") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season_birth) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"),
+         legend.text = element_text(size = 20))
+
+plt_incidence_comp
+plt_incidence_comp %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Incidence comparison.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
+
 plt_all <- incidence_test_long %>% 
-  filter(season == "all") %>%
+  filter(season == "all" & age_midpoint > 30) %>%
   ggplot() + 
   geom_point(aes(x = age_midpoint, y = median, col = season), size = 5) +
   geom_errorbar(aes(x = age_midpoint, 
@@ -565,7 +647,7 @@ plt_all %>%
          device='png')
 
 plt_all <- incidence_test_long %>% 
-  filter(age_midpoint <= 365 & season == "all") %>%
+  filter(age_midpoint <= 365 & age_midpoint > 30 & season == "all") %>%
   ggplot() + 
   geom_point(aes(x = age_midpoint, y = median, col = season), size = 3) +
   geom_errorbar(aes(x = age_midpoint, 
