@@ -1253,10 +1253,22 @@ total_hosp_no_int_age <- total_hosp_intervention_df %>%
          age_bracket = factor(age_bracket, 
                                levels = c("1", "3", "5", "7", "9", "11")))
 
-plt_hosp <- total_hosp_no_int_age %>% ggplot() +
-            geom_point(aes(x = age_bracket, y = hosp_median, col = season_birth),
+plt_hosp <- total_hosp_no_int_age %>% 
+  mutate(age_midpoint_text = case_when(
+    age_bracket == "1" ~ "[0-2)",
+    age_bracket == "3" ~ "[2-4)",
+    age_bracket == "5" ~ "[4-6)",
+    age_bracket == "7" ~ "[6-8)",
+    age_bracket == "9" ~ "[8-10)",
+    age_bracket == "11" ~ "[10-12)")) %>%
+  mutate(age_midpoint_text = factor(age_midpoint_text, 
+                              levels = c("[0-2)", "[2-4)", 
+                                         "[4-6)", "[6-8)", 
+                                         "[8-10)", "[10-12)"))) %>%
+  ggplot() +
+            geom_point(aes(x = age_midpoint_text, y = hosp_median, col = season_birth),
                        size = 3) +
-            geom_errorbar(aes(x = age_bracket, ymin = hosp_low_95, ymax = hosp_up_95,
+            geom_errorbar(aes(x = age_midpoint_text, ymin = hosp_low_95, ymax = hosp_up_95,
                               col = season_birth), width = 0.5, linewidth = 1) +
             labs(x = "\nAge (months)",
                  y = "Hospitalisations\n",

@@ -688,13 +688,22 @@ severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates S
 severe_illness_progression <- incidence_test_long %>%
   merge(severe_illness, by.x = "age_midpoint", by.y = "age_days") %>%
   mutate(cases = case_when(age_midpoint == 30 ~ 0,
-                           T ~ (total_severe_illness_rate/100000) / median)) %>%
-  select(age_midpoint, season, cases)
+                           T ~ (total_severe_illness_rate/100000) / median),
+         age_midpoint_text = case_when(
+           age_midpoint == 30 ~ "[0-2) months",
+           age_midpoint == 91 ~ "[2-4) months",
+           age_midpoint == 152 ~ "[4-6) months",
+           age_midpoint == 212 ~ "[6-8) months",
+           age_midpoint == 272 ~ "[8-10) months",
+           age_midpoint == 332 ~ "[8-12) months",
+           T ~ as.character(age_midpoint)
+         )) %>%
+  select(age_midpoint_text, age_midpoint, season, cases)
 
 plt_progression <- severe_illness_progression %>% ggplot() +
-  geom_point(aes(x = age_midpoint/30.25, y = cases/100, col = season), size = 5) +
+  geom_point(aes(x = age_midpoint_text, y = cases/100, col = season), size = 5) +
   facet_wrap(~season) +
-  labs(title = "New RSV hospitalisations by age", x = "Age (months)",
+  labs(title = "New RSV hospitalisations by age", x = "Age midpoint",
        y = "% new hospitalisations\n",
        colour = "Season of birth") +
   scale_y_continuous(labels = scales::percent) +
