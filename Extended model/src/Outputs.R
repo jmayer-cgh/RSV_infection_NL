@@ -783,7 +783,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
                   n_hospitalisations = sum(n_severe_vacc),
                   # prevented_hospitalisations = sum(n_ma_severe_averted),
                   prevented_hospitalisations = sum(n_severe_averted),
-                  intervention = "Maternal vaccination")
+                  intervention = "MV")
     ) %>%
     rbind(
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
@@ -796,7 +796,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
                   n_hospitalisations = sum(n_severe_vacc),
                   # prevented_hospitalisations = sum(n_ma_severe_averted),
                   prevented_hospitalisations = sum(n_severe_averted),
-                  intervention = "Maternal vaccination")
+                  intervention = "MV")
     ) %>%
     rbind(
       hosp_prevented_age %>%
@@ -805,7 +805,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
         summarise(age_bracket = "all",
                   n_hospitalisations = hosp_spring_8,
                   prevented_hospitalisations = prev_spring_8,
-                  intervention = "Nirsevimab for spring births")
+                  intervention = "+ mAB for spring births")
     ) %>%
     rbind(
       hosp_prevented_age %>%
@@ -814,7 +814,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
         summarise(age_bracket = "all",
                   n_hospitalisations = hosp_summer_4,
                   prevented_hospitalisations = prev_summer_4,
-                  intervention = "Nirsevimab for summer births")
+                  intervention = "+ mAB for summer births")
     ) %>%
     rbind(
       hosp_prevented_age %>% 
@@ -823,7 +823,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
         summarise(age_bracket = "all",
                   n_hospitalisations = hosp_autumn_1,
                   prevented_hospitalisations = prev_autumn_1,
-                  intervention = "Nirsevimab for autumn births")
+                  intervention = "+ mAB for autumn births")
     ) %>%
     rbind(
       hosp_prevented_age %>% 
@@ -832,7 +832,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
         summarise(age_bracket = "all",
                   n_hospitalisations = hosp_winter_11,
                   prevented_hospitalisations = prev_winter_11,
-                  intervention = "Nirsevimab for winter births")
+                  intervention = "+ mAB for winter births")
     ) %>%
     rbind(
       hosp_prevented_age %>% 
@@ -841,19 +841,19 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
         summarise(age_bracket = "all",
                   n_hospitalisations = 0, # we need to calculate this later
                   prevented_hospitalisations = prev_summer_4 + prev_spring_8,
-                  intervention = "Nirsevimab for spring and summer births")
+                  intervention = "+ mAB for spring and summer births")
     ) %>% mutate(intervention = factor(intervention, 
-                                       levels = c("No immunisation", "Maternal vaccination", 
-                                                  "Nirsevimab for spring births",
-                                                  "Nirsevimab for summer births",
-                                                  "Nirsevimab for autumn births",
-                                                  "Nirsevimab for winter births",
-                                                  "Nirsevimab for spring and summer births")))
+                                       levels = c("No immunisation", "MV", 
+                                                  "+ mAB for spring births",
+                                                  "+ mAB for summer births",
+                                                  "+ mAB for autumn births",
+                                                  "+ mAB for winter births",
+                                                  "+ mAB for spring and summer births")))
   
   total_hosp_intervention <- total_hosp_intervention %>%
     group_by(season_birth) %>%
-    mutate(n_hospitalisations = case_when (intervention == "Nirsevimab for spring and summer births" ~
-                                             n_hospitalisations[intervention == "Maternal vaccination"] - prevented_hospitalisations[intervention == "Nirsevimab for spring and summer births"],
+    mutate(n_hospitalisations = case_when (intervention == "+ mAB for spring and summer births" ~
+                                             n_hospitalisations[intervention == "MV"] - prevented_hospitalisations[intervention == "+ mAB for spring and summer births"],
                                            TRUE ~ n_hospitalisations))
   
   return (total_hosp_intervention)
@@ -882,7 +882,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = sum(n_ma_cases_vacc),
                   prevented_cases = sum(n_ma_cases_averted),
                   severity = "all",
-                  intervention = "Maternal vaccination")
+                  intervention = "MV")
     ) %>%
     rbind(
       ma_prevented_age %>% filter(severity == "all") %>%
@@ -894,7 +894,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = ma_spring_8,
                   prevented_cases = prev_spring_8,
                   severity = "all",
-                  intervention = "Nirsevimab for spring births")
+                  intervention = "+ mAB for spring births")
     ) %>%
     rbind(
       ma_prevented_age %>% filter(severity == "all") %>%
@@ -906,7 +906,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = ma_summer_4,
                   prevented_cases = prev_summer_4,
                   severity = "all",
-                  intervention = "Nirsevimab for summer births")
+                  intervention = "+ mAB for summer births")
     ) %>%
     rbind(
       ma_prevented_age %>% filter(severity == "all") %>%
@@ -918,7 +918,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = ma_autumn_1,
                   prevented_cases = prev_autumn_1,
                   severity = "all",
-                  intervention = "Nirsevimab for autumn births")
+                  intervention = "+ mAB for autumn births")
     ) %>%
     rbind(
       ma_prevented_age %>% filter(severity == "all") %>%
@@ -930,7 +930,7 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = ma_winter_11,
                   prevented_cases = prev_winter_11,
                   severity = "all",
-                  intervention = "Nirsevimab for winter births")
+                  intervention = "+ mAB for winter births")
     ) %>%
     rbind(
       ma_prevented_age %>% filter(severity == "all") %>%
@@ -942,19 +942,19 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
                   n_cases = 0, # we need to calculate this later
                   prevented_cases = prev_summer_4 + prev_spring_8,
                   severity = "all",
-                  intervention = "Nirsevimab for spring and summer births")
+                  intervention = "+ mAB for spring and summer births")
     ) %>% mutate(intervention = factor(intervention, 
-                                       levels = c("No immunisation", "Maternal vaccination", 
-                                                  "Nirsevimab for spring births",
-                                                  "Nirsevimab for summer births",
-                                                  "Nirsevimab for autumn births",
-                                                  "Nirsevimab for winter births",
-                                                  "Nirsevimab for spring and summer births")))
+                                       levels = c("No immunisation", "MV", 
+                                                  "+ mAB for spring births",
+                                                  "+ mAB for summer births",
+                                                  "+ mAB for autumn births",
+                                                  "+ mAB for winter births",
+                                                  "+ mAB for spring and summer births")))
   
   total_ma_intervention <- total_ma_intervention %>%
     group_by(season_birth) %>%
-    mutate(n_cases = case_when (intervention == "Nirsevimab for spring and summer births" ~
-                                             n_cases[intervention == "Maternal vaccination"] - prevented_cases[intervention == "Nirsevimab for spring and summer births"],
+    mutate(n_cases = case_when (intervention == "+ mAB for spring and summer births" ~
+                                             n_cases[intervention == "MV"] - prevented_cases[intervention == "+ mAB for spring and summer births"],
                                            TRUE ~ n_cases))
   
   return (total_ma_intervention)
@@ -1057,65 +1057,65 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
 # Get NNV to prevent one hospitalisation
 nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
                                               prev_low_95, prev_median, prev_up_95) %>%
-  mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
-                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_low_95,
-                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
-                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_low_95,
-                                 intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_low_95,
-                                 intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_low_95,
-                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_low_95),
-         NNV_median = case_when (intervention == "No immusination" ~ NA,
-                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_median,
-                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_median,
-                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_median,
-                                 intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_median,
-                                 intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_median,
-                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_median),
-         NNV_up_95 = case_when (intervention == "No immusination" ~ NA,
-                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_up_95,
-                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_up_95,
-                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_up_95,
-                                intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_up_95,
-                                intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_up_95,
-                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_up_95))
+  mutate(NNV_low_95 = case_when (intervention == "No immunisation" ~ NA,
+                                 intervention == "MV" ~ births_de$N[1]/prev_low_95,
+                                 intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
+                                 intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_low_95,
+                                 intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_low_95,
+                                 intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_low_95,
+                                 intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_low_95),
+         NNV_median = case_when (intervention == "No immunisation" ~ NA,
+                                 intervention == "MV" ~ births_de$N[1]/prev_median,
+                                 intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_median,
+                                 intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_median,
+                                 intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_median,
+                                 intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_median,
+                                 intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_median),
+         NNV_up_95 = case_when (intervention == "No immunisation" ~ NA,
+                                 intervention == "MV" ~ births_de$N[1]/prev_up_95,
+                                 intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_up_95,
+                                 intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_up_95,
+                                intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_up_95,
+                                intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_up_95,
+                                 intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_up_95))
 
 
 # Get NNV to prevent one MA cases
 nnv_ma <- total_ma_intervention_int %>% select(intervention, season_birth, 
                                                prev_low_95, prev_median, prev_up_95) %>%
-  mutate(NNV_low_95 = case_when (intervention == "No immusination" ~ NA,
-                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_low_95,
-                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
-                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_low_95,
-                                 intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_low_95,
-                                 intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_low_95,
-                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_low_95),
-         NNV_median = case_when (intervention == "No immusination" ~ NA,
-                                 intervention == "Maternal vaccination" ~ births_de$N[1]/prev_median,
-                                 intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_median,
-                                 intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_median,
-                                 intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_median,
-                                 intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_median,
-                                 intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_median),
-         NNV_up_95 = case_when (intervention == "No immusination" ~ NA,
-                                intervention == "Maternal vaccination" ~ births_de$N[1]/prev_up_95,
-                                intervention == "Nirsevimab for spring births" ~ births_de$total[births_de$season == "spring"]/prev_up_95,
-                                intervention == "Nirsevimab for summer births" ~ births_de$total[births_de$season == "summer"]/prev_up_95,
-                                intervention == "Nirsevimab for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_up_95,
-                                intervention == "Nirsevimab for winter births" ~ births_de$total[births_de$season == "winter"]/prev_up_95,
-                                intervention == "Nirsevimab for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_up_95))
+  mutate(NNV_low_95 = case_when (intervention == "No immunisation" ~ NA,
+                                 intervention == "MV" ~ births_de$N[1]/prev_low_95,
+                                 intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
+                                 intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_low_95,
+                                 intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_low_95,
+                                 intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_low_95,
+                                 intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_low_95),
+         NNV_median = case_when (intervention == "No immunisation" ~ NA,
+                                 intervention == "MV" ~ births_de$N[1]/prev_median,
+                                 intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_median,
+                                 intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_median,
+                                 intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_median,
+                                 intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_median,
+                                 intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_median),
+         NNV_up_95 = case_when (intervention == "No immunisation" ~ NA,
+                                intervention == "MV" ~ births_de$N[1]/prev_up_95,
+                                intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_up_95,
+                                intervention == "+ mAB for summer births" ~ births_de$total[births_de$season == "summer"]/prev_up_95,
+                                intervention == "+ mAB for autumn births" ~ births_de$total[births_de$season == "autumn"]/prev_up_95,
+                                intervention == "+ mAB for winter births" ~ births_de$total[births_de$season == "winter"]/prev_up_95,
+                                intervention == "+ mAB for spring and summer births" ~ (births_de$total[births_de$season == "spring"] + births_de$total[births_de$season == "summer"])/prev_up_95))
 
 
 # ------ Plot and save outputs -----------------------------------------------
 # VE_distribution %>% ggplot(aes(x = t, y = VE_t, col = group)) +
 #   geom_line()
 
-palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
-             "Nirsevimab for spring births" = "#88BBA0",
-             "Nirsevimab for summer births" = "#85D4E3",
-             "Nirsevimab for autumn births" = "#13D4C7",
-             "Nirsevimab for winter births" = "#B479E0",
-             "Nirsevimab for spring and summer births" = "#B39BC8")
+palette <- c("No immunisation" = "#9C964A", "MV" = "#6A9D96",
+             "+ mAB for spring births" = "#88BBA0",
+             "+ mAB for summer births" = "#85D4E3",
+             "+ mAB for autumn births" = "#13D4C7",
+             "+ mAB for winter births" = "#B479E0",
+             "+ mAB for spring and summer births" = "#B39BC8")
 
 palette_season <- c("autumn" = "#88BBA0", "winter" = "#13D4C7", 
                     "spring" = "#B39BC8", "summer" = "#B479E0",
