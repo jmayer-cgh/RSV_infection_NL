@@ -1118,7 +1118,8 @@ palette <- c("No immunisation" = "#9C964A", "Maternal vaccination" = "#6A9D96",
              "Nirsevimab for spring and summer births" = "#B39BC8")
 
 palette_season <- c("autumn" = "#88BBA0", "winter" = "#13D4C7", 
-                    "spring" = "#B39BC8", "summer" = "#B479E0")
+                    "spring" = "#B39BC8", "summer" = "#B479E0",
+                    "all" = "#9C964A")
 
 # One iteration
 total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>% 
@@ -1286,6 +1287,36 @@ plt_hosp <- total_hosp_no_int_age %>%
          strip.text.x = element_text(size = 20, color = "black")) 
 plt_hosp
 
+# Look at total burden by season of birth
+total_hosp_1_y <- total_hosp_intervention_df %>%
+  filter(age_bracket == "all") %>%
+  group_by(season_birth, intervention) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
+            hosp_median = quantile(n_hospitalisations, 0.5),
+            hosp_up_95 = quantile(n_hospitalisations, 0.95)) %>%
+  ungroup() 
+
+total_hosp_1_y_plt <- total_hosp_1_y %>% ggplot() +
+  geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), 
+           position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95, group = season_birth), 
+                width = 0.2, position = position_dodge(width = 0.9)) +
+  labs(title = "Number of RSV-associated hospitalisations in children under the age of 1 year",
+       x = "\nIntervention",
+       y = "Hospitalisations\n",
+       fill = "Season of birth") +
+  theme_light() +
+  theme (axis.ticks.y=element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25)) +
+  scale_fill_manual(values = palette_season)
+
+total_hosp_1_y_plt
+
 # Save files
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
 write.csv(total_hosp_intervention_int, paste0(path, "Final outputs hospitalisations.csv"), row.names = F)
@@ -1313,3 +1344,7 @@ plt_nnv_cases %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneD
 plt_hosp %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Hospitalisations no intervention.png",
                          width = 14, height = 16, units = "in", 
                          device='png')
+
+total_hosp_1_y_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Total hospitalisations.png",
+                              width = 14, height = 16, units = "in", 
+                              device='png')
