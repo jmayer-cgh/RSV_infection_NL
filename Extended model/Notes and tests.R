@@ -448,6 +448,50 @@ for (i in 1:length(incidence_data_season_wide$time)){
 seroconversion_df <- do.call("rbind", seroconversion)
 rownames(seroconversion_df) <- NULL
 
+seroconversion_long <- seroconversion_df %>%
+  pivot_longer(
+    cols = -age_midpoint,  # keep age as is
+    names_to = c("measure", "season"),  # split column names into two parts
+    names_sep = "_",  # separator is underscore (e.g. "low95_sp")
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = measure,  # now spread low95, median, up95 into columns
+    values_from = value
+  ) %>%
+  mutate(season = case_when(season == "sp" ~ "Spring",
+                            season == "sm" ~ "Summer",
+                            season == "wt" ~ "Winter",
+                            season == "au" ~ "Autumn",
+                            season == "all" ~ "All"),
+         season = factor(season, levels = c("Spring", "Summer", "Autumn", "Winter", "All")))
+
+plt <- seroconversion_long %>% filter(age_midpoint <= 365) %>%
+  ggplot() + 
+  geom_point(aes(x = age_midpoint, y = median, col = season), size = 3) +
+  geom_errorbar(aes(x = age_midpoint, 
+                    ymin = low95, ymax = up95,
+                    col = season),width = 10, linewidth = 1) +
+  labs(title = "Proportion of seroconverted children", x = "Age (days)",
+       y = "% seroconverted\n",
+       col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
+plt
+
+plt %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Proportion seroconversion by season of birth and age.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
 
 # Get incident cases
 incidence <- list()
