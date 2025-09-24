@@ -116,6 +116,38 @@ incidence_data_season %>% filter (xMidpoint <= 365) %>%
        y = "Number of children", fill = "Season of birth") +
   theme_light()
 
+# Plot % of children by age and season
+plt_child_prop <- incidence_data_season %>% filter (xMidpoint <= 365) %>%
+  mutate(season_birth = factor(season_birth, levels = c("autumn", "winter", "spring", "summer"))) %>%
+  group_by(xMidpoint) %>%
+  mutate(N_age = sum(N),
+         prop = N/N_age) %>%
+  ungroup() %>%
+  ggplot()+
+  geom_bar(aes(x = xMidpoint/30, y = prop, fill = season_birth), 
+           stat = "identity", position = "dodge") +
+  scale_x_continuous(breaks=c(1, 3, 5, 7, 9, 11, 13),
+                     labels=c("1","3","5", "7", "9", "11", "13")) +
+  labs(title = "Proportion of children by age and season of birth", x = "Age midpoint (months)",
+       y = "Proprtion of children", fill = "Season of birth") +
+  theme_light() +
+  scale_y_continuous(labels = scales::percent) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 20))
+
+plt_child_prop
+
+plt_child_prop  %>%
+  ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Prop birth cohort by age.png",
+         width = 20, height = 14, units = "in", 
+         device='png')
+
 # Plot seroprevalence by age and season
 plt_season <- incidence_data_season %>% 
   filter (xMidpoint <= 365) %>%
