@@ -47,9 +47,9 @@ mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.
 severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>%
   janitor::clean_names()
 
-severe_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Pooled severe illness") %>% 
+severe_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness rates") %>% 
   janitor::clean_names() %>%
-  select(age_days, total_severe_illness_rate, total_severe_illness_lower_ci, 
+  select(age_months, total_severe_illness_rate, total_severe_illness_lower_ci, 
          total_severe_illness_upper_ci)
 
 # ----------- Data -------------------------------------------------------------
@@ -145,13 +145,13 @@ incidence_data_season_wide <- incidence_data_season %>%
 # --------- Define our functions ----------------------------------------------
 # Newly seroconverted at a given age
 new_seroconv_age <- function (index){
-  converted_all_rand <- converted_all[,index]
-  converted_sp_rand <- converted_sp[,index]
-  converted_sm_rand <- converted_sm[,index]
-  converted_au_rand <- converted_au[,index]
-  converted_wt_rand <- converted_wt[,index]
+  converted_all_rand <- as.numeric(t(converted_all[index,0:366]))
+  converted_sp_rand <- as.numeric(t(converted_sp[index,0:366]))
+  converted_sm_rand <- as.numeric(t(converted_sm[index,0:366]))
+  converted_au_rand <- as.numeric(t(converted_au[index,0:366]))
+  converted_wt_rand <- as.numeric(t(converted_wt[index,0:366]))
   
-  converted <- data.frame(age_midpoint = incidence_data_season_wide$time,
+  converted <- data.frame(age_midpoint = 0:365,
                           sero_all = converted_all_rand,
                           sero_sp = converted_sp_rand,
                           sero_sm = converted_sm_rand,
@@ -251,9 +251,10 @@ s_progression_format <- function (conversion, illness_type) {
                                    TRUE ~ as.character(age_months)))
   
   severe_illness_progression <- conversion_formated %>%
-    merge(illness_type, by.x = "age_midpoint", by.y = "age_days") %>%
-    mutate(cases = case_when(age_midpoint == 30 ~ 0,
-                             T ~ (total_severe_illness_rate/100000) / incidence / 100)) %>%
+    merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
+    mutate(cases = case_when((total_severe_illness_rate/100000) * incidence < 0 ~ 0,
+                             is.infinite((total_severe_illness_rate/100000) * incidence ) ~ NA,
+                             T ~ (total_severe_illness_rate/100000) * incidence )) %>%
     select(age_midpoint, age_months, age_bracket, season_birth, cases)
   
   return (severe_illness_progression)
@@ -964,12 +965,19 @@ ma_intervention <- function (cases, ma_prevented_vacc, ma_prevented_age){
 # --------- Run the models once -----------------------------------------------
 source(paste0(path_code, "VE estimates.R")) # takes about 10 min 
 # source(paste0(path_code, "Seroconversion fit.R")) # takes about 3 hours 
-converted_summary <- readRDS("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion model outputs.rds")
+converted_summary <- readRDS("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion simulation outputs.rds")
 converted_all <- do.call(rbind.data.frame, converted_summary[1])
 converted_sp <- do.call(rbind.data.frame, converted_summary[2])
 converted_sm <- do.call(rbind.data.frame, converted_summary[3])
 converted_au <- do.call(rbind.data.frame, converted_summary[4])
 converted_wt <- do.call(rbind.data.frame, converted_summary[5])
+
+# Replace negative values with 0
+converted_all[converted_all<0] <- 0
+converted_sp[converted_sp<0] <- 0
+converted_sm[converted_sm<0] <- 0
+converted_au[converted_au<0] <- 0
+converted_wt[converted_wt<0] <- 0
 
 
 # -----------------------------------------------------------------------------
@@ -1016,7 +1024,7 @@ for (i in 1:100){
   
   # Get total hospitalisations by intervention
   total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
-  total_hosp_intervention[[i]]$iter <- rep(i, each = 56) # save index in case we want to check one iteration
+  total_hosp_intervention[[i]]$iter <- rep(i, each = 1500) # save index in case we want to check one iteration
   
   # Get total MA cases by intervention
   total_ma_intervention[[i]] <- ma_intervention(ma_cases, ma_prevented_vacc, ma_prevented_age)
@@ -1030,12 +1038,12 @@ total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
   filter (age_bracket == "all") %>%
   group_by(intervention, season_birth) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
-            hosp_median = quantile(n_hospitalisations, 0.5),
-            hosp_up_95 = quantile(n_hospitalisations, 0.95),
-            prev_low_95 = quantile(prevented_hospitalisations, 0.05),
-            prev_median = quantile(prevented_hospitalisations, 0.5),
-            prev_up_95 = quantile(prevented_hospitalisations, 0.95)) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05, na.rm = T),
+            hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
+            hosp_up_95 = quantile(n_hospitalisations, 0.95, na.rm = T),
+            prev_low_95 = quantile(prevented_hospitalisations, 0.05, na.rm = T),
+            prev_median = quantile(prevented_hospitalisations, 0.5, na.rm = T),
+            prev_up_95 = quantile(prevented_hospitalisations, 0.95, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("winter", "spring", "summer", "autumn",
@@ -1043,12 +1051,12 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
   group_by(intervention, season_birth) %>%
-  summarise(cases_low_95 = quantile(n_cases, 0.05),
-            cases_median = quantile(n_cases, 0.5),
-            cases_up_95 = quantile(n_cases, 0.95),
-            prev_low_95 = quantile(prevented_cases, 0.05),
-            prev_median = quantile(prevented_cases, 0.5),
-            prev_up_95 = quantile(prevented_cases, 0.95)) %>%
+  summarise(cases_low_95 = quantile(n_cases, 0.05, na.rm = T),
+            cases_median = quantile(n_cases, 0.5, na.rm = T),
+            cases_up_95 = quantile(n_cases, 0.95, na.rm = T),
+            prev_low_95 = quantile(prevented_cases, 0.05, na.rm = T),
+            prev_median = quantile(prevented_cases, 0.5, na.rm = T),
+            prev_up_95 = quantile(prevented_cases, 0.95, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("winter", "spring", "summer", "autumn",
@@ -1244,32 +1252,22 @@ total_hosp_no_int_age <- total_hosp_intervention_df %>%
   rbind(total_hosp_intervention_df %>%
           filter(age_bracket != "all" & intervention == 'No immunisation')) %>%
   group_by(age_bracket, intervention, season_birth) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
-            hosp_median = quantile(n_hospitalisations, 0.5),
-            hosp_up_95 = quantile(n_hospitalisations, 0.95)) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05, na.rm = T),
+            hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
+            hosp_up_95 = quantile(n_hospitalisations, 0.95, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("winter", "spring", "summer", "autumn",
                                           "all")),
          age_bracket = factor(age_bracket, 
-                               levels = c("1", "3", "5", "7", "9", "11")))
+                               levels = c("<1", "1", "2", "3", "4", "5", "6", "7", "8", 
+                               "9", "10", "11", "12-14")))
 
 plt_hosp <- total_hosp_no_int_age %>% 
-  mutate(age_midpoint_text = case_when(
-    age_bracket == "1" ~ "[0-2)",
-    age_bracket == "3" ~ "[2-4)",
-    age_bracket == "5" ~ "[4-6)",
-    age_bracket == "7" ~ "[6-8)",
-    age_bracket == "9" ~ "[8-10)",
-    age_bracket == "11" ~ "[10-12)")) %>%
-  mutate(age_midpoint_text = factor(age_midpoint_text, 
-                              levels = c("[0-2)", "[2-4)", 
-                                         "[4-6)", "[6-8)", 
-                                         "[8-10)", "[10-12)"))) %>%
   ggplot() +
-            geom_point(aes(x = age_midpoint_text, y = hosp_median, col = season_birth),
+            geom_point(aes(x = age_bracket, y = hosp_median, col = season_birth),
                        size = 3) +
-            geom_errorbar(aes(x = age_midpoint_text, ymin = hosp_low_95, ymax = hosp_up_95,
+            geom_errorbar(aes(x = age_bracket, ymin = hosp_low_95, ymax = hosp_up_95,
                               col = season_birth), width = 0.5, linewidth = 1) +
             labs(x = "\nAge (months)",
                  y = "Hospitalisations\n",

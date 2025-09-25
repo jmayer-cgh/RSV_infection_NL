@@ -804,3 +804,192 @@ plt_progression %>%
   ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/Hosp by age and season.png",
          width = 22, height = 14, units = "in", 
          device='png')
+
+# -----------------
+converted_summary <- readRDS("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion simulation outputs.rds")
+converted_all <- do.call(rbind.data.frame, converted_summary[1])
+converted_sp <- do.call(rbind.data.frame, converted_summary[2])
+converted_sm <- do.call(rbind.data.frame, converted_summary[3])
+converted_au <- do.call(rbind.data.frame, converted_summary[4])
+converted_wt <- do.call(rbind.data.frame, converted_summary[5])
+
+# Replace negative values with 0
+converted_all[converted_all<0] <- 0
+converted_sp[converted_sp<0] <- 0
+converted_sm[converted_sm<0] <- 0
+converted_au[converted_au<0] <- 0
+converted_wt[converted_wt<0] <- 0
+
+seroconversion <- list()
+
+for (i in 1:(5*365)){
+  age_midpoint <- i
+  
+  low95_sp <- quantile(t(converted_sp[,i]), 0.05, na.rm = T)
+  median_sp <- quantile(t(converted_sp[,i]), 0.5, na.rm = T)
+  up95_sp <- quantile(t(converted_sp[,i]), 0.95, na.rm = T)
+  
+  low95_sm <- quantile(t(converted_sm[,i]), 0.05, na.rm = T)
+  median_sm <- quantile(t(converted_sm[,i]), 0.5, na.rm = T)
+  up95_sm <- quantile(t(converted_sm[,i]), 0.95, na.rm = T)
+  
+  low95_au <- quantile(t(converted_au[,i]), 0.05, na.rm = T)
+  median_au <- quantile(t(converted_au[,i]), 0.5, na.rm = T)
+  up95_au <- quantile(t(converted_au[,i]), 0.95, na.rm = T)
+  
+  low95_wt <- quantile(t(converted_wt[,i]), 0.05, na.rm = T)
+  median_wt <- quantile(t(converted_wt[,i]), 0.5, na.rm = T)
+  up95_wt <- quantile(t(converted_wt[,i]), 0.95, na.rm = T)
+  
+  low95_all <- quantile(t(converted_all[,i]), 0.05, na.rm = T)
+  median_all <- quantile(t(converted_all[,i]), 0.5, na.rm = T)
+  up95_all <- quantile(t(converted_all[,i]), 0.95, na.rm = T)
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_sp, median_sp, up95_sp, 
+                         low95_sm, median_sm, up95_sm, 
+                         low95_au, median_au, up95_au, 
+                         low95_wt, median_wt, up95_wt,
+                         low95_all, median_all, up95_all)
+  
+  seroconversion[[i]] <- combined
+}
+
+seroconversion_df <- do.call("rbind", seroconversion)
+rownames(seroconversion_df) <- NULL
+
+seroconversion_long <- seroconversion_df %>%
+  pivot_longer(
+    cols = -age_midpoint,  # keep age as is
+    names_to = c("measure", "season"),  # split column names into two parts
+    names_sep = "_",  # separator is underscore (e.g. "low95_sp")
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = measure,  # now spread low95, median, up95 into columns
+    values_from = value
+  ) %>%
+  mutate(season = case_when(season == "sp" ~ "Spring",
+                            season == "sm" ~ "Summer",
+                            season == "wt" ~ "Winter",
+                            season == "au" ~ "Autumn",
+                            season == "all" ~ "All"),
+         season = factor(season, levels = c("Spring", "Summer", "Autumn", "Winter", "All")))
+
+seroconversion_long %>% ggplot() +
+  geom_line(aes(x = age_midpoint, y = median, col = season)) + 
+  geom_ribbon(aes(x = age_midpoint, ymin=low95, ymax=up95, fill=season), alpha=.2) +
+  labs(title = "Proportion of seroconverted children", x = "Age (days)",
+       y = "% seroconverted\n",
+       col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
+
+# Get incident cases
+incidence <- list()
+
+for (i in 1:(5*365)){
+  age_midpoint <- i
+  
+  if(i>1){
+    low95_spring <- quantile(
+      (t(converted_sp[,i]) - t(converted_sp[,i-1])), 0.05)
+    median_spring <- quantile(
+      (t(converted_sp[,i]) - t(converted_sp[,i-1])), 0.5)
+    up95_spring <- quantile(
+      (t(converted_sp[,i]) - t(converted_sp[,i-1])), 0.95)
+    
+    low95_summer <- quantile((t(converted_sm[,i]) - t(converted_sm[,i-1])), 0.05)
+    median_summer <- quantile((t(converted_sm[,i]) - t(converted_sm[,i-1])), 0.5)
+    up95_summer <- quantile((t(converted_sm[,i]) - t(converted_sm[,i-1])), 0.95)
+    
+    low95_autumn <- quantile((t(converted_au[,i]) - t(converted_au[,i-1])), 0.05)
+    median_autumn <- quantile((t(converted_au[,i]) - t(converted_au[,i-1])), 0.5)
+    up95_autumn <- quantile((t(converted_au[,i]) - t(converted_au[,i-1])), 0.95)
+    
+    low95_winter <- quantile((t(converted_wt[,i]) - t(converted_wt[,i-1])), 0.05)
+    median_winter <- quantile((t(converted_wt[,i]) - t(converted_wt[,i-1])), 0.5)
+    up95_winter <- quantile((t(converted_wt[,i]) - t(converted_wt[,i-1])), 0.95)
+    
+    low95_all <- quantile((t(converted_all[,i]) - t(converted_all[,i-1])), 0.05)
+    median_all <- quantile((t(converted_all[,i]) - t(converted_all[,i-1])), 0.5)
+    up95_all <- quantile((t(converted_all[,i]) - t(converted_all[,i-1])), 0.95)
+  } else{
+    low95_spring <- 0
+    median_spring <- 0
+    up95_spring <- 0
+    
+    low95_summer <- 0
+    median_summer <- 0
+    up95_summer <- 0
+    
+    low95_autumn <- 0
+    median_autumn <- 0
+    up95_autumn <- 0
+    
+    low95_winter <- 0
+    median_winter <- 0
+    up95_winter <- 0
+    
+    low95_all <- 0
+    median_all <- 0
+    up95_all <- 0
+  }
+  
+  combined <- data.frame(age_midpoint = age_midpoint,
+                         low95_spring, median_spring, up95_spring, 
+                         low95_summer, median_summer, up95_summer, 
+                         low95_autumn, median_autumn, up95_autumn, 
+                         low95_winter, median_winter, up95_winter,
+                         low95_all, median_all, up95_all)
+  
+  incidence[[i]] <- combined
+}
+
+incidence_test <- do.call("rbind", incidence)
+rownames(incidence_test) <- NULL
+
+incidence_test_long <- incidence_test %>%
+  pivot_longer(
+    cols = -age_midpoint,  # keep age as is
+    names_to = c("measure", "season"),  # split column names into two parts
+    names_sep = "_",  # separator is underscore (e.g. "low95_sp")
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = measure,  # now spread low95, median, up95 into columns
+    values_from = value
+  ) %>%
+  mutate(season = case_when(season == "spring" ~ "Spring",
+                            season == "summer" ~ "Summer",
+                            season == "winter" ~ "Winter",
+                            season == "autumn" ~ "Autumn",
+                            season == "all" ~ "All"),
+         season = factor(season, levels = c("Spring", "Summer", "Autumn", "Winter", "All")))
+
+incidence_test_long %>% ggplot() +
+  geom_line(aes(x = age_midpoint, y = median, col = season)) + 
+  geom_ribbon(aes(x = age_midpoint, ymin=low95, ymax=up95, fill=season), alpha=.2) +
+  labs(title = "Proportion of new seroconversions", x = "Age (days)",
+       y = "% new seroconversions\n",
+       col = "Season of birth") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_light() +
+  facet_wrap(~season) +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 25, color = "black"))
