@@ -623,8 +623,8 @@ hosp_mAB <- function (hosp_prevented_vacc) {
            hosp_autumn_1 = case_when (season_birth == "autumn" ~ hosp_1,
                                       TRUE ~ prev_1 + hosp_1),
            hosp_winter_11 = case_when (season_birth == "winter" ~ hosp_11,
-                                       TRUE ~ prev_11 + hosp_11)) %>%
-    rbind(
+                                       TRUE ~ prev_11 + hosp_11)) 
+  hosp_prevented_age <- hosp_prevented_age %>% rbind(
       data.frame(season_birth = "all",
                  # averted hospitalisations
                  prev_u1 = sum(hosp_prevented$n_severe_averted_nirs),
@@ -636,19 +636,19 @@ hosp_mAB <- function (hosp_prevented_vacc) {
                  prev_10 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 10], na.rm = T),
                  prev_11 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 11], na.rm = T),
                  # prevented hospitalisations when immunising one cohort only
-                 prev_spring_8 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 10 & hosp_prevented$season_birth == "spring"], na.rm = T),
+                 prev_spring_8 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 8 & hosp_prevented$season_birth == "spring"], na.rm = T),
                  prev_summer_4 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 4 & hosp_prevented$season_birth == "summer"], na.rm = T),
                  prev_autumn_1 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 1 & hosp_prevented$season_birth == "autumn"], na.rm = T),
                  prev_winter_11 = sum(hosp_prevented$n_severe_averted_nirs[hosp_prevented$age_months >= 11 & hosp_prevented$season_birth == "winter"], na.rm = T),
                  # remaining hospitalisations
                  hosp_u1 = sum(hosp_prevented$n_severe_nirs),
-                 hosp_1 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 1], na.rm = T),
-                 hosp_3 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 3], na.rm = T),
-                 hosp_4 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 4], na.rm = T),
-                 hosp_7 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 7], na.rm = T),
-                 hosp_8 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 8], na.rm = T),
-                 hosp_10 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 10], na.rm = T),
-                 hosp_11 = sum(hosp_prevented$n_severe_nirs[hosp_prevented$age_months >= 11], na.rm = T),
+                 hosp_1 = sum(hosp_prevented_age$hosp_1, na.rm = T),
+                 hosp_3 = sum(hosp_prevented_age$hosp_3, na.rm = T),
+                 hosp_4 = sum(hosp_prevented_age$hosp_4, na.rm = T),
+                 hosp_7 = sum(hosp_prevented_age$hosp_7, na.rm = T),
+                 hosp_8 = sum(hosp_prevented_age$hosp_8, na.rm = T),
+                 hosp_10 = sum(hosp_prevented_age$hosp_10, na.rm = T),
+                 hosp_11 = sum(hosp_prevented_age$hosp_11, na.rm = T),
                  hosp_spring_8 = 0,
                  hosp_summer_4 = 0,
                  hosp_autumn_1 = 0,
