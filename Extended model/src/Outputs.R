@@ -1251,6 +1251,9 @@ total_hosp_no_int_age <- total_hosp_intervention_df %>%
          n_hospitalisations = sum(n_hospitalisations)) %>%
   rbind(total_hosp_intervention_df %>%
           filter(age_bracket != "all" & intervention == 'No immunisation')) %>%
+  group_by(age_bracket, iter, season_birth, intervention) %>%
+  summarise(n_hospitalisations = sum(n_hospitalisations, na.rm = T)) %>%
+  ungroup() %>%
   group_by(age_bracket, intervention, season_birth) %>%
   summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05, na.rm = T),
             hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
