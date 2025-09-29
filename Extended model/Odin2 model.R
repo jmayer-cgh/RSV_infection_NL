@@ -1,9 +1,3 @@
-## Definition of the time-step and output as "time"
-#dt <- parameter(1)
-#initial(time) <- 1
-#update(time) <- (step + 1) * dt
-
-
 ## Core equations for transitions between compartments:
 # spring birth cohort
 update(M1_sp) <- M1_sp - n_M1M2_sp
@@ -155,73 +149,30 @@ winter_FOI_wt <- if( (time <= 30.41*3) ||
                      ((time >= 4*365) && (time <= (4*365+30.41*3))) ||
                      ((time >= 5*365) && (time <= (5*365+30.41*3)))) 1 else 0
 
-
-# time-dependent contact parameter for each birth cohort
-# contacts_sp <- if((time > 30.41*6) &&  (time <= 30.41*12)) 5/4 else if 
-#                          ((time > 30.41*12) && (time <= 30.41*18)) 5/4 else if
-#                          ((time > 30.41*18) && (time <= 30.41*24)) 4.5/4 else if
-#                          ((time > 30.41*24) && (time <= 30.41*30)) 6/4 else if
-#                          ((time > 30.41*30) && (time <= 30.41*36)) 8/4 else if
-#                          ((time > 30.41*36) && (time <= 30.41*42)) 20/4 else if
-#                          ((time > 30.41*42) && (time <= 30.41*48)) 14/4 else if
-#                          ((time > 30.41*48) && (time <= 30.41*54)) 29/4 else if
-#                          ((time > 30.41*54)) 25/4 else  1
-# contacts_sm <- if((time > 30.41*6) &&  (time <= 30.41*12) ~ 3.5/1,
-#                          (time > 30.41*12) && (time <= 30.41*18) ~ 3.5/1,
-#                          (time > 30.41*18) && (time <= 30.41*24) ~ 7/1,
-#                          (time > 30.41*24) && (time <= 30.41*30) ~ 7.5/1,
-#                          (time > 30.41*30) && (time <= 30.41*36) ~ 6/1,
-#                          (time > 30.41*36) && (time <= 30.41*42) ~ 9/1,
-#                          (time > 30.41*42) && (time <= 30.41*48) ~ 11/1,
-#                          (time > 30.41*48) && (time <= 30.41*54) ~ 25/4,
-#                          (time > 30.41*54) ~ 13/4,
-#                          TRUE ~ 1)
-# contacts_au <- if((time > 30.41*6) &&  (time <= 30.41*12) ~ 3/4,
-#                          (time > 30.41*12) && (time <= 30.41*18) ~ 5/4,
-#                          (time > 30.41*18) && (time <= 30.41*24) ~ 4/4,
-#                          (time > 30.41*24) && (time <= 30.41*30) ~ 6/4,
-#                          (time > 30.41*30) && (time <= 30.41*36) ~ 6/4,
-#                          (time > 30.41*36) && (time <= 30.41*42) ~ 9/4,
-#                          (time > 30.41*42) && (time <= 30.41*48) ~ 12/4,
-#                          (time > 30.41*48) && (time <= 30.41*54) ~ 12/4,
-#                          (time > 30.41*54) ~ 11.5/4,
-#                          TRUE ~ 1)
-# contacts_wt <- if((time > 30.41*6) &&  (time <= 30.41*12) ~ 4/4,
-#                          (time > 30.41*12) && (time <= 30.41*18) ~ 4/4,
-#                          (time > 30.41*18) && (time <= 30.41*24) ~ 4.5/4,
-#                          (time > 30.41*24) && (time <= 30.41*30) ~ 6/4,
-#                          (time > 30.41*30) && (time <= 30.41*36) ~ 6/4,
-#                          (time > 30.41*36) && (time <= 30.41*42) ~ 7.5/4,
-#                          (time > 30.41*42) && (time <= 30.41*48) ~ 11/4,
-#                          (time > 30.41*48) && (time <= 30.41*54) ~ 21/4,
-#                          (time > 30.41*54) ~ 26.5/4,
-#                          TRUE ~ 1)
-
 # Putting it all together into four FOIs
 lambda_sp = (summer_comp + spring_comp) * spring_FOI_sp + 
   summer_comp * summer_FOI_sp + 
   (summer_comp + autumn_comp) * autumn_FOI_sp +
-  (summer_comp + winter_comp) * winter_FOI_sp #+
-# contact_comp * contacts_sp
+  (summer_comp + winter_comp) * winter_FOI_sp 
+
 lambda_sm = (summer_comp + spring_comp) * spring_FOI_sm + 
   summer_comp * summer_FOI_sm + 
   (summer_comp + autumn_comp) * autumn_FOI_sm + 
-  (summer_comp + winter_comp) * winter_FOI_sm #+
-#contact_comp * contacts_sm
+  (summer_comp + winter_comp) * winter_FOI_sm 
+
 lambda_au = (summer_comp + spring_comp) * spring_FOI_au + 
   summer_comp * summer_FOI_au + 
   (summer_comp + autumn_comp) * autumn_FOI_au + 
-  (summer_comp + winter_comp) * winter_FOI_au #+
-# contact_comp * contacts_au
+  (summer_comp + winter_comp) * winter_FOI_au 
+
 lambda_wt = (summer_comp + spring_comp) * spring_FOI_wt + 
   summer_comp * summer_FOI_wt +
   (summer_comp + autumn_comp) * autumn_FOI_wt + 
-  (summer_comp + winter_comp) * winter_FOI_wt #+
-#contact_comp * contacts_wt
+  (summer_comp + winter_comp) * winter_FOI_wt 
 
 ## Initial states:
 # spring cohort
-initial(M1_sp) <- prop * M1_sp_ini # only a proportion og children is born
+initial(M1_sp) <- prop * M1_sp_ini # only a proportion of children is born protected
 initial(M2_sp) <- M2_sp_ini
 initial(S_sp) <- (1-prop) * M1_sp_ini
 initial(R_sp) <- R_sp_ini
@@ -274,7 +225,6 @@ spring_comp <- parameter(1e-05)
 summer_comp <- parameter(0.02002)
 autumn_comp <- parameter(3e-05)
 winter_comp <- parameter(4e-05)
-#contact_comp <- user(0.02)
 
 # Proportion born with maternal immunity
 prop <- parameter(1)
