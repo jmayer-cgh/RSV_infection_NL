@@ -127,7 +127,7 @@ settings <- list(
   burnin =500,            
   message = FALSE, 
   nrChains = 1,  
-  thin =2
+  thin = 2
 ) 
 
 out_bay <- runMCMC(bayesianSetup = bayesianSetup, settings = settings)
@@ -166,7 +166,7 @@ model_mab_runs <- resp_mab %>%
 
 # Identify which numbers were generated from the same initial values
 model_mab_runs_t <- model_mab_runs %>%
-  mutate(iter = rep(1:ceiling(nrow(model_mab_runs) / 365), each = 365)[1:nrow(model_mab_runs)])
+  mutate(iter = rep(1:ceiling(nrow(model_mab_runs) / 730), each = 730)[1:nrow(model_mab_runs)])
 
 # Hospitalisations
 model_ie_hosp_sum <- model_mab_runs %>%
@@ -176,7 +176,7 @@ model_ie_hosp_sum <- model_mab_runs %>%
             IE_t_hi = quantile(IE_t, probs = .975))%>%
   filter(group == "hospitalisation")
 
-# Mild
+# Medically-attended
 model_ie_med_sum <- model_mab_runs %>%
   group_by(group,t) %>%
   summarise(IE_t_mid = median(IE_t),
