@@ -1293,3 +1293,165 @@ plt_hosp %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-
 total_hosp_1_y_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Total hospitalisations.png",
                               width = 14, height = 16, units = "in", 
                               device='png')
+
+# Plot seroconversions with CI
+converted_ci <- list()
+
+for (index in seq(1:1000)){
+  converted_all_rand <- as.numeric(t(converted_all[index,0:366]))
+  converted_sp_rand <- as.numeric(t(converted_sp[index,0:366]))
+  converted_sm_rand <- as.numeric(t(converted_sm[index,0:366]))
+  converted_au_rand <- as.numeric(t(converted_au[index,0:366]))
+  converted_wt_rand <- as.numeric(t(converted_wt[index,0:366]))
+  
+  converted <- data.frame(age_midpoint = 0:365,
+                          All = converted_all_rand,
+                          Spring = converted_sp_rand,
+                          Summer = converted_sm_rand,
+                          Autumn = converted_au_rand,
+                          Winter = converted_wt_rand)
+  
+  converted_ci[[index]] <- converted
+  converted_ci[[index]]$iter <- index # save index in case we want to check one iteration
+}
+
+converted_ci_df <- do.call("rbind", converted_ci)
+converted_ci_long <- converted_ci_df %>%
+  pivot_longer(cols = !c(age_midpoint, iter),
+               names_to = "season_birth",
+               values_to = "seroconverted") %>%
+  mutate(season_birth = factor(season_birth, levels = c("Autumn", "Winter",
+                                                         "Spring", "Summer",
+                                                         "All")))
+
+converted_ci <- converted_ci_long %>% 
+  group_by(season_birth, age_midpoint) %>%
+  summarise(sero_low_95 = quantile(seroconverted, 0.05, na.rm = T),
+            sero_median = quantile(seroconverted, 0.5, na.rm = T),
+            sero_up_95 = quantile(seroconverted, 0.95, na.rm = T)) %>%
+  ungroup()
+
+converted_plt <- converted_ci %>%
+  ggplot() +
+  geom_line(aes(x = age_midpoint, y = sero_median, col = season_birth),
+            linewidth = 1.2) +
+  geom_ribbon(aes(x = age_midpoint, ymin = sero_low_95, ymax = sero_up_95, 
+                    fill = season_birth),
+              alpha = 0.4) +
+  facet_wrap (~season_birth) +
+  labs(title = "Proportion of seroconverted children under the age of 1 year",
+       x = "\nAge (days)",
+       y = " Proportion seroconverted\n",
+       colour = "Season of birth",
+       fill = "Season of birth") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.text.y = element_text(size = 18),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25),
+         strip.text.x = element_text(size = 20, color = "black")) +
+  scale_y_continuous(labels = scales::percent_format())
+
+converted_plt
+
+converted_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Prop seroconverted.png",
+                              width = 18, height = 16, units = "in", 
+                              device='png')
+
+# Plot VE with CI
+VE_ci <- model_ve_runs_t %>%
+  filter(group == "severe") %>%
+  group_by(t) %>%
+  summarise(ve_low_95 = quantile(VE_t, 0.05),
+            ve_median = quantile(VE_t, 0.5),
+            ve_up_95 = quantile(VE_t, 0.95)) %>%
+  ungroup()
+
+VE_ci_plt <- VE_ci %>%
+  ggplot() +
+  geom_line(aes(x = t, y = ve_median),
+            linewidth = 1.2) +
+  geom_ribbon(aes(x = t, ymin = ve_low_95, ymax = ve_up_95),
+              alpha = 0.4) +
+  labs(title = "Efficacy of the maternal vaccine",
+       x = "\nAge (days)",
+       y = "VE\n") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.text.y = element_text(size = 18),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25)) +
+  scale_y_continuous(labels = scales::percent_format())
+
+VE_ci_plt 
+
+VE_ci_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/VE waning.png",
+                         width = 18, height = 16, units = "in", 
+                         device='png')
+
+VE_inv_plt <- VE_ci %>%
+  ggplot() +
+  geom_line(aes(x = t, y = 1-ve_median),
+            linewidth = 1.2) +
+  geom_ribbon(aes(x = t, ymax = 1-ve_low_95, ymin = 1-ve_up_95),
+              alpha = 0.4) +
+  labs(title = "Odds of hospitalisation despite receiving the MV",
+       x = "\nAge (days)",
+       y = "OR\n") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.text.y = element_text(size = 18),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25)) 
+
+VE_inv_plt 
+
+VE_inv_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/OR VE.png",
+                     width = 18, height = 16, units = "in", 
+                     device='png')
+
+# Do seroconversion * (1-VE) 100 times and plot it
+
+# Age dependent disease progression
+severe_illness_plt <- severe_illness_new %>%
+  filter(age_months != "12-14" & age_months != "15-17" & age_months != "18-20" & 
+           age_months != "21-23" & age_months != "24-35" & age_months != "36-47" &
+           age_months != "48-59" & age_months != "<5 years" & age_months !="12" &
+           age_months != "< 1 year") %>%
+  mutate(age_months = factor(age_months, levels = c("<1", "1", "2", "3", "4", 
+                                                    "5", "6", "7", "8", "9", "10",
+                                                    "11"))) %>%
+  ggplot() +
+  geom_point(aes(x = age_months, y = total_severe_illness_rate)) +
+  geom_errorbar(aes(x = age_months, ymin = total_severe_illness_lower_ci, 
+                    ymax = total_severe_illness_upper_ci)) +
+ labs(title = "Severe RSV illness rates under the age of 1 year",
+       x = "\nAge (months)",
+       y = "Illness rates\n") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.text.y = element_text(size = 18),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25))
+
+severe_illness_plt
+
+severe_illness_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Severe illness rates.png",
+                              width = 18, height = 16, units = "in", 
+                              device='png')
