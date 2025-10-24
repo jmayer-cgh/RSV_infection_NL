@@ -1422,6 +1422,97 @@ VE_inv_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDriv
                      device='png')
 
 # Do seroconversion * (1-VE) 100 times and plot it
+odds_MV <- list()
+
+for (i in 1:100){
+  # Take one random iteration of the model
+  rand <- base::sample(1:10000, 1)
+  # And extract the values for it
+  converted_all_rand <- as.numeric(t(converted_all[rand,0:366]))
+  converted_sp_rand <- as.numeric(t(converted_sp[rand,0:366]))
+  converted_sm_rand <- as.numeric(t(converted_sm[rand,0:366]))
+  converted_au_rand <- as.numeric(t(converted_au[rand,0:366]))
+  converted_wt_rand <- as.numeric(t(converted_wt[rand,0:366]))
+  
+  converted <- data.frame(age_midpoint = 0:365,
+                          All = converted_all_rand,
+                          Spring = converted_sp_rand,
+                          Summer = converted_sm_rand,
+                          Autumn = converted_au_rand,
+                          Winter = converted_wt_rand)
+
+  
+  # Maternal vaccination
+  # Take one random iteration of the model
+  draw <- base::sample(1:10000, 1)
+  # And extract the values for it
+  VE_distribution <- model_ve_runs_t %>% filter(iter == draw)
+  # Get OR
+  OR_dist <- VE_distribution %>%
+    mutate(OR_t = 1 - VE_t) %>%
+    select(t, OR_t)
+  
+  # Combined the two
+  risk <- converted %>%
+    left_join(OR_dist, by = c("age_midpoint" = "t")) %>%
+    mutate(adjusted_seroconverted_all = All * OR_t,
+           adjusted_seroconverted_sp = Spring * OR_t,
+           adjusted_seroconverted_sm = Summer * OR_t,
+           adjusted_seroconverted_au = Autumn * OR_t,
+           adjusted_seroconverted_wt = Winter * OR_t)
+  
+  odds_MV[[i]] <- risk
+  odds_MV[[i]]$iter <- i # save index in case we want to check one iteration
+}
+
+odds_MV_df <- do.call("rbind", odds_MV)
+odds_MV_ci <- odds_MV_df %>%
+  pivot_longer(cols = c(adjusted_seroconverted_all, adjusted_seroconverted_sp,
+                        adjusted_seroconverted_sm, adjusted_seroconverted_au,
+                        adjusted_seroconverted_wt),
+               names_to = "season_birth",
+               values_to = "adjusted_seroconverted") %>%
+  mutate(season_birth = case_when(season_birth == "adjusted_seroconverted_all" ~ "All",
+                                 season_birth == "adjusted_seroconverted_sp" ~ "Spring",
+                                 season_birth == "adjusted_seroconverted_sm" ~ "Summer",
+                                 season_birth == "adjusted_seroconverted_au" ~ "Autumn",
+                                 season_birth == "adjusted_seroconverted_wt" ~ "Winter")) %>%
+  group_by(season_birth, age_midpoint) %>%
+  summarise(adj_sero_low_95 = quantile(adjusted_seroconverted, 0.05, na.rm = T),
+            adj_sero_median = quantile(adjusted_seroconverted, 0.5, na.rm = T),
+            adj_sero_up_95 = quantile(adjusted_seroconverted, 0.95, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = factor(season_birth, levels = c("Autumn", "Winter",
+                                                         "Spring", "Summer",
+                                                         "All")))
+
+odds_MV_plt <- odds_MV_ci %>%
+  ggplot() +
+  geom_line(aes(x = age_midpoint, y = adj_sero_median, colour = season_birth),
+            linewidth = 1.2) +
+  geom_ribbon(aes(x = age_midpoint, ymin = adj_sero_low_95, ymax = adj_sero_up_95, 
+                    fill = season_birth),
+              alpha = 0.4) +
+  facet_wrap (~season_birth) +
+  labs(title = "Odds of hospitalisation given infection despite receiving the MV",
+       x = "\nAge (days)",
+       y = "OR\n") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.text.y = element_text(size = 18),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25),
+         strip.text.x = element_text(size = 20, color = "black")) 
+
+odds_MV_plt 
+
+odds_MV_plt  %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/OR with risk and VE.png",
+                      width = 18, height = 16, units = "in", 
+                      device='png')
 
 # Age dependent disease progression
 severe_illness_plt <- severe_illness_new %>%
