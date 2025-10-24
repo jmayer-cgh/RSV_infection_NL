@@ -55,8 +55,7 @@ mild_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates
 
 # ----------- Data -------------------------------------------------------------
 # Read in and the data and put it in the right format
-data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
-                 sep=",")
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
 
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
@@ -73,7 +72,7 @@ winter <- c(1, 2, 12)
 
 data <- data %>%
   mutate(
-    Birth_mo = birthday %>% lubridate::month(),
+    Birth_mo = format(as.Date(Birth_doy, origin = "2020-12-31"), "%m") %>% as.numeric(),
     season_birth = case_when (Birth_mo %in% spring ~ "spring",
                               Birth_mo %in% summer ~ "summer",
                               Birth_mo %in% autumn ~ "autumn",
