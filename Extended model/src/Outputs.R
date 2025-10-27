@@ -987,9 +987,10 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             prev_median = quantile(prevented_hospitalisations, 0.5, na.rm = T),
             prev_up_95 = quantile(prevented_hospitalisations, 0.95, na.rm = T)) %>%
   ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
-                               levels = c("winter", "spring", "summer", "autumn",
-                                          "all")))
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
   group_by(intervention, season_birth) %>%
@@ -1000,9 +1001,10 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
             prev_median = quantile(prevented_cases, 0.5, na.rm = T),
             prev_up_95 = quantile(prevented_cases, 0.95, na.rm = T)) %>%
   ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
-                               levels = c("winter", "spring", "summer", "autumn",
-                                          "all")))
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
 
 # Get NNV to prevent one hospitalisation
 nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
@@ -1067,9 +1069,9 @@ palette <- c("No immunisation" = "#9C964A", "MV" = "#6A9D96",
              "+ mAB for winter births" = "#B479E0",
              "+ mAB for spring and summer births" = "#B39BC8")
 
-palette_season <- c("autumn" = "#88BBA0", "winter" = "#13D4C7", 
-                    "spring" = "#B39BC8", "summer" = "#B479E0",
-                    "all" = "#9C964A")
+palette_season <- c("Autumn" = "#88BBA0", "Winter" = "#13D4C7", 
+                    "Spring" = "#B39BC8", "Summer" = "#B479E0",
+                    "All" = "#9C964A")
 
 # One iteration
 total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>% 
@@ -1079,14 +1081,14 @@ total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>%
   labs(x = "\nIntervention",
        y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n") +
   theme_light() +
-  theme (#axis.text.y=element_blank(), 
-    axis.ticks.y=element_blank(),
-    legend.position = "None",
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-    axis.title.x = element_text(size = 20),
-    axis.title.y = element_text(size = 20),
-    title = element_text(size = 20)) +
-  scale_fill_manual(values = palette_season)
+  theme ( axis.ticks.y = element_blank(),
+          legend.position = "None",
+          axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+          axis.text.y = element_text(size = 20),
+          axis.title.x = element_text(size = 25),
+          axis.title.y = element_text(size = 25)) +
+  scale_fill_manual(values = palette_season) +
+  scale_y_continuous(labels=scales::comma)
 
 total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>% 
   ggplot() +
@@ -1104,25 +1106,26 @@ total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>%
   scale_fill_manual(values = palette_season)
 
 # All with CI
-plt <- total_hosp_intervention_int %>% filter (season_birth != "all") %>%
+plt <- total_hosp_intervention_int %>% filter (season_birth != "All") %>%
   ggplot() +
   geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), position = "stack") +
-  geom_errorbar(data = subset(total_hosp_intervention_int, season_birth == "all"),
+  geom_errorbar(data = subset(total_hosp_intervention_int, season_birth == "All"),
                 aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
-       y = "Number of RSV-associated hospitalisations in children under the age of 1 year\n",
+       y = "Number of RSV-associated hospitalisations in\nchildren under the age of 1 year\n",
        fill = "Season of birth") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
     legend.position = "right",
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-    axis.text.y = element_text(size = 18),
-    axis.title.x = element_text(size = 20),
-    axis.title.y = element_text(size = 20),
-    title = element_text(size = 20),
-    legend.text = element_text(size = 18)) +
-  scale_fill_manual(values = palette_season)
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 25),
+    axis.title.y = element_text(size = 25),
+    legend.title = element_text(size = 25),
+    legend.text = element_text(size = 20)) +
+  scale_fill_manual(values = palette_season) +
+  scale_y_continuous(labels=scales::comma)
 
 plt
 
@@ -1155,15 +1158,16 @@ plt_nnv <- nnv %>% filter (intervention != "No immunisation" & season_birth == "
   geom_errorbar(aes(x = intervention, ymin = NNV_low_95, ymax = NNV_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
-       y = "NNV to prevent one hospitalisation\n") +
+       y = "NNI to prevent one hospitalisation\n") +
   theme_light() +
   theme (axis.ticks.y=element_blank(),
          legend.position = "None",
-         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 20),
-         axis.title.y = element_text(size = 20),
-         title = element_text(size = 20)) +
-  scale_fill_manual(values = palette)
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         axis.text.y = element_text(size = 20)) +
+  scale_fill_manual(values = palette) +
+  scale_y_continuous(labels=scales::comma)
 
 plt_nnv
 
@@ -1399,21 +1403,20 @@ VE_ci_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive
 VE_inv_plt <- VE_ci %>%
   ggplot() +
   geom_line(aes(x = t, y = 1-ve_median),
-            linewidth = 1.2) +
+            linewidth = 1.5, colour = "blue4") +
   geom_ribbon(aes(x = t, ymax = 1-ve_low_95, ymin = 1-ve_up_95),
-              alpha = 0.4) +
+              alpha = 0.4, fill = "darkslategray1") +
   labs(title = "Odds of hospitalisation despite receiving the MV",
        x = "\nAge (days)",
-       y = "OR\n") +
+       y = "Risk of hospitalisation despite receiving the MV\n") +
   theme_light() +
   theme (axis.ticks.y = element_blank(),
          legend.position = "none",
-         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 25),
-         axis.text.y = element_text(size = 18),
-         axis.title.y = element_text(size = 25),
-         title = element_text(size = 25),
-         legend.text = element_text(size = 25)) 
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 25),
+         axis.title.x = element_text(size = 30),
+         axis.text.y = element_text(size = 25),
+         axis.title.y = element_text(size = 30),
+         title = element_blank()) 
 
 VE_inv_plt 
 
@@ -1494,19 +1497,16 @@ odds_MV_plt <- odds_MV_ci %>%
                     fill = season_birth),
               alpha = 0.4) +
   facet_wrap (~season_birth) +
-  labs(title = "Odds of hospitalisation given infection despite receiving the MV",
-       x = "\nAge (days)",
-       y = "OR\n") +
+  labs(x = "\nAge (days)",
+       y = "Risk of hospitalisation despite receiving the MV\n") +
   theme_light() +
   theme (axis.ticks.y = element_blank(),
          legend.position = "none",
-         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 25),
-         axis.text.y = element_text(size = 18),
-         axis.title.y = element_text(size = 25),
-         title = element_text(size = 25),
-         legend.text = element_text(size = 25),
-         strip.text.x = element_text(size = 20, color = "black")) 
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 25),
+         axis.title.x = element_text(size = 30),
+         axis.text.y = element_text(size = 25),
+         axis.title.y = element_text(size = 30),
+         strip.text.x = element_text(size = 30, color = "black")) 
 
 odds_MV_plt 
 
@@ -1524,21 +1524,19 @@ severe_illness_plt <- severe_illness_new %>%
                                                     "5", "6", "7", "8", "9", "10",
                                                     "11"))) %>%
   ggplot() +
-  geom_point(aes(x = age_months, y = total_severe_illness_rate)) +
+  geom_point(aes(x = age_months, y = total_severe_illness_rate), size = 2) +
   geom_errorbar(aes(x = age_months, ymin = total_severe_illness_lower_ci, 
                     ymax = total_severe_illness_upper_ci)) +
- labs(title = "Severe RSV illness rates under the age of 1 year",
-       x = "\nAge (months)",
-       y = "Illness rates\n") +
+ labs(x = "\nAge (months)",
+       y = "Severe RSV illness rates under the age of 1 year\n") +
   theme_light() +
   theme (axis.ticks.y = element_blank(),
          legend.position = "none",
-         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-         axis.title.x = element_text(size = 25),
-         axis.text.y = element_text(size = 18),
-         axis.title.y = element_text(size = 25),
-         title = element_text(size = 25),
-         legend.text = element_text(size = 25))
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 25),
+         axis.title.x = element_text(size = 30),
+         axis.text.y = element_text(size = 25),
+         axis.title.y = element_text(size = 30)) +
+  scale_y_continuous(labels = scales::comma)
 
 severe_illness_plt
 
