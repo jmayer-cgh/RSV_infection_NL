@@ -980,12 +980,12 @@ total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
   filter (age_bracket == "all") %>%
   group_by(intervention, season_birth) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05, na.rm = T),
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
             hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
-            hosp_up_95 = quantile(n_hospitalisations, 0.95, na.rm = T),
-            prev_low_95 = quantile(prevented_hospitalisations, 0.05, na.rm = T),
+            hosp_up_95 = quantile(n_hospitalisations, 0.975, na.rm = T),
+            prev_low_95 = quantile(prevented_hospitalisations, 0.025, na.rm = T),
             prev_median = quantile(prevented_hospitalisations, 0.5, na.rm = T),
-            prev_up_95 = quantile(prevented_hospitalisations, 0.95, na.rm = T)) %>%
+            prev_up_95 = quantile(prevented_hospitalisations, 0.975, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
@@ -994,12 +994,12 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
 
 total_ma_intervention_int <- total_ma_intervention_df %>% 
   group_by(intervention, season_birth) %>%
-  summarise(cases_low_95 = quantile(n_cases, 0.05, na.rm = T),
+  summarise(cases_low_95 = quantile(n_cases, 0.025, na.rm = T),
             cases_median = quantile(n_cases, 0.5, na.rm = T),
-            cases_up_95 = quantile(n_cases, 0.95, na.rm = T),
-            prev_low_95 = quantile(prevented_cases, 0.05, na.rm = T),
+            cases_up_95 = quantile(n_cases, 0.975, na.rm = T),
+            prev_low_95 = quantile(prevented_cases, 0.025, na.rm = T),
             prev_median = quantile(prevented_cases, 0.5, na.rm = T),
-            prev_up_95 = quantile(prevented_cases, 0.95, na.rm = T)) %>%
+            prev_up_95 = quantile(prevented_cases, 0.975, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
@@ -1202,9 +1202,9 @@ total_hosp_no_int_age <- total_hosp_intervention_df %>%
   summarise(n_hospitalisations = sum(n_hospitalisations, na.rm = T)) %>%
   ungroup() %>%
   group_by(age_bracket, intervention, season_birth) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05, na.rm = T),
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
             hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
-            hosp_up_95 = quantile(n_hospitalisations, 0.95, na.rm = T)) %>%
+            hosp_up_95 = quantile(n_hospitalisations, 0.975, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("winter", "spring", "summer", "autumn",
@@ -1329,9 +1329,9 @@ converted_ci_long <- converted_ci_df %>%
 
 converted_ci <- converted_ci_long %>% 
   group_by(season_birth, age_midpoint) %>%
-  summarise(sero_low_95 = quantile(seroconverted, 0.05, na.rm = T),
+  summarise(sero_low_95 = quantile(seroconverted, 0.025, na.rm = T),
             sero_median = quantile(seroconverted, 0.5, na.rm = T),
-            sero_up_95 = quantile(seroconverted, 0.95, na.rm = T)) %>%
+            sero_up_95 = quantile(seroconverted, 0.975, na.rm = T)) %>%
   ungroup()
 
 converted_plt <- converted_ci %>%
@@ -1481,9 +1481,9 @@ odds_MV_ci <- odds_MV_df %>%
                                  season_birth == "adjusted_seroconverted_au" ~ "Autumn",
                                  season_birth == "adjusted_seroconverted_wt" ~ "Winter")) %>%
   group_by(season_birth, age_midpoint) %>%
-  summarise(adj_sero_low_95 = quantile(adjusted_seroconverted, 0.05, na.rm = T),
+  summarise(adj_sero_low_95 = quantile(adjusted_seroconverted, 0.025, na.rm = T),
             adj_sero_median = quantile(adjusted_seroconverted, 0.5, na.rm = T),
-            adj_sero_up_95 = quantile(adjusted_seroconverted, 0.95, na.rm = T)) %>%
+            adj_sero_up_95 = quantile(adjusted_seroconverted, 0.975, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = factor(season_birth, levels = c("Autumn", "Winter",
                                                          "Spring", "Summer",
