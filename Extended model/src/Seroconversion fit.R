@@ -16,8 +16,7 @@ msr <- odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerl
 
 # ----------- Data -------------------------------------------------------------
 # Read in and the data and put it in the right format
-data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
-                 sep=",")
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
 
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
@@ -34,7 +33,7 @@ winter <- c(1, 2, 12)
 
 data <- data %>%
   mutate(
-    Birth_mo = birthday %>% lubridate::month(),
+    Birth_mo = format(as.Date(Birth_doy, origin = "2020-12-31"), "%m") %>% as.numeric(),
     season_birth = case_when (Birth_mo %in% spring ~ "spring",
                               Birth_mo %in% summer ~ "summer",
                               Birth_mo %in% autumn ~ "autumn",
@@ -188,8 +187,8 @@ rownames(hpd) <- c("low95", "median", "up95")
 
 # Get the mean highest probability distribution
 mean_hpd <- apply(samples_thinned$pars, 2, mean)
-lower_95_hpd <- apply(samples_thinned$pars, 2, quantile, probs = 0.05)
-upper_95_hpd <- apply(samples_thinned$pars, 2, quantile, probs = 0.95)
+lower_95_hpd <- apply(samples_thinned$pars, 2, quantile, probs = 0.025)
+upper_95_hpd <- apply(samples_thinned$pars, 2, quantile, probs = 0.975)
 summary_hpd <- rbind(mean_hpd, lower_95_hpd, upper_95_hpd)
 
 # Thin and check mixing
@@ -207,8 +206,8 @@ dev.off ()
 # Summary
 params_est <- summarise_draws(draws_thinned, 
                               mean, sd, median, mad, 
-                              q5 = ~quantile(.x, 0.05), 
-                              q95 = ~quantile(.x, 0.95),
+                              q5 = ~quantile(.x, 0.025), 
+                              q95 = ~quantile(.x , 0.975),
                               rhat, ess_bulk, ess_tail,
                               min, max)
 
