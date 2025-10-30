@@ -12,6 +12,7 @@ library(tidyr)
 library(ggplot2)
 library(posterior)
 library(bayesplot)
+library(magrittr)
 
 # ----------- Model ------------------------------------------------------------
 # Load model
@@ -19,8 +20,7 @@ msr <- odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerl
 
 # ----------- Data -------------------------------------------------------------
 # Read in and the data and put it in the right format
-data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/master/data/infection_status_csv.txt",
-                 sep=",")
+data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
 
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
@@ -37,7 +37,7 @@ winter <- c(1, 2, 12)
 
 data <- data %>%
   mutate(
-    Birth_mo = birthday %>% lubridate::month(),
+    Birth_mo = format(as.Date(Birth_doy, origin = "2020-12-31"), "%m") %>% as.numeric(),
     season_birth = case_when (Birth_mo %in% spring ~ "spring",
                               Birth_mo %in% summer ~ "summer",
                               Birth_mo %in% autumn ~ "autumn",
@@ -263,10 +263,19 @@ rownames(hpd) <- c("low95", "median", "up95")
 
 # Get the mean highest probability distribution
 mean_hpd <- apply(samples_tuned$pars, 2, mean)
-lower_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.05)
-upper_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.95)
+lower_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.025)
+upper_95_hpd <- apply(samples_tuned$pars, 2, quantile, probs = 0.975)
 summary_hpd <- rbind(mean_hpd, lower_95_hpd, upper_95_hpd)
 summary_hpd
+
+params_est <- summarise_draws(draws_thinned, 
+                              mean, sd, median, mad, 
+                              q5 = ~quantile(.x, 0.025), 
+                              q95 = ~quantile(.x , 0.975),
+                              rhat, ess_bulk, ess_tail,
+                              min, max)
+params_est %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/Parameter estimates.csv")
+
 
 # Seroconversion estimates
 seroconversion <- list()
@@ -274,25 +283,25 @@ seroconversion <- list()
 for (i in 1:length(incidence_data_season_wide$time)){
   age_midpoint <- incidence_data_season_wide$time[i]
   
-  low95_sp <- quantile(trajectories$R_sp[i, , ], 0.05)
+  low95_sp <- quantile(trajectories$R_sp[i, , ], 0.025)
   median_sp <- quantile(trajectories$R_sp[i, , ], 0.5)
-  up95_sp <- quantile(trajectories$R_sp[i, , ], 0.95)
+  up95_sp <- quantile(trajectories$R_sp[i, , ], 0.975)
   
-  low95_sm <- quantile(trajectories$R_sm[i, , ], 0.05)
+  low95_sm <- quantile(trajectories$R_sm[i, , ], 0.025)
   median_sm <- quantile(trajectories$R_sm[i, , ], 0.5)
-  up95_sm <- quantile(trajectories$R_sm[i, , ], 0.95)
+  up95_sm <- quantile(trajectories$R_sm[i, , ], 0.975)
   
-  low95_au <- quantile(trajectories$R_au[i, , ], 0.05)
+  low95_au <- quantile(trajectories$R_au[i, , ], 0.025)
   median_au <- quantile(trajectories$R_au[i, , ], 0.5)
-  up95_au <- quantile(trajectories$R_au[i, , ], 0.95)
+  up95_au <- quantile(trajectories$R_au[i, , ], 0.975)
   
-  low95_wt <- quantile(trajectories$R_wt[i, , ], 0.05)
+  low95_wt <- quantile(trajectories$R_wt[i, , ], 0.025)
   median_wt <- quantile(trajectories$R_wt[i, , ], 0.5)
-  up95_wt <- quantile(trajectories$R_wt[i, , ], 0.95)
+  up95_wt <- quantile(trajectories$R_wt[i, , ], 0.975)
   
-  low95_all <- quantile(trajectories$R_all[i, , ], 0.05)
+  low95_all <- quantile(trajectories$R_all[i, , ], 0.025)
   median_all <- quantile(trajectories$R_all[i, , ], 0.5)
-  up95_all <- quantile(trajectories$R_all[i, , ], 0.95)
+  up95_all <- quantile(trajectories$R_all[i, , ], 0.975)
   
   combined <- data.frame(age_midpoint = age_midpoint,
                          low95_sp, median_sp, up95_sp, 
@@ -314,25 +323,25 @@ for (i in 1:length(incidence_data_season_wide$time)){
   age_midpoint <- incidence_data_season_wide$time[i]
   
   if(i>1){
-    low95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.05)
+    low95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.025)
     median_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.5)
-    up95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.95)
+    up95_sp <- quantile(trajectories$R_sp[i, , ] - trajectories$R_sp[i-1, , ], 0.975)
     
-    low95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.05)
+    low95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.025)
     median_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.5)
-    up95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.95)
+    up95_sm <- quantile(trajectories$R_sm[i, , ] - trajectories$R_sm[i-1, , ], 0.975)
     
-    low95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.05)
+    low95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.025)
     median_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.5)
-    up95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.95)
+    up95_au <- quantile(trajectories$R_au[i, , ] - trajectories$R_au[i-1, , ], 0.975)
     
-    low95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.05)
+    low95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.025)
     median_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.5)
-    up95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.95)
+    up95_wt <- quantile(trajectories$R_wt[i, , ] - trajectories$R_wt[i-1, , ], 0.975)
     
-    low95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.05)
+    low95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.025)
     median_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.5)
-    up95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.95)
+    up95_all <- quantile(trajectories$R_all[i, , ] - trajectories$R_all[i-1, , ], 0.975)
   } else{
     low95_sp <- 0
     median_sp <- 0
@@ -425,4 +434,101 @@ incidence_test %>% filter(age_midpoint <= 365) %>%
   scale_y_continuous(labels = scales::percent) +
   theme_light()
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence all.png");
+dev.off ()
+
+# ------------------------------------------------------------------------------
+# Simulate the model with the parameter estimates
+msr_sim <- odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Simulation model.R")
+
+
+# Get mean and sd for each parameter
+mu_mean <- params_est %$% mean[params_est$variable == "mu"]
+mu_sd <- params_est %$% sd[params_est$variable == "mu"]
+prop_mean <- params_est %$% mean[params_est$variable == "prop"]
+prop_sd <- params_est %$% sd[params_est$variable == "prop"]
+spring_comp_mean <- params_est %$% mean[params_est$variable == "spring_comp"]
+spring_comp_sd <- params_est %$% sd[params_est$variable == "spring_comp"]
+summer_comp_mean <- params_est %$% mean[params_est$variable == "summer_comp"]
+summer_comp_sd <- params_est %$% sd[params_est$variable == "summer_comp"]
+autumn_comp_mean <- params_est %$% mean[params_est$variable == "autumn_comp"]
+autumn_comp_sd <- params_est %$% sd[params_est$variable == "autumn_comp"]
+winter_comp_mean <- params_est %$% mean[params_est$variable == "winter_comp"]
+winter_comp_sd <- params_est %$% sd[params_est$variable == "winter_comp"]
+
+pars <- list(spring_comp_mean = spring_comp_mean,
+             spring_comp_sd = spring_comp_sd,
+             summer_comp_mean = summer_comp_mean,
+             summer_comp_sd = summer_comp_sd,
+             autumn_comp_mean = autumn_comp_mean,
+             autumn_comp_sd = autumn_comp_sd,
+             winter_comp_mean = winter_comp_mean,
+             winter_comp_sd = winter_comp_sd,
+             mu_mean = mu_mean,
+             mu_sd = mu_sd,
+             prop_mean = prop_mean,
+             prop_sd = prop_sd)
+
+sys <- dust_system_create(msr_sim(), pars, n_particles = 10000, dt = 1)
+dust_system_set_state_initial(sys)
+time <- 0:(5*365)
+y <- dust_system_simulate(sys, time)
+
+# Save the outputs in case we don't want to run the whole model again
+prevalence <- dust_unpack_state(sys, y)$R_all
+prevalence_sp <- dust_unpack_state(sys, y)$R_sp
+prevalence_sm <- dust_unpack_state(sys, y)$R_sm
+prevalence_au <- dust_unpack_state(sys, y)$R_au
+prevalence_wt <- dust_unpack_state(sys, y)$R_wt
+prevalence_summary <- list(prevalence, prevalence_sp, prevalence_sm, prevalence_au, prevalence_wt)
+saveRDS(prevalence_summary, file = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion simulation outputs.rds")
+
+# Plot the results
+# All cohorts
+matplot(time, t(prevalence), type = "l", lty = 1, col = "#00000055",
+        xlab = "Time (days)", ylab = "% seroconverted", las = 1)
+points(prop_seroconv ~ time, incidence_data, pch = 19, col = "red")
+arrows(x0 = incidence_data$time, y0 = incidence_data$seroprev_low95, 
+       x1 = incidence_data$time, y1 = incidence_data$seroprev_up95, 
+       angle = 90, code = 3, length = 0.1, col = "red")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Simulated fit all.png")
+dev.off ()
+
+# Spring
+matplot(time, t(prevalence_sp), type = "l", lty = 1, col = "#00000055",
+        xlab = "Time (days)", ylab = "% seroconverted (spring)", las = 1)
+points(prop_seroconv_spring ~ time, incidence_data_season_wide, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_spring, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_spring, 
+       angle = 90, code = 3, length = 0.1, col = "red")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Simulated fit spring.png")
+dev.off ()
+
+# Summer
+matplot(time, t(prevalence_sm), type = "l", lty = 1, col = "#00000055",
+        xlab = "Time (days)", ylab = "% seroconverted (summer)", las = 1)
+points(prop_seroconv_summer ~ time, incidence_data_season_wide, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_summer, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_summer, 
+       angle = 90, code = 3, length = 0.1, col = "red")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Simulated fit summer.png")
+dev.off ()
+
+# Autumn
+matplot(time, t(prevalence_au), type = "l", lty = 1, col = "#00000055",
+        xlab = "Time (days)", ylab = "% seroconverted (autumn)", las = 1)
+points(prop_seroconv_autumn ~ time, incidence_data_season_wide, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_autumn, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_autumn, 
+       angle = 90, code = 3, length = 0.1, col = "red")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Simulated fit autumn.png")
+dev.off ()
+
+# Winter
+matplot(time, t(prevalence_wt), type = "l", lty = 1, col = "#00000055",
+        xlab = "Time (days)", ylab = "% seroconverted (winter)", las = 1)
+points(prop_seroconv_winter ~ time, incidence_data_season_wide, pch = 19, col = "red")
+arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$seroprev_low95_winter, 
+       x1 = incidence_data_season_wide$time, y1 = incidence_data_season_wide$seroprev_up95_winter, 
+       angle = 90, code = 3, length = 0.1, col = "red")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Simulated fit winter.png")
 dev.off ()

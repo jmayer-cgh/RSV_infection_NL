@@ -382,3 +382,6 @@ arrows(x0 = incidence_data_season_wide$time, y0 = incidence_data_season_wide$ser
 # Save the outputs in case we don't want to run the whole model again
 prevalence_summary <- list(prevalence, prevalence_sp, prevalence_sm, prevalence_au, prevalence_wt)
 saveRDS(prevalence_summary, file = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion simulation outputs.rds")
+
+# Save the parameter estimates
+params_est %>% write.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/Parameter estimates.csv")

@@ -901,7 +901,7 @@ source(paste0(path_code, "VE estimates.R")) # takes about 10 min
 # Get IE of mAB
 source(paste0(path_code, "mAB IE estimates.R")) # takes about X min
 # Get seroconversion by age
-# source(paste0(path_code, "Seroconversion fit.R")) # takes about 3 hours 
+# source(paste0(path_code, "Main.R")) # takes about 3 hours 
 converted_summary <- readRDS("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/RDS files/seroconversion simulation outputs.rds")
 converted_all <- do.call(rbind.data.frame, converted_summary[1])
 converted_sp <- do.call(rbind.data.frame, converted_summary[2])
