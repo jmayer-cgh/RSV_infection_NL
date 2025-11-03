@@ -1401,14 +1401,14 @@ VE_ci_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive
                          device='png')
 
 VE_inv_plt <- VE_ci %>%
+  filter(t/30.25 <= 11) %>%
   ggplot() +
-  geom_line(aes(x = t, y = 1-ve_median),
+  geom_line(aes(x = t/30.25, y = 1-ve_median),
             linewidth = 1.5, colour = "blue4") +
-  geom_ribbon(aes(x = t, ymax = 1-ve_low_95, ymin = 1-ve_up_95),
+  geom_ribbon(aes(x = t/30.25, ymax = 1-ve_low_95, ymin = 1-ve_up_95),
               alpha = 0.4, fill = "darkslategray1") +
-  labs(title = "Odds of hospitalisation despite receiving the MV",
-       x = "\nAge (days)",
-       y = "Risk of hospitalisation despite receiving the MV\n") +
+  labs(x = "\nAge (months)",
+       y = "Relative risk of hospitalisation despite receiving the MV\n(1-VE)\n") +
   theme_light() +
   theme (axis.ticks.y = element_blank(),
          legend.position = "none",
@@ -1416,12 +1416,13 @@ VE_inv_plt <- VE_ci %>%
          axis.title.x = element_text(size = 30),
          axis.text.y = element_text(size = 25),
          axis.title.y = element_text(size = 30),
-         title = element_blank()) 
+         title = element_blank()) +
+  scale_x_continuous(breaks = seq(0,12,1))
 
 VE_inv_plt 
 
 VE_inv_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/OR VE.png",
-                     width = 18, height = 16, units = "in", 
+                     width = 20, height = 12, units = "in", 
                      device='png')
 
 # Do seroconversion * (1-VE) 100 times and plot it
@@ -1541,5 +1542,5 @@ severe_illness_plt <- severe_illness_new %>%
 severe_illness_plt
 
 severe_illness_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Severe illness rates.png",
-                              width = 18, height = 16, units = "in", 
+                              width = 20, height = 12, units = "in", 
                               device='png')
