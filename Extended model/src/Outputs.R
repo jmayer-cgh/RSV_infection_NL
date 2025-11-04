@@ -720,6 +720,17 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
                   intervention = "MV")
     ) %>%
     rbind(
+      hosp_prevented_vacc %>% 
+        filter(age_bracket != "all") %>%
+        ungroup() %>%
+        select(season_birth, age_bracket, n_severe_vacc, n_severe_averted) %>%
+        group_by(season_birth, age_bracket) %>%
+        summarise(n_hospitalisations = sum(n_severe_vacc),
+                  # prevented_hospitalisations = sum(n_ma_severe_averted),
+                  prevented_hospitalisations = sum(n_severe_averted),
+                  intervention = "MV")
+    ) %>%
+    rbind(
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
         ungroup() %>%
         # select(age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
@@ -787,7 +798,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
   total_hosp_intervention <- total_hosp_intervention %>%
     group_by(season_birth) %>%
     mutate(n_hospitalisations = case_when (intervention == "+ mAB for spring and summer births" ~
-                                             n_hospitalisations[intervention == "MV"] - prevented_hospitalisations[intervention == "+ mAB for spring and summer births"],
+                                             n_hospitalisations[intervention == "MV" & age_bracket == "all"] - prevented_hospitalisations[intervention == "+ mAB for spring and summer births"],
                                            TRUE ~ n_hospitalisations))
   
   return (total_hosp_intervention)
@@ -966,7 +977,7 @@ for (i in 1:100){
   
   # Get total hospitalisations by intervention
   total_hosp_intervention[[i]] <- hosp_intervention(severe_illness_de, hosp_prevented_vacc, hosp_prevented_age)
-  total_hosp_intervention[[i]]$iter <- rep(i, each = 1500) # save index in case we want to check one iteration
+  total_hosp_intervention[[i]]$iter <- rep(i, each = 1552) # save index in case we want to check one iteration
   
   # Get total MA cases by intervention
   total_ma_intervention[[i]] <- ma_intervention(ma_cases, ma_prevented_vacc, ma_prevented_age)
@@ -1234,6 +1245,50 @@ plt_hosp <- total_hosp_no_int_age %>%
          title = element_text(size = 25),
          strip.text.x = element_text(size = 20, color = "black")) 
 plt_hosp
+
+total_hosp_mv_age <- total_hosp_intervention_df %>%
+  filter(age_bracket != "all" & intervention == 'MV') %>%
+  group_by(age_bracket, iter, intervention) %>%
+  summarise(season_birth = "all",
+            n_hospitalisations = sum(n_hospitalisations)) %>%
+  rbind(total_hosp_intervention_df %>%
+          filter(age_bracket != "all" & intervention == 'MV')) %>%
+  group_by(age_bracket, iter, season_birth, intervention) %>%
+  summarise(n_hospitalisations = sum(n_hospitalisations, na.rm = T)) %>%
+  ungroup() %>%
+  group_by(age_bracket, intervention, season_birth) %>%
+  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
+            hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
+            hosp_up_95 = quantile(n_hospitalisations, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("winter", "spring", "summer", "autumn",
+                                          "all")),
+         age_bracket = factor(age_bracket, 
+                              levels = c("<1", "1", "2", "3", "4", "5", "6", "7", "8", 
+                                         "9", "10", "11", "12-14")))
+
+plt_hosp_mv <- total_hosp_mv_age %>% 
+  ggplot() +
+  geom_point(aes(x = age_bracket, y = hosp_median, col = season_birth),
+             size = 3) +
+  geom_errorbar(aes(x = age_bracket, ymin = hosp_low_95, ymax = hosp_up_95,
+                    col = season_birth), width = 0.5, linewidth = 1) +
+  labs(x = "\nAge (months)",
+       y = "Hospitalisations\n",
+       title = "Total hospitalisations with MV",
+       col = "Season of birth") +
+  theme_light() +
+  facet_wrap(~season_birth) +
+  theme (axis.ticks.y=element_blank(),
+         legend.position = "none",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 25),
+         axis.text.y = element_text(size = 25),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         strip.text.x = element_text(size = 20, color = "black")) 
+plt_hosp_mv
 
 # Look at total burden by season of birth
 total_hosp_1_y <- total_hosp_intervention_df %>%
@@ -1544,3 +1599,65 @@ severe_illness_plt
 severe_illness_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Severe illness rates.png",
                               width = 20, height = 12, units = "in", 
                               device='png')
+
+# Get average age at hospitalisation
+av_age_hosp <- total_hosp_intervention_df %>%
+  ungroup() %>%
+  filter(age_bracket != "all" & age_bracket != "12-14") %>%
+  mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
+                                  T ~ as.numeric(age_bracket))) %>%
+  group_by(iter, intervention, season_birth) %>%
+  summarise(av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
+  ungroup() %>%
+  group_by(intervention, season_birth) %>%
+  summarise(av_age_low_95 = quantile(av_age, 0.025),
+            av_age_median = quantile(av_age, 0.5),
+            av_age_up_95 = quantile(av_age, 0.975)) %>%
+  ungroup() %>%
+  rbind(
+    total_hosp_intervention_df %>%
+      ungroup() %>%
+      filter(age_bracket != "all" & age_bracket != "12-14") %>%
+      mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
+                                      T ~ as.numeric(age_bracket))) %>%
+      group_by(iter, intervention) %>%
+      summarise(season_birth = "all",
+                av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
+      ungroup() %>%
+      group_by(intervention, season_birth) %>%
+      summarise(av_age_low_95 = quantile(av_age, 0.025),
+                av_age_median = quantile(av_age, 0.5),
+                av_age_up_95 = quantile(av_age, 0.975)) %>%
+      ungroup()
+  )
+
+# Get median age at hospitalisation
+median_age_hosp <- total_hosp_intervention_df %>%
+  ungroup() %>%
+  filter(age_bracket != "all" & age_bracket != "12-14") %>%
+  mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
+                                  T ~ as.numeric(age_bracket))) %>%
+  group_by(iter, intervention, season_birth) %>%
+  summarise(median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
+  ungroup() %>%
+  group_by(intervention, season_birth) %>%
+  summarise(median_age_low_95 = quantile(median_age, 0.025),
+            median_age_median = quantile(median_age, 0.5),
+            median_age_up_95 = quantile(median_age, 0.975)) %>%
+  ungroup() %>%
+  rbind(
+    total_hosp_intervention_df %>%
+      ungroup() %>%
+      filter(age_bracket != "all" & age_bracket != "12-14") %>%
+      mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
+                                      T ~ as.numeric(age_bracket))) %>%
+      group_by(iter, intervention) %>%
+      summarise(season_birth = "all",
+                median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
+      ungroup() %>%
+      group_by(intervention, season_birth) %>%
+      summarise(median_age_low_95 = quantile(median_age, 0.025),
+                median_age_median = quantile(median_age, 0.5),
+                median_age_up_95 = quantile(median_age, 0.975)) %>%
+      ungroup()
+  )
