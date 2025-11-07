@@ -680,6 +680,7 @@ hosp_mAB <- function (hosp_prevented_vacc, IE_distribution){
                  hosp_winter_11 = 0) %>%# placeholder
         ungroup()
     ) %>%
+    group_by(severity) %>%
     mutate(hosp_spring_8 = case_when (season_birth == "all" ~ sum(hosp_spring_8),
                                       TRUE ~ hosp_spring_8),
            hosp_summer_4 = case_when (season_birth == "all" ~ sum(hosp_summer_4),
@@ -687,7 +688,8 @@ hosp_mAB <- function (hosp_prevented_vacc, IE_distribution){
            hosp_autumn_1 = case_when (season_birth == "all" ~ sum(hosp_autumn_1),
                                       TRUE ~ hosp_autumn_1),
            hosp_winter_11 = case_when (season_birth == "all" ~ sum(hosp_winter_11),
-                                       TRUE ~ hosp_winter_11))
+                                       TRUE ~ hosp_winter_11)) %>%
+    ungroup()
   
   return (hosp_prevented_age)
 }
@@ -909,7 +911,7 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
   
   total_hosp_intervention <- total_hosp_intervention %>%
     group_by(season_birth, severity) %>%
-    mutate(n_hospitalisations = case_when (intervention == "+ mAB for spring and summer births" ~
+    mutate(n_cases = case_when (intervention == "+ mAB for spring and summer births" ~
                                              n_cases[intervention == "MV" & age_bracket == "all"] - prevented_cases[intervention == "+ mAB for spring and summer births"],
                                            TRUE ~ n_cases))
   
@@ -1102,14 +1104,29 @@ total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 # Compute 95% CI
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
   filter (age_bracket == "all") %>%
-  group_by(intervention, season_birth) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
-            hosp_median = quantile(n_hospitalisations, 0.5, na.rm = T),
-            hosp_up_95 = quantile(n_hospitalisations, 0.975, na.rm = T),
-            prev_low_95 = quantile(prevented_hospitalisations, 0.025, na.rm = T),
-            prev_median = quantile(prevented_hospitalisations, 0.5, na.rm = T),
-            prev_up_95 = quantile(prevented_hospitalisations, 0.975, na.rm = T)) %>%
+  group_by(intervention, season_birth, severity, age_bracket) %>%
+  summarise(cases_low_95 = quantile(n_cases, 0.025, na.rm = T),
+            cases_median = quantile(n_cases, 0.5, na.rm = T),
+            cases_up_95 = quantile(n_cases, 0.975, na.rm = T),
+            prev_low_95 = quantile(prevented_cases, 0.025, na.rm = T),
+            prev_median = quantile(prevented_cases, 0.5, na.rm = T),
+            prev_up_95 = quantile(prevented_cases, 0.975, na.rm = T)) %>%
   ungroup() %>%
+  rbind(
+    total_hosp_intervention_df %>%
+      filter(age_bracket != "all") %>%
+      group_by(intervention, season_birth, age_bracket) %>%
+      summarise(severity = "All",
+                n_cases = sum(n_cases),
+                prevented_cases = sum(prevented_cases)) %>%
+      group_by(intervention, season_birth, severity, age_bracket) %>%
+      summarise(cases_low_95 = quantile(n_cases, 0.025, na.rm = T),
+                cases_median = quantile(n_cases, 0.5, na.rm = T),
+                cases_up_95 = quantile(n_cases, 0.975, na.rm = T),
+                prev_low_95 = quantile(prevented_cases, 0.025, na.rm = T),
+                prev_median = quantile(prevented_cases, 0.5, na.rm = T),
+                prev_up_95 = quantile(prevented_cases, 0.975, na.rm = T))
+  ) %>%
   mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
                                levels = c("Winter", "Spring", "Summer", "Autumn",
@@ -1130,8 +1147,8 @@ total_ma_intervention_int <- total_ma_intervention_df %>%
                                           "All")))
 
 # Get NNV to prevent one hospitalisation
-nnv <- total_hosp_intervention_int %>% select(intervention, season_birth, 
-                                              prev_low_95, prev_median, prev_up_95) %>%
+nnv <- total_hosp_intervention_int %>% filter (severity == "severe") %>%
+  select(intervention, season_birth, prev_low_95, prev_median, prev_up_95) %>%
   mutate(NNV_low_95 = case_when (intervention == "No immunisation" ~ NA,
                                  intervention == "MV" ~ births_de$N[1]/prev_low_95,
                                  intervention == "+ mAB for spring births" ~ births_de$total[births_de$season == "spring"]/prev_low_95,
@@ -1197,7 +1214,8 @@ palette_season <- c("Autumn" = "#88BBA0", "Winter" = "#13D4C7",
                     "All" = "#9C964A")
 
 # One iteration
-total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>% 
+total_hosp_intervention_df %>% 
+  filter (iter == 1 & season_birth != "all" & severity == "severe") %>% 
   ggplot() +
   geom_col(aes(x = intervention, y = n_hospitalisations, fill = season_birth), 
            position="stack") +
@@ -1210,7 +1228,7 @@ total_hosp_intervention_df %>% filter (iter == 1 & season_birth != "all") %>%
           axis.text.y = element_text(size = 20),
           axis.title.x = element_text(size = 25),
           axis.title.y = element_text(size = 25)) +
-  scale_fill_manual(values = palette_season) +
+  # scale_fill_manual(values = palette_season) +
   scale_y_continuous(labels=scales::comma)
 
 total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>% 
@@ -1229,11 +1247,13 @@ total_ma_intervention_df %>% filter (iter == 3 & season_birth != "all") %>%
   scale_fill_manual(values = palette_season)
 
 # All with CI
-plt <- total_hosp_intervention_int %>% filter (season_birth != "All") %>%
+plt <- total_hosp_intervention_int %>% 
+  filter (season_birth != "All" & severity == "severe") %>%
   ggplot() +
-  geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), position = "stack") +
-  geom_errorbar(data = subset(total_hosp_intervention_int, season_birth == "All"),
-                aes(x = intervention, ymin = hosp_low_95, ymax = hosp_up_95), 
+  geom_col(aes(x = intervention, y = cases_median, fill = season_birth), position = "stack") +
+  geom_errorbar(data = subset(total_hosp_intervention_int, 
+                              season_birth == "All" & severity == "severe"),
+                aes(x = intervention, ymin = cases_low_95, ymax = cases_up_95), 
                 width = 0.2, position = "dodge") +
   labs(x = "\nIntervention",
        y = "Number of RSV-associated hospitalisations in\nchildren under the age of 1 year\n",
@@ -1886,3 +1906,50 @@ prop_hosp %>%
             age_months == "11" ) %>%
   ggplot(aes(x = age_months, y = prop_age)) +
   geom_point()
+
+# % case that get hospitalised by age bracket
+prop_hosp_age_bracket <- total_hosp_intervention_df %>%
+  group_by(season_birth, age_bracket, iter, intervention, severity) %>%
+  summarise(n_cases = sum(n_cases)) %>%
+  ungroup() %>%
+  select(season_birth, age_bracket, iter, n_cases, intervention, severity) %>%
+  pivot_wider(names_from = severity,
+              values_from = n_cases) %>%
+  group_by(season_birth, age_bracket, iter, intervention) %>%
+  mutate(total = severe + LRTI,
+         prop_hosp_age = severe/total) %>%
+  ungroup() %>%
+  group_by(season_birth, age_bracket, intervention) %>%
+  summarise(prop_hosp_low_95 = quantile(prop_hosp_age, 0.025, na.rm = T),
+            prop_hosp_median = quantile(prop_hosp_age, 0.5, na.rm = T),
+            prop_hosp_up_95 = quantile(prop_hosp_age, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth),
+         season_birth = factor(season_birth, 
+                              levels = c("Winter", "Spring", "Summer", "Autumn",
+                                         "All")),
+         age_bracket = factor(age_bracket, 
+                             levels = c("<1", "1", "2", "3", "4", "5", "6", "7", "8", 
+                                        "9", "10", "11", "12-14")))
+
+prop_hosp_age_bracket %>%
+  filter(age_bracket != "all" & age_bracket != "12-14" & 
+           intervention == "No immunisation") %>%
+  ggplot(aes(x = age_bracket, y = prop_hosp_median, fill = season_birth)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_errorbar(aes(ymin = prop_hosp_low_95, ymax = prop_hosp_up_95, group = season_birth), 
+                width = 0.2, position = position_dodge(width = 0.9)) +
+  labs(x = "\nAge (months)",
+       y = "Proportion of cases leading to hospitalisation\n",
+       fill = "Season of birth") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25),
+         legend.text = element_text(size = 25)) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_manual(values = palette_season) +
+  facet_wrap(~season_birth)
