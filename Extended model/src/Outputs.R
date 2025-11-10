@@ -1912,7 +1912,7 @@ prop_hosp_age_bracket <- total_hosp_intervention_df %>%
                              levels = c("<1", "1", "2", "3", "4", "5", "6", "7", "8", 
                                         "9", "10", "11", "12-14")))
 
-prop_hosp_age_bracket %>%
+plt_prop_hosp <- prop_hosp_age_bracket %>%
   filter(age_bracket != "all" & age_bracket != "12-14" & 
            intervention == "No immunisation") %>%
   ggplot(aes(x = age_bracket, y = prop_hosp_median, fill = season_birth)) +
@@ -1933,3 +1933,9 @@ prop_hosp_age_bracket %>%
   scale_y_continuous(labels = scales::percent_format()) +
   scale_fill_manual(values = palette_season) +
   facet_wrap(~season_birth)
+
+plt_prop_hosp 
+
+plt_prop_hosp %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Prop hosp cases.png",
+                    width = 14, height = 16, units = "in", 
+                    device='png')
