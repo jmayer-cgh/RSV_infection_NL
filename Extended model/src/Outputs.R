@@ -1295,7 +1295,7 @@ plt_ma <- total_ma_intervention_int %>% filter (season_birth != "all") %>%
 plt_ma # We have more MA cases than hospitalisations because we take severe = hospitalisation
 # as opposed to MA severe = hospitalisation
 
-plt_nnv <- nnv %>% filter (intervention != "No immunisation" & season_birth == "all") %>% 
+plt_nnv <- nnv %>% filter (intervention != "No immunisation" & season_birth == "All") %>% 
   ggplot() +
   geom_col(aes(x = intervention, y = NNV_median, fill = intervention), position = "dodge") +
   geom_errorbar(aes(x = intervention, ymin = NNV_low_95, ymax = NNV_up_95), 
@@ -1309,7 +1309,7 @@ plt_nnv <- nnv %>% filter (intervention != "No immunisation" & season_birth == "
          axis.title.x = element_text(size = 25),
          axis.title.y = element_text(size = 25),
          axis.text.y = element_text(size = 20)) +
-  scale_fill_manual(values = palette) +
+    scale_fill_manual(values = palette) +
   scale_y_continuous(labels=scales::comma)
 
 plt_nnv
@@ -1335,14 +1335,15 @@ plt_nnv_cases
 
 # Plot outcomes by age
 total_hosp_no_int_age <- total_hosp_intervention_df %>%
-  filter(age_bracket != "all" & intervention == 'No immunisation') %>%
+  filter(age_bracket != "all" & intervention == 'No immunisation' & severity == "severe") %>%
   group_by(age_bracket, iter, intervention) %>%
   summarise(season_birth = "all",
-         n_hospitalisations = sum(n_hospitalisations)) %>%
+         n_hospitalisations = sum(n_cases)) %>%
   rbind(total_hosp_intervention_df %>%
-          filter(age_bracket != "all" & intervention == 'No immunisation')) %>%
+          filter(age_bracket != "all" & intervention == 'No immunisation' & severity == "severe") %>%
   group_by(age_bracket, iter, season_birth, intervention) %>%
-  summarise(n_hospitalisations = sum(n_hospitalisations, na.rm = T)) %>%
+  summarise(n_hospitalisations = sum(n_cases, na.rm = T))
+  ) %>%
   ungroup() %>%
   group_by(age_bracket, intervention, season_birth) %>%
   summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
@@ -1379,14 +1380,15 @@ plt_hosp <- total_hosp_no_int_age %>%
 plt_hosp
 
 total_hosp_mv_age <- total_hosp_intervention_df %>%
-  filter(age_bracket != "all" & intervention == 'MV') %>%
+  filter(age_bracket != "all" & intervention == 'MV' & severity == "severe") %>%
   group_by(age_bracket, iter, intervention) %>%
   summarise(season_birth = "all",
-            n_hospitalisations = sum(n_hospitalisations)) %>%
+            n_hospitalisations = sum(n_cases)) %>%
   rbind(total_hosp_intervention_df %>%
-          filter(age_bracket != "all" & intervention == 'MV')) %>%
+          filter(age_bracket != "all" & intervention == 'MV' & severity == "severe") %>%
   group_by(age_bracket, iter, season_birth, intervention) %>%
-  summarise(n_hospitalisations = sum(n_hospitalisations, na.rm = T)) %>%
+  summarise(n_hospitalisations = sum(n_cases, na.rm = T))
+  ) %>%
   ungroup() %>%
   group_by(age_bracket, intervention, season_birth) %>%
   summarise(hosp_low_95 = quantile(n_hospitalisations, 0.025, na.rm = T),
@@ -1424,12 +1426,13 @@ plt_hosp_mv
 
 # Look at total burden by season of birth
 total_hosp_1_y <- total_hosp_intervention_df %>%
-  filter(age_bracket == "all") %>%
+  filter(age_bracket == "all" & severity == "severe") %>%
   group_by(season_birth, intervention) %>%
-  summarise(hosp_low_95 = quantile(n_hospitalisations, 0.05),
-            hosp_median = quantile(n_hospitalisations, 0.5),
-            hosp_up_95 = quantile(n_hospitalisations, 0.95)) %>%
-  ungroup() 
+  summarise(hosp_low_95 = quantile(n_cases, 0.025),
+            hosp_median = quantile(n_cases, 0.5),
+            hosp_up_95 = quantile(n_cases, 0.975)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth))
 
 total_hosp_1_y_plt <- total_hosp_1_y %>% ggplot() +
   geom_col(aes(x = intervention, y = hosp_median, fill = season_birth), 
@@ -1735,11 +1738,11 @@ severe_illness_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage
 # Get average age at hospitalisation
 av_age_hosp <- total_hosp_intervention_df %>%
   ungroup() %>%
-  filter(age_bracket != "all" & age_bracket != "12-14") %>%
+  filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
   mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                   T ~ as.numeric(age_bracket))) %>%
   group_by(iter, intervention, season_birth) %>%
-  summarise(av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
+  summarise(av_age = sum(age_bracket * n_cases)/sum(n_cases)) %>%
   ungroup() %>%
   group_by(intervention, season_birth) %>%
   summarise(av_age_low_95 = quantile(av_age, 0.025),
@@ -1749,28 +1752,28 @@ av_age_hosp <- total_hosp_intervention_df %>%
   rbind(
     total_hosp_intervention_df %>%
       ungroup() %>%
-      filter(age_bracket != "all" & age_bracket != "12-14") %>%
+      filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
       mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                       T ~ as.numeric(age_bracket))) %>%
       group_by(iter, intervention) %>%
       summarise(season_birth = "all",
-                av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
+                av_age = sum(age_bracket * n_cases)/sum(n_cases)) %>%
       ungroup() %>%
       group_by(intervention, season_birth) %>%
       summarise(av_age_low_95 = quantile(av_age, 0.025),
                 av_age_median = quantile(av_age, 0.5),
                 av_age_up_95 = quantile(av_age, 0.975)) %>%
       ungroup()
-  )
+  ) %>% arrange(season_birth)
 
 # Get median age at hospitalisation
 median_age_hosp <- total_hosp_intervention_df %>%
   ungroup() %>%
-  filter(age_bracket != "all" & age_bracket != "12-14") %>%
+  filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
   mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                   T ~ as.numeric(age_bracket))) %>%
   group_by(iter, intervention, season_birth) %>%
-  summarise(median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
+  summarise(median_age = spatstat.univar::weighted.median(age_bracket, n_cases)) %>%
   ungroup() %>%
   group_by(intervention, season_birth) %>%
   summarise(median_age_low_95 = quantile(median_age, 0.025),
@@ -1780,43 +1783,20 @@ median_age_hosp <- total_hosp_intervention_df %>%
   rbind(
     total_hosp_intervention_df %>%
       ungroup() %>%
-      filter(age_bracket != "all" & age_bracket != "12-14") %>%
+      filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
       mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                       T ~ as.numeric(age_bracket))) %>%
       group_by(iter, intervention) %>%
       summarise(season_birth = "all",
-                median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
+                median_age = spatstat.univar::weighted.median(age_bracket, n_cases)) %>%
       ungroup() %>%
       group_by(intervention, season_birth) %>%
       summarise(median_age_low_95 = quantile(median_age, 0.025),
                 median_age_median = quantile(median_age, 0.5),
                 median_age_up_95 = quantile(median_age, 0.975)) %>%
       ungroup()
-  )
+  ) %>% arrange(season_birth)
 
-hospitalisations %>%
-  group_by(age_midpoint) %>%
-  mutate(n_severe = sum(n_severe)) %>%
-  mutate(season_birth = "all") %>%
-  ggplot(aes(x = age_midpoint, y = n_severe, color = season_birth)) +
-  geom_point()
-
-hospitalisations %>%
-  group_by(season_birth, age_months) %>%
-  summarise(n_infections = sum(n_infections),
-            n_severe = sum(n_severe),
-            prop_hosp_age = n_severe/n_infections) %>%
-  rbind(
-    hospitalisations %>%
-      group_by(age_months) %>%
-      summarise(n_infections = sum(n_infections),
-                n_severe = sum(n_severe),
-                prop_hosp_age = n_severe/n_infections) %>%
-      mutate(season_birth = "all")
-  ) %>%
-  ggplot(aes(x = age_months, y = prop_hosp_age, fill = season_birth)) +
-  geom_col() +
-  facet_wrap(~season_birth)
 
 severe_cases_u1_de %>%
       group_by(age_months) %>%
