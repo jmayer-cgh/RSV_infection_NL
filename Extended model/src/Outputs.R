@@ -1026,6 +1026,34 @@ total_hosp_intervention_df <- total_hosp_intervention_df %>%
       ungroup()
   )
 
+incidence_hosp <- total_hosp_intervention_df %>%
+  merge(births_de %>% select(season, total), by.x = "season_birth", by.y = "season") %>%
+  mutate(incidence_per_100000 = n_hospitalisations/total*100000)
+
+# Get reduction in incidence compared to no immunisation
+incidence_reduction_no_imm <- incidence_hosp %>%
+  filter (intervention != "No immunisation" & age_bracket == "all") %>%
+  merge(
+    incidence_hosp %>%
+      filter (intervention == "No immunisation" & age_bracket == "all") %>%
+      select(season_birth, age_bracket, n_hospitalisations, iter) %>%
+      rename(n_hospitalisations_no_int = n_hospitalisations),
+    by = c("season_birth", "age_bracket", "iter")
+  ) %>%
+  mutate(incidence_reduction_perc = (n_hospitalisations_no_int - n_hospitalisations)/n_hospitalisations_no_int*100)
+
+# Get reduction in incidence for mAB compared to MV
+incidence_reduction_mab_mv <- incidence_hosp %>%
+  filter (intervention != "No immunisation" & intervention != "MV" & age_bracket == "all") %>%
+  merge(
+    incidence_hosp %>%
+      filter (intervention == "MV" & age_bracket == "all") %>%
+      select(season_birth, age_bracket, n_hospitalisations, iter) %>%
+      rename(n_hospitalisations_mv = n_hospitalisations),
+    by = c("season_birth", "age_bracket", "iter")
+  ) %>%
+  mutate(incidence_reduction_perc = (n_hospitalisations_mv - n_hospitalisations)/n_hospitalisations_mv*100)
+
 # Compute 95% CI
 total_hosp_intervention_int <- total_hosp_intervention_df %>% 
   filter (age_bracket == "all") %>%
@@ -1036,6 +1064,40 @@ total_hosp_intervention_int <- total_hosp_intervention_df %>%
             prev_low_95 = quantile(prevented_hospitalisations, 0.025, na.rm = T),
             prev_median = quantile(prevented_hospitalisations, 0.5, na.rm = T),
             prev_up_95 = quantile(prevented_hospitalisations, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
+
+incidence_hosp_int <- incidence_hosp %>%
+  group_by(intervention, season_birth, age_bracket) %>%
+  summarise(incidence_up_95 = quantile(incidence_per_100000, 0.025, na.rm = T),
+            incidence_median = quantile(incidence_per_100000, 0.5, na.rm = T),
+            incidence_low_95 = quantile(incidence_per_100000, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
+
+incidence_reduction_mab_mv_int <- incidence_reduction_mab_mv %>%
+  group_by(intervention, season_birth, age_bracket) %>%
+  summarise(incidence_reduction_low_95 = quantile(incidence_reduction_perc, 0.025, na.rm = T),
+            incidence_reduction_median = quantile(incidence_reduction_perc, 0.5, na.rm = T),
+            incidence_reduction_up_95 = quantile(incidence_reduction_perc, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
+
+
+incidence_reduction_no_imm_int <- incidence_reduction_no_imm %>%
+  group_by(intervention, season_birth, age_bracket) %>%
+  summarise(incidence_reduction_low_95 = quantile(incidence_reduction_perc, 0.025, na.rm = T),
+            incidence_reduction_median = quantile(incidence_reduction_perc, 0.5, na.rm = T),
+            incidence_reduction_up_95 = quantile(incidence_reduction_perc, 0.975, na.rm = T)) %>%
   ungroup() %>%
   mutate(season_birth = str_to_sentence(season_birth)) %>%
   mutate(season_birth = factor(season_birth, 
@@ -1406,9 +1468,11 @@ total_hosp_1_y_plt
 path <- "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/CSV files/2 M odin/monty/"
 write.csv(total_hosp_intervention_int, paste0(path, "Final outputs hospitalisations.csv"), row.names = F)
 write.csv(nnv, paste0(path, "Final outputs NNV hosp.csv"), row.names = F)
+write.csv(incidence_hosp_int, paste0(path, "Final outputs hosp incidence.csv"), row.names = F)
+write.csv(incidence_reduction_int, paste0(path, "Final outputs incidence vs no.csv"), row.names = F)
+write.csv(incidence_reduction_mab_mv_int, paste0(path, "Final outputs incidence vs MV.csv"), row.names = F)
 write.csv(total_ma_intervention_int, paste0(path, "Final outputs MA cases.csv"), row.names = F)
 write.csv(nnv_ma, paste0(path, "Final outputs NNV MA cases.csv"), row.names = F)
-
 
 plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Hosp by intervention CI.png",
            width = 14, height = 16, units = "in", 
