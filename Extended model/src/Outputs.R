@@ -1104,6 +1104,73 @@ incidence_reduction_no_imm_int <- incidence_reduction_no_imm %>%
                                levels = c("Winter", "Spring", "Summer", "Autumn",
                                           "All")))
 
+# Get absolute reduction in incidence for mAB compared to MV
+abs_inc_reduction <- incidence_hosp %>%
+  filter (intervention == "MV" & age_bracket == "all" & season_birth == "spring") %>%
+  select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+  merge(
+    incidence_hosp %>%
+      filter (intervention == "+ mAB for spring births") %>%
+      select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+      rename(incidence_mAB = incidence_per_100000),
+    by = c("season_birth", "age_bracket", "iter")
+  ) %>%
+  mutate(abs_incidence_reduction = incidence_per_100000 - incidence_mAB,
+         season_birth = "spring") %>%
+  rbind(
+    incidence_hosp %>%
+      filter (intervention == "MV" & age_bracket == "all" & season_birth == "summer") %>%
+      select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+      merge(
+        incidence_hosp %>%
+          filter (intervention == "+ mAB for summer births") %>%
+          select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+          rename(incidence_mAB = incidence_per_100000),
+        by = c("season_birth", "age_bracket", "iter")
+      ) %>%
+      mutate(abs_incidence_reduction = incidence_per_100000 - incidence_mAB,
+             season_birth = "summer")
+  ) %>%
+  rbind(
+    incidence_hosp %>%
+      filter (intervention == "MV" & age_bracket == "all" & season_birth == "autumn") %>%
+      select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+      merge(
+        incidence_hosp %>%
+          filter (intervention == "+ mAB for autumn births") %>%
+          select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+          rename(incidence_mAB = incidence_per_100000),
+        by = c("season_birth", "age_bracket", "iter")
+      ) %>%
+      mutate(abs_incidence_reduction = incidence_per_100000 - incidence_mAB,
+             season_birth = "autumn")
+  ) %>%
+  rbind(
+    incidence_hosp %>%
+      filter (intervention == "MV" & age_bracket == "all" & season_birth == "winter") %>%
+      select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+      merge(
+        incidence_hosp %>%
+          filter (intervention == "+ mAB for winter births") %>%
+          select(season_birth, age_bracket, incidence_per_100000, iter) %>%
+          rename(incidence_mAB = incidence_per_100000),
+        by = c("season_birth", "age_bracket", "iter")
+      ) %>%
+      mutate(abs_incidence_reduction = incidence_per_100000 - incidence_mAB,
+             season_birth = "winter")
+  )
+
+abs_inc_reduction_ci <- abs_inc_reduction %>%
+  group_by(season_birth, age_bracket) %>%
+  summarise(abs_incidence_reduction_low_95 = quantile(abs_incidence_reduction, 0.025, na.rm = T),
+            abs_incidence_reduction_median = quantile(abs_incidence_reduction, 0.5, na.rm = T),
+            abs_incidence_reduction_up_95 = quantile(abs_incidence_reduction, 0.975, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(season_birth = str_to_sentence(season_birth)) %>%
+  mutate(season_birth = factor(season_birth, 
+                               levels = c("Winter", "Spring", "Summer", "Autumn",
+                                          "All")))
+
 # total_ma_intervention_int <- total_ma_intervention_df %>% 
 #   group_by(intervention, season_birth) %>%
 #   summarise(cases_low_95 = quantile(n_cases, 0.025, na.rm = T),
@@ -1471,6 +1538,7 @@ write.csv(nnv, paste0(path, "Final outputs NNV hosp.csv"), row.names = F)
 write.csv(incidence_hosp_int, paste0(path, "Final outputs hosp incidence.csv"), row.names = F)
 write.csv(incidence_reduction_int, paste0(path, "Final outputs incidence vs no.csv"), row.names = F)
 write.csv(incidence_reduction_mab_mv_int, paste0(path, "Final outputs incidence vs MV.csv"), row.names = F)
+write.csv(abs_inc_reduction_ci, paste0(path, "Final outputs absolute incidence reduction.csv"), row.names = F)
 write.csv(total_ma_intervention_int, paste0(path, "Final outputs MA cases.csv"), row.names = F)
 write.csv(nnv_ma, paste0(path, "Final outputs NNV MA cases.csv"), row.names = F)
 
@@ -1950,3 +2018,18 @@ plt_prop_hosp
 plt_prop_hosp %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Outputs/Prop hosp cases.png",
                     width = 14, height = 16, units = "in", 
                     device='png')
+
+# Get % reduction in hosp rate between 0 and 6 months with CI
+hosp_rate_diff <- severe_illness_new %>%
+  filter(age_months == "<1" | age_months == "6") %>%
+  select(age_months, total_severe_illness_rate) %>%
+  pivot_wider(names_from = age_months,
+              values_from = total_severe_illness_rate) %>%
+  mutate(reduction = (`<1` - `6`)/`<1`) %>%
+  rename(hosp_rate_u1 = `<1`,
+         hosp_rate_6m = `6`) 
+  # get 95% CI
+  
+  popEpi::rate_ratio(x = c(hosp_rate_diff$hosp_rate_6m, 100000), 
+                     y = c(hosp_rate_diff$hosp_rate_u1, 100000), SE.method = FALSE)
+  
