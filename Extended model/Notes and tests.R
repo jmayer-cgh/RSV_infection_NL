@@ -998,117 +998,267 @@ incidence_test_long %>% ggplot() +
  # -----------------------------------------------------------------------------
 # Testing time values
 spring_FOI_sp_func <- function(t){
-  spring_FOI_sp <- if ((t <= 30.41*4.5) ||  
-                     ((t > 30.41*13.5) && (t <= (30.41*16.5))) ||
-                     ((t > 30.41*25.5) && (t <= (30.41*28.5))) ||
-                     ((t > 30.41*37.5) && (t <= (30.41*40.5))) || 
-                     ((t > 30.41*49.5) && (t <= (30.41*52.5))) || 
-                     ((t > 30.41*61.5) )) 1 else 0
+  spring_FOI_sp <- if ((t <= 30.41*1.5) ||  
+                     ((t > 30.41*10.5) && (t <= (30.41*13.5))) ||
+                     ((t > 30.41*22.5) && (t <= (30.41*25.5))) ||
+                     ((t > 30.41*34.5) && (t <= (30.41*37.5))) || 
+                     ((t > 30.41*46.5) && (t <= (30.41*49.5))) || 
+                     ((t > 30.41*58.5) && (t <= (30.41*61.5)))) 1 else 0
   return (spring_FOI_sp)
 }
 
 summer_FOI_sp_func <- function(t){
-  summer_FOI_sp <- if ((t > 30.41*4.5 && t <= 30.41*7.5 ) ||                      # FOI in summer for those born in spring
-                       ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
-                       ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
-                       ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
-                       ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
+  summer_FOI_sp <- if ((t > 30.41*1.5 && t <= 30.41*4.5 ) ||                      # FOI in summer for those born in spring
+                       ((t > 30.41*13.5) && (t <= 30.41*16.5)) ||
+                       ((t > 30.41*25.5) && (t <= 30.41*28.5)) ||
+                       ((t > 30.41*37.5) && (t <= 30.41*40.5)) ||
+                       ((t > 30.41*49.5) && (t <= 30.41*52.5))) 1 else 0
   return(summer_FOI_sp)
   
 }
 
 autumn_FOI_sp_func <- function(t){
-  autumn_FOI_sp <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                    
-                        ((t > 30.41*19.5) && (t <= 30.41*22.5)) ||
-                        ((t > 30.41*31.5) && (t <= 30.41*34.5)) ||
-                        ((t > 30.41*43.5) && (t <= 30.41*46.5)) ||
-                        ((t > 30.41*55.5) && (t <= 30.41*58.5))) 1 else 0
+  autumn_FOI_sp <- if ( (t > 30.41*4.5 && t <= 30.41*7.5 ) ||                    
+                        ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
+                        ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
+                        ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
+                        ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
  return(autumn_FOI_sp)
    
 }
 
 winter_FOI_sp_func <- function(t){
-  winter_FOI_sp <- if ( (t > 30.41*10.5 && t <= 30.41*13.5 ) ||                   
-                        ((t > 30.41*22.5) && (t <= 30.41*25.5)) ||
-                        ((t > 30.41*34.5) && (t <= 30.41*37.5)) ||
-                        ((t > 30.41*46.5) && (t <= 30.41*49.5)) ||
-                        ((t > 30.41*58.6) && (t <= 30.41*61.5))) 1 else 0
+  winter_FOI_sp <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                   
+                        ((t > 30.41*19.5) && (t <= 30.41*22.5)) ||
+                        ((t > 30.41*31.5) && (t <= 30.41*34.5)) ||
+                        ((t > 30.41*43.5) && (t <= 30.41*46.5)) ||
+                        ((t > 30.41*55.5) && (t <= 30.41*58.5))) 1 else 0
   
   return(winter_FOI_sp)
   
 }
-  spring_FOI_sm <- if ( (t > 30.41*10.5 && t <= 30.41*13.5 ) ||                   
-                        ((t > 30.41*22.5) && (t <= 30.41*25.5)) ||
-                        ((t > 30.41*34.5) && (t <= 30.41*37.5)) ||
-                        ((t > 30.41*46.5) && (t <= 30.41*49.5)) ||
-                        ((t > 30.41*58.6) && (t <= 30.41*61.5))) 1 else 0
-  summer_FOI_sm <- if ((t <= 30.41*4.5) ||  
-                       ((t > 30.41*13.5) && (t <= (30.41*16.5))) ||
-                       ((t > 30.41*25.5) && (t <= (30.41*28.5))) ||
-                       ((t > 30.41*37.5) && (t <= (30.41*40.5))) || 
-                       ((t > 30.41*49.5) && (t <= (30.41*52.5))) || 
-                       ((t > 30.41*61.5) )) 1 else 0
-  autumn_FOI_sm <- if ((t > 30.41*1.5 && t <= 30.41*3 ) ||                       # FOI in autumn for those born in summer
-                       ((t > 365 + 30.41*3) && (t <= (365+30.41*3))) ||
-                       ((t > 2*365 + 30.41*3) && (t <= (2*365+30.41*3))) || 
-                       ((t > 3*365 + 30.41*3) && (t <= (3*365+30.41*3))) ||
-                       ((t > 4*365 + 30.41*3) && (t <= (4*365+30.41*3))) ||
-                       ((t > 5*365 + 30.41*3) && (t <= (5*365+30.41*3)))) 1 else 0
-  winter_FOI_sm <- if ((t > 30.41*4.5 && t <= 30.41*7.5 ) ||                      # FOI in winter for those born in summer
-                       ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
-                       ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
-                       ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
-                       ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0 
-  spring_FOI_au <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                    
+
+spring_FOI_sm_func <- function (t){
+  spring_FOI_sm <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                   
                         ((t > 30.41*19.5) && (t <= 30.41*22.5)) ||
                         ((t > 30.41*31.5) && (t <= 30.41*34.5)) ||
                         ((t > 30.41*43.5) && (t <= 30.41*46.5)) ||
                         ((t > 30.41*55.5) && (t <= 30.41*58.5))) 1 else 0
-  summer_FOI_au <- if ( (t > 30.41*10.5 && t <= 30.41*13.5 ) ||                   
-                        ((t > 30.41*22.5) && (t <= 30.41*25.5)) ||
-                        ((t > 30.41*34.5) && (t <= 30.41*37.5)) ||
-                        ((t > 30.41*46.5) && (t <= 30.41*49.5)) ||
-                        ((t > 30.41*58.6) && (t <= 30.41*61.5))) 1 else 0
-  autumn_FOI_au <- if ((t <= 30.41*4.5) ||  
-                       ((t > 30.41*13.5) && (t <= (30.41*16.5))) ||
-                       ((t > 30.41*25.5) && (t <= (30.41*28.5))) ||
-                       ((t > 30.41*37.5) && (t <= (30.41*40.5))) || 
-                       ((t > 30.41*49.5) && (t <= (30.41*52.5))) || 
-                       ((t > 30.41*61.5) )) 1 else 0
-  winter_FOI_au <- if ((t > 30.41*4.5 && t <= 30.41*7.5 ) ||                      # FOI in winter for those born in autumn
-                       ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
-                       ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
-                       ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
-                       ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
-  spring_FOI_wt <- if ((t > 30.41*4.5 && t <= 30.41*7.5 ) ||                      # FOI in spring for those born in winter
-                       ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
-                       ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
-                       ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
-                       ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
-  summer_FOI_wt <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                    
+  
+  return (spring_FOI_sm)
+}
+
+summer_FOI_sm_func <- function (t){
+  summer_FOI_sm <- if ((t <= 30.41*1.5) ||  
+                       ((t > 30.41*10.5) && (t <= (30.41*13.5))) ||
+                       ((t > 30.41*22.5) && (t <= (30.41*25.5))) ||
+                       ((t > 30.41*34.5) && (t <= (30.41*37.5))) || 
+                       ((t > 30.41*46.5) && (t <= (30.41*49.5))) || 
+                       ((t > 30.41*58.5) && (t <= (30.41*61.5)))) 1 else 0
+  
+ return (summer_FOI_sm) 
+}
+
+autumn_FOI_sm_func <- function(t){
+  autumn_FOI_sm <- if ((t > 30.41*1.5 && t <= 30.41*4.5 ) ||                      # FOI in summer for those born in spring
+                       ((t > 30.41*13.5) && (t <= 30.41*16.5)) ||
+                       ((t > 30.41*25.5) && (t <= 30.41*28.5)) ||
+                       ((t > 30.41*37.5) && (t <= 30.41*40.5)) ||
+                       ((t > 30.41*49.5) && (t <= 30.41*52.5))) 1 else 0
+ return (autumn_FOI_sm) 
+}
+
+winter_FOI_sm_func <- function(t){
+  winter_FOI_sm <-  if ( (t > 30.41*4.5 && t <= 30.41*7.5 ) ||                    
+                         ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
+                         ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
+                         ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
+                         ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
+ return (winter_FOI_sm) 
+}
+
+spring_FOI_au_func <- function(t) {
+  spring_FOI_au <-  if ( (t > 30.41*4.5 && t <= 30.41*7.5 ) ||                    
+                         ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
+                         ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
+                         ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
+                         ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
+ return (spring_FOI_au) 
+}
+
+summer_FOI_au_func <- function(t){
+  summer_FOI_au <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                   
                         ((t > 30.41*19.5) && (t <= 30.41*22.5)) ||
                         ((t > 30.41*31.5) && (t <= 30.41*34.5)) ||
                         ((t > 30.41*43.5) && (t <= 30.41*46.5)) ||
                         ((t > 30.41*55.5) && (t <= 30.41*58.5))) 1 else 0
-  autumn_FOI_wt <- if ( (t > 30.41*10.5 && t <= 30.41*13.5 ) ||                   
-                        ((t > 30.41*22.5) && (t <= 30.41*25.5)) ||
-                        ((t > 30.41*34.5) && (t <= 30.41*37.5)) ||
-                        ((t > 30.41*46.5) && (t <= 30.41*49.5)) ||
-                        ((t > 30.41*58.6) && (t <= 30.41*61.5))) 1 else 0
-  winter_FOI_wt <- if ((t <= 30.41*4.5) ||  
-                       ((t > 30.41*13.5) && (t <= (30.41*16.5))) ||
-                       ((t > 30.41*25.5) && (t <= (30.41*28.5))) ||
-                       ((t > 30.41*37.5) && (t <= (30.41*40.5))) || 
-                       ((t > 30.41*49.5) && (t <= (30.41*52.5))) || 
-                       ((t > 30.41*61.5) )) 1 else 0
+ return (summer_FOI_au) 
+}
 
-t <- 0
-spring_FOI_sp <- spring_FOI_sp_func(t)
-summer_FOI_sp <- summer_FOI_sp_func(t)
-autumn_FOI_sp <- autumn_FOI_sp_func(t)
-winter_FOI_sp <- winter_FOI_sp_func(t)
+autumn_FOI_au_func <- function(t){
+  autumn_FOI_au <- if ((t <= 30.41*1.5) ||  
+                       ((t > 30.41*10.5) && (t <= (30.41*13.5))) ||
+                       ((t > 30.41*22.5) && (t <= (30.41*25.5))) ||
+                       ((t > 30.41*34.5) && (t <= (30.41*37.5))) || 
+                       ((t > 30.41*46.5) && (t <= (30.41*49.5))) || 
+                       ((t > 30.41*58.5) && (t <= (30.41*61.5)))) 1 else 0
+ return (autumn_FOI_au) 
+}
 
-print(paste0("Spring FOI for spring births = ", spring_FOI_sp))
-print(paste0("Summer FOI for spring births = ", summer_FOI_sp))
-print(paste0("Autumn FOI for spring births = ", autumn_FOI_sp))
-print(paste0("Winter FOI for spring births = ", winter_FOI_sp))
+winter_FOI_au_func <- function(t){
+  winter_FOI_au <- if ((t > 30.41*1.5 && t <= 30.41*4.5 ) ||                      # FOI in summer for those born in spring
+                       ((t > 30.41*13.5) && (t <= 30.41*16.5)) ||
+                       ((t > 30.41*25.5) && (t <= 30.41*28.5)) ||
+                       ((t > 30.41*37.5) && (t <= 30.41*40.5)) ||
+                       ((t > 30.41*49.5) && (t <= 30.41*52.5))) 1 else 0
+  
+ return (winter_FOI_au) 
+}
+
+spring_FOI_wt_func <- function(t){
+  spring_FOI_wt <- if ((t > 30.41*1.5 && t <= 30.41*4.5 ) ||                      # FOI in summer for those born in spring
+                       ((t > 30.41*13.5) && (t <= 30.41*16.5)) ||
+                       ((t > 30.41*25.5) && (t <= 30.41*28.5)) ||
+                       ((t > 30.41*37.5) && (t <= 30.41*40.5)) ||
+                       ((t > 30.41*49.5) && (t <= 30.41*52.5))) 1 else 0
+  
+ return (spring_FOI_wt) 
+}
+
+summer_FOI_wt_func <- function (t){
+  summer_FOI_wt <-  if ( (t > 30.41*4.5 && t <= 30.41*7.5 ) ||                    
+                         ((t > 30.41*16.5) && (t <= 30.41*19.5)) ||
+                         ((t > 30.41*28.5) && (t <= 30.41*31.5)) ||
+                         ((t > 30.41*40.5) && (t <= 30.41*43.5)) ||
+                         ((t > 30.41*52.5) && (t <= 30.41*55.5))) 1 else 0
+ return (summer_FOI_wt) 
+}
+
+autumn_FOI_wt_func <- function(t){
+  autumn_FOI_wt <- if ( (t > 30.41*7.5 && t <= 30.41*10.5 ) ||                   
+                        ((t > 30.41*19.5) && (t <= 30.41*22.5)) ||
+                        ((t > 30.41*31.5) && (t <= 30.41*34.5)) ||
+                        ((t > 30.41*43.5) && (t <= 30.41*46.5)) ||
+                        ((t > 30.41*55.5) && (t <= 30.41*58.5))) 1 else 0
+ return (autumn_FOI_wt) 
+}
+
+winter_FOI_wt_func <- function (t){
+  winter_FOI_wt <- if ((t <= 30.41*1.5) ||  
+                       ((t > 30.41*10.5) && (t <= (30.41*13.5))) ||
+                       ((t > 30.41*22.5) && (t <= (30.41*25.5))) ||
+                       ((t > 30.41*34.5) && (t <= (30.41*37.5))) || 
+                       ((t > 30.41*46.5) && (t <= (30.41*49.5))) || 
+                       ((t > 30.41*58.5) && (t <= (30.41*61.5)))) 1 else 0
+  
+}
+
+# Get parameter estimates from run to estimates the FOI for meach birth cohort
+spring_comp <- 3
+summer_comp <- 1
+autumn_comp <- 4
+winter_comp <- 5
+
+# Define where to store the values
+lambda_sp_list <- list()
+lambda_sm_list <- list()
+lambda_au_list <- list()
+lambda_wt_list <- list()
+
+# Calculate the FOIs 
+for (t in seq_along(1:(365*5))){
+  spring_FOI_sp <- spring_FOI_sp_func(t)
+  summer_FOI_sp <- summer_FOI_sp_func(t)
+  autumn_FOI_sp <- autumn_FOI_sp_func(t)
+  winter_FOI_sp <- winter_FOI_sp_func(t)
+  
+  spring_FOI_sm <- spring_FOI_sm_func(t)
+  summer_FOI_sm <- summer_FOI_sm_func(t)
+  autumn_FOI_sm <- autumn_FOI_sm_func(t)
+  winter_FOI_sm <- winter_FOI_sm_func(t)
+  
+  spring_FOI_au <- spring_FOI_au_func(t)
+  summer_FOI_au <- summer_FOI_au_func(t)
+  autumn_FOI_au <- autumn_FOI_au_func(t)
+  winter_FOI_au <- winter_FOI_au_func(t)
+  
+  spring_FOI_wt <- spring_FOI_wt_func(t)
+  summer_FOI_wt <- summer_FOI_wt_func(t)
+  autumn_FOI_wt <- autumn_FOI_wt_func(t)
+  winter_FOI_wt <- winter_FOI_wt_func(t)
+  
+  # Putting it all together into four FOIs
+  lambda_sp = (summer_comp + spring_comp) * spring_FOI_sp + 
+    summer_comp * summer_FOI_sp + 
+    (summer_comp + autumn_comp) * autumn_FOI_sp +
+    (summer_comp + winter_comp) * winter_FOI_sp 
+  
+  lambda_sm = (summer_comp + spring_comp) * spring_FOI_sm + 
+    summer_comp * summer_FOI_sm + 
+    (summer_comp + autumn_comp) * autumn_FOI_sm + 
+    (summer_comp + winter_comp) * winter_FOI_sm 
+  
+  lambda_au = (summer_comp + spring_comp) * spring_FOI_au + 
+    summer_comp * summer_FOI_au + 
+    (summer_comp + autumn_comp) * autumn_FOI_au + 
+    (summer_comp + winter_comp) * winter_FOI_au 
+  
+  lambda_wt = (summer_comp + spring_comp) * spring_FOI_wt + 
+    summer_comp * summer_FOI_wt +
+    (summer_comp + autumn_comp) * autumn_FOI_wt + 
+    (summer_comp + winter_comp) * winter_FOI_wt 
+  
+  lambda_sp_list[[t]] <- as.data.frame(lambda_sp)
+  lambda_sp_list[[t]]$time <- t
+  lambda_sm_list[[t]] <- as.data.frame(lambda_sm)
+  lambda_sm_list[[t]]$time <- t
+  lambda_au_list[[t]] <- as.data.frame(lambda_au)
+  lambda_au_list[[t]]$time <- t
+  lambda_wt_list[[t]] <- as.data.frame(lambda_wt)
+  lambda_wt_list[[t]]$time <- t
+  
+}
+
+# Combine into 4 dataframes
+lambda_sp_df <- do.call("rbind", lambda_sp_list)
+lambda_sm_df <- do.call("rbind", lambda_sm_list)
+lambda_au_df <- do.call("rbind", lambda_au_list)
+lambda_wt_df <- do.call("rbind", lambda_wt_list)
+
+# Combine them into one dataframe
+lambda_values <- lambda_sp_df %>%
+  merge(lambda_sm_df, by = "time") %>%
+  merge(lambda_au_df, by = "time") %>%
+  merge(lambda_wt_df, by = "time") 
+
+# Pivot longer
+lambda_values_long <- lambda_values %>%
+  pivot_longer(
+    cols = -time,  # keep time as is
+    names_to = "season_birth",  # split column names into two parts
+    values_to = "FOI"
+  ) %>%
+  mutate(season_birth = case_when(season_birth == "lambda_sp" ~ "Spring",
+                            season_birth == "lambda_sm" ~ "Summer",
+                            season_birth == "lambda_au" ~ "Autumn",
+                            season_birth == "lambda_wt" ~ "Winter"),
+         season_birth = factor(season_birth, levels = c("Spring", "Summer", "Autumn", "Winter")))
+
+# Plot FOI over time
+lambda_values_long %>%# filter(time <= 365) %>%
+  ggplot() +
+  geom_line(aes(x = time/30.41, y = FOI, col = season_birth)) +
+  labs(title = "Force of infection by age and season of birth", x = "Age (months)",
+       y = "Force of infection\n",
+       col = "Season of birth") +
+  theme_light() +
+  theme (axis.ticks.y = element_blank(),
+         legend.position = "right",
+         axis.text.x = element_text(angle = 45, hjust = 1, size = 20),
+         axis.text.y = element_text(size = 20),
+         axis.title.x = element_text(size = 25),
+         axis.title.y = element_text(size = 25),
+         title = element_text(size = 25)) +
+  facet_wrap(~season_birth)
+
+
