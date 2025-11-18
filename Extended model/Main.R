@@ -134,7 +134,7 @@ runner <- monty_runner_callr(2, progress = T)
 properties <- monty_model_properties(is_stochastic = F)
 model <- monty_model(posterior, properties = properties)
 samples <- monty_sample(model, sampler, 80000, 
-                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.02, 0.5),
+                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
                         runner = runner,
                         n_chains = 2)
 
@@ -146,7 +146,7 @@ vcv_tuned <- cov(draws[1:6])
 runner <- monty_runner_callr(6, progress = T)
 sampler_tuned <- monty_sampler_adaptive(vcv_tuned)
 samples_tuned <- monty_sample(model, sampler_tuned, 80000, 
-                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.02, 0.5),
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
                               runner = runner,
                               n_chains = 6)
 
@@ -156,7 +156,7 @@ matplot(samples_tuned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 
 # Thin and check mixing
-samples_thinned <- monty_samples_thin(samples_tuned, burnin = 55000)
+samples_thinned <- monty_samples_thin(samples_tuned, burnin = 25000)
 matplot(samples_thinned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace log posterior season mu adaptive.png");
