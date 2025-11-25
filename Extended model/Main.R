@@ -98,7 +98,8 @@ filter <- dust_filter_create(msr, time_start = 0, data = incidence_data_season_w
 # Now running an MCMC
 # List of inputs
 packer <- monty_packer(c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", 
-                         "mu", "prop"))
+                         # "mu", 
+                         "prop"))
 
 # Likelihood
 likelihood <- dust_likelihood_monty(filter, packer, save_trajectories = T)
@@ -106,7 +107,7 @@ dust_likelihood_run(filter, list(spring_comp = 0.003478,
                                  summer_comp = 0.00060,
                                  autumn_comp = 0.00264,
                                  winter_comp = 0.00692, 
-                                 mu = 0.09,
+                                 # mu = 0.09,
                                  prop = 0.3),
                     save_trajectories = T)
 
@@ -116,7 +117,7 @@ prior <- monty_dsl({
   summer_comp ~ Uniform(0, 0.1)
   autumn_comp ~ Uniform(0, 0.1)
   winter_comp ~ Uniform(0, 0.1)
-  mu ~ Uniform(0.0001, 0.1)
+  # mu ~ Uniform(0.0001, 0.1)
   prop ~ Uniform(0, 1)
 })
 
@@ -124,7 +125,7 @@ prior <- monty_dsl({
 posterior <- likelihood + prior
 
 # Define a sampler (adaptive MCMC)
-vcv <- diag(6) * 0.0004
+vcv <- diag(5) * 0.0004 # diag(6) * 0.0004
 sampler <- monty_sampler_adaptive(vcv)
 
 # Parallelise the process
@@ -134,19 +135,21 @@ runner <- monty_runner_callr(2, progress = T)
 properties <- monty_model_properties(is_stochastic = F)
 model <- monty_model(posterior, properties = properties)
 samples <- monty_sample(model, sampler, 80000, 
-                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, #0.09, 
+                                    0.5),
                         runner = runner,
                         n_chains = 2)
 
 # Tune the sampler
 draws <- as_draws_df(samples)
-vcv_tuned <- cov(draws[1:6])
+vcv_tuned <- cov(draws[1:5])
 
 # Sample
 runner <- monty_runner_callr(6, progress = T)
 sampler_tuned <- monty_sampler_adaptive(vcv_tuned)
 samples_tuned <- monty_sample(model, sampler_tuned, 80000, 
-                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.09, 0.5),
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, #0.09, 
+                                          0.5),
                               runner = runner,
                               n_chains = 6)
 

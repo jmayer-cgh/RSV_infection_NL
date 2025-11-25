@@ -208,7 +208,7 @@ R_wt_ini <- parameter(1e-12)
 
 
 # transition parameters
-mu <- parameter(1/59.50121)
+mu <- parameter (0.0050) # parameter(1/59.50121)
 spring_comp <- parameter(1e-05)
 summer_comp <- parameter(0.02002)
 autumn_comp <- parameter(3e-05)

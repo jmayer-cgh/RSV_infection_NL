@@ -1154,10 +1154,10 @@ winter_FOI_wt_func <- function (t){
 }
 
 # Get parameter estimates from run to estimates the FOI for meach birth cohort
-spring_comp <- 3
-summer_comp <- 1
-autumn_comp <- 4
-winter_comp <- 5
+spring_comp <- params_est$median[1]
+summer_comp <- params_est$median[2]
+autumn_comp <- params_est$median[3]
+winter_comp <- params_est$median[4]
 
 # Define where to store the values
 lambda_sp_list <- list()
