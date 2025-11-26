@@ -64,8 +64,8 @@ mild_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates
 
 # ----------- Data -------------------------------------------------------------
 # Read in and the data and put it in the right format
-data <- read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
-
+data <- #read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
+read.csv("/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Original code/RSV_infection_NL/Data/infection_status.csv")
 # Group age into intervals 
 # bi-monthly for 0-2 years and 6-monthly for 2-5 years
 data$age_grp <- cut(data$age_days,
@@ -1817,11 +1817,11 @@ severe_illness_plt %>% ggsave(filename = "/Users/juliamayer/Library/CloudStorage
 # Get average age at hospitalisation
 av_age_hosp <- total_hosp_intervention_df %>%
   ungroup() %>%
-  filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
+  filter(age_bracket != "all" & age_bracket != "12-14") %>%
   mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                   T ~ as.numeric(age_bracket))) %>%
   group_by(iter, intervention, season_birth) %>%
-  summarise(av_age = sum(age_bracket * n_cases)/sum(n_cases)) %>%
+  summarise(av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
   ungroup() %>%
   group_by(intervention, season_birth) %>%
   summarise(av_age_low_95 = quantile(av_age, 0.025),
@@ -1831,12 +1831,12 @@ av_age_hosp <- total_hosp_intervention_df %>%
   rbind(
     total_hosp_intervention_df %>%
       ungroup() %>%
-      filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
+      filter(age_bracket != "all" & age_bracket != "12-14") %>%
       mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                       T ~ as.numeric(age_bracket))) %>%
       group_by(iter, intervention) %>%
       summarise(season_birth = "all",
-                av_age = sum(age_bracket * n_cases)/sum(n_cases)) %>%
+                av_age = sum(age_bracket * n_hospitalisations)/sum(n_hospitalisations)) %>%
       ungroup() %>%
       group_by(intervention, season_birth) %>%
       summarise(av_age_low_95 = quantile(av_age, 0.025),
@@ -1848,11 +1848,11 @@ av_age_hosp <- total_hosp_intervention_df %>%
 # Get median age at hospitalisation
 median_age_hosp <- total_hosp_intervention_df %>%
   ungroup() %>%
-  filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
+  filter(age_bracket != "all" & age_bracket != "12-14") %>%
   mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                   T ~ as.numeric(age_bracket))) %>%
   group_by(iter, intervention, season_birth) %>%
-  summarise(median_age = spatstat.univar::weighted.median(age_bracket, n_cases)) %>%
+  summarise(median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
   ungroup() %>%
   group_by(intervention, season_birth) %>%
   summarise(median_age_low_95 = quantile(median_age, 0.025),
@@ -1862,12 +1862,12 @@ median_age_hosp <- total_hosp_intervention_df %>%
   rbind(
     total_hosp_intervention_df %>%
       ungroup() %>%
-      filter(age_bracket != "all" & age_bracket != "12-14" & severity == "severe") %>%
+      filter(age_bracket != "all" & age_bracket != "12-14") %>%
       mutate (age_bracket = case_when(age_bracket == "<1" ~ 0,
                                       T ~ as.numeric(age_bracket))) %>%
       group_by(iter, intervention) %>%
       summarise(season_birth = "all",
-                median_age = spatstat.univar::weighted.median(age_bracket, n_cases)) %>%
+                median_age = spatstat.univar::weighted.median(age_bracket, n_hospitalisations)) %>%
       ungroup() %>%
       group_by(intervention, season_birth) %>%
       summarise(median_age_low_95 = quantile(median_age, 0.025),
