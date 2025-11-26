@@ -56,12 +56,6 @@ mild_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.
 severe_illness <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness numbers") %>%
   janitor::clean_names()
 
-severe_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Severe illness rates") %>% 
-  janitor::clean_names()
-
-mild_illness_new <- read_excel(paste0(path_paper,"SA estimates/RSV illness rates SA.xlsx"), sheet = "Mild illness rates") %>% 
-  janitor::clean_names()
-
 # ----------- Data -------------------------------------------------------------
 # Read in and the data and put it in the right format
 data <- #read.csv("https://raw.githubusercontent.com/Stijn-A/RSV_serology/refs/heads/master/data/infection_status.csv")
@@ -140,7 +134,7 @@ incidence_data_season[,c("incidence_mean","incidence_low95","incidence_up95")] <
                                                                                                        incidence_data_season$cum_pop,
                                                                                                        method="exact")[,c("mean","lower","upper")]
 
-
+# Pivot to wide format for fitting
 incidence_data_season_wide <- incidence_data_season %>% 
   select (!c(age_mid, age_grp, seroprev_mean, incidence_mean, cum_pop)) %>%
   pivot_wider(
@@ -154,6 +148,7 @@ incidence_data_season_wide <- incidence_data_season %>%
 # --------- Define our functions ----------------------------------------------
 # Newly seroconverted at a given age
 new_seroconv_age <- function (index){
+  # Extract a random iteration
   converted_all_rand <- as.numeric(t(converted_all[index,0:366]))
   converted_sp_rand <- as.numeric(t(converted_sp[index,0:366]))
   converted_sm_rand <- as.numeric(t(converted_sm[index,0:366]))
@@ -167,6 +162,7 @@ new_seroconv_age <- function (index){
                           sero_au = converted_au_rand,
                           sero_wt = converted_wt_rand)
   
+  # Get incidence of seroconversion
   incidence_df <- data.frame(age_midpoint = converted$age_midpoint,
                              incidence = c(0, diff(converted$sero_sp)),
                              season_birth = "spring") %>%
@@ -215,14 +211,6 @@ illness_type <- mild_illness_new %>%
             prop_non_ma_rate = total_non_ma_rate / total_rate) %>%
   ungroup()
 
-# # Get proportion of cases that are hospitalised
-# prop_hosp <- severe_illness %>%
-#   merge(mild_illness, by = "age_months") %>%
-#   group_by(age_months) %>%
-#   mutate(total_cases = total_severe_illness_number + total_mild_illness_number) %>%
-#   group_by(age_months) %>%
-#   summarise(prop_hosp = total_severe_illness_number / total_cases)
-
 # ----- Data processing
 # Number of infections
 infections <- function(conversion, births){
@@ -268,23 +256,6 @@ s_progression_format <- function (infections, severe_illness) {
                                    age_months > 59 ~ "≥60",
                                    TRUE ~ as.character(age_months)))
   
-  # severe_illness_progression <- conversion_formated %>%
-  #   merge(illness_type, by.x = "age_bracket", by.y = "age_months") %>%
-  #   mutate(severe_cases = case_when((total_severe_illness_rate/100000) * incidence < 0 ~ 0,
-  #                            is.infinite((total_severe_illness_rate/100000) * incidence ) ~ NA,
-  #                            T ~ (total_severe_illness_rate/100000) * incidence ),
-  #          mild_cases = case_when((total_mild_illness_rate/100000) * incidence < 0 ~ 0,
-  #                                   is.infinite((total_mild_illness_rate/100000) * incidence ) ~ NA,
-  #                                   T ~ (total_mild_illness_rate/100000) * incidence ),
-  #          ma_severe_cases = case_when((ma_severe_illness_rate/100000) * incidence < 0 ~ 0,
-  #                                   is.infinite((ma_severe_illness_rate/100000) * incidence ) ~ NA,
-  #                                   T ~ (ma_severe_illness_rate/100000) * incidence ),
-  #          non_ma_severe_cases = case_when((non_ma_severe_illness_rate/100000) * incidence < 0 ~ 0,
-  #                                   is.infinite((non_ma_severe_illness_rate/100000) * incidence ) ~ NA,
-  #                                   T ~ (non_ma_severe_illness_rate/100000) * incidence )) %>%
-  #   select(age_midpoint, age_months, age_bracket, season_birth, 
-  #          severe_cases, mild_cases, ma_severe_cases, non_ma_severe_cases)
-  
   # Get proportion of severe cases in SA
   severe_illness_progression <- infections_formated %>%
     filter(season_birth != "all") %>%
@@ -297,30 +268,12 @@ s_progression_format <- function (infections, severe_illness) {
                                       T ~ total_severe_illness_number/n_infections)) %>%
     filter(age_bracket != "12-14") # remove this age group as we don't have it in our data
   
- 
-  # severe_illness_progression %>%
-  #   mutate(age_bracket = factor(age_bracket,
-  #                               levels = c("<1", "1", "2", "3", "4", "5",
-  #                                          "6", "7", "8", "9", "10", "11"))) %>%
-  #   group_by(age_bracket) %>%
-  #   summarise(incidence_hosp = sum(incidence_hosp)) %>%
-  #   ggplot(aes(x = age_bracket, y = incidence_hosp)) +
-  #   geom_bar(stat = "identity")
   
   # Apply that to the birth seasons
   severe_illness_progression <- severe_illness_progression %>%
     merge(infections_formated, by = c("age_bracket")) %>%
     mutate(n_hosp = n_infections * incidence_hosp) %>%
     select(age_midpoint, age_months, age_bracket, season_birth, n_hosp)
-    
-  # severe_illness_progression %>%
-  #   mutate(age_bracket = factor(age_bracket,
-  #                               levels = c("<1", "1", "2", "3", "4", "5",
-  #                                          "6", "7", "8", "9", "10", "11"))) %>%
-  #   group_by(season_birth, age_bracket) %>%
-  #   summarise(n_hosp = sum(n_hosp)) %>%
-  #   ggplot(aes(x = age_bracket, y = n_hosp, fill = season_birth)) +
-  #   geom_bar(position = position_dodge(), stat = "identity")
   
   return (severe_illness_progression)
 }
@@ -365,7 +318,7 @@ scale_cases <- function (severe_illness) {
   # Get totals
   severe_cases_u1_de <- severe_illness 
   
-  # Scale the numbers to have them match Fabienne's paper
+  # Scale the numbers
   # About 22,000 hospitalisations in 2019, of which about 12% in year 1 --> 2,640 
   # But we had 10,564 in 2024 according to InEKDatenBrowser for 28 days - 1 year
   # Model predicts about 79,000 hospitalisations --> scale by 0.033 for Fabienne and by 0.133 for InEKDatenBrowser
@@ -473,11 +426,10 @@ hosp_vacc <- function (cases, VE_distribution){
   # Get number of prevented cases
   hosp_prevented_vacc <- hosp_prevented_vacc %>% 
     group_by(season_birth, age_bracket, age_months, age_midpoint, VE_t) %>%
-    # summarise(n_ma_severe_vacc = n_ma_severe_scaled * (1-VE_t), # number of cases despite vaccination
-    #           n_ma_severe_averted = n_ma_severe_scaled * VE_t)
     summarise(n_vacc = n_hosp_scaled * (1-VE_t), # number of cases despite vaccination
               n_averted = n_hosp_scaled * VE_t)
   
+  # Get totals by season of birth
   hosp_prevented_vacc <- hosp_prevented_vacc %>% 
     filter(season_birth != "all") %>%
     rbind(
@@ -547,6 +499,8 @@ ma_vacc <- function (ma_cases, VE_distribution){
 
 # Effect of mAB on hospitalisations
 hosp_mAB <- function (hosp_prevented_vacc, IE_distribution){
+  
+  # Add the estimated IE to the number of cases
   hosp_prevented <- hosp_prevented_vacc %>% filter(!is.na(age_months)) %>%
     ungroup() %>%
     select(season_birth, age_bracket, age_months, age_midpoint,
@@ -600,6 +554,7 @@ hosp_mAB <- function (hosp_prevented_vacc, IE_distribution){
            hosp_winter_11 = case_when (season_birth == "winter" ~ hosp_11,
                                        TRUE ~ prev_11 + hosp_11)) 
   
+  # Get totals
   hosp_prevented_age <- hosp_prevented_age %>% 
     filter(season_birth != "all") %>%
     rbind(
@@ -728,8 +683,6 @@ ma_mAB <- function (ma_prevented_vacc, IE_distribution) {
 hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
   # Get the numbers
   total_hosp_intervention <- cases %>%
-    # select(season_birth, age_bracket, n_ma_severe_scaled) %>%
-    # rename(n_hospitalisations = n_ma_severe_scaled) %>%
     select(season_birth, age_bracket, n_hosp_scaled) %>%
     rename(n_hospitalisations = n_hosp_scaled) %>%
     mutate(prevented_hospitalisations = 0,
@@ -737,7 +690,6 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
     rbind(
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
         ungroup() %>%
-        # select(season_birth, age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
         select(season_birth, age_bracket, n_vacc, n_averted) %>%
         group_by(season_birth) %>%
         summarise(age_bracket = "all",
@@ -758,7 +710,6 @@ hosp_intervention <- function (cases, hosp_prevented_vacc, hosp_prevented_age){
     rbind(
       hosp_prevented_vacc %>% filter(age_bracket == "all") %>%
         ungroup() %>%
-        # select(age_bracket, n_ma_severe_vacc, n_ma_severe_averted) %>%
         select(age_bracket, n_vacc, n_averted) %>%
         summarise(season_birth = "all",
                   age_bracket = "all",
@@ -1015,6 +966,7 @@ for (i in 1:100){
 total_hosp_intervention_df <- do.call("rbind", total_hosp_intervention)
 # total_ma_intervention_df <- do.call("rbind", total_ma_intervention)
 
+# Add total without intervention
 total_hosp_intervention_df <- total_hosp_intervention_df %>%
   rbind(
     total_hosp_intervention_df %>% 
@@ -1026,6 +978,7 @@ total_hosp_intervention_df <- total_hosp_intervention_df %>%
       ungroup()
   )
 
+# Get incidence per 100,000
 incidence_hosp <- total_hosp_intervention_df %>%
   merge(births_de %>% select(season, total), by.x = "season_birth", by.y = "season") %>%
   mutate(incidence_per_100000 = n_hospitalisations/total*100000)
