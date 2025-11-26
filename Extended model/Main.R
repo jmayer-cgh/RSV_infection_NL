@@ -439,6 +439,48 @@ incidence_test %>% filter(age_midpoint <= 365) %>%
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence all.png");
 dev.off ()
 
+# Save diagnostic plots
+# Thin and check mixing
+matplot(samples_thinned$density, type = "l", lty = 1,
+        xlab = "Sample", ylab = "Log posterior probability density")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace log posterior season mu adaptive.png");
+dev.off ()
+
+# Check trace
+draws_thinned <- as_draws_df(samples_thinned)
+mcmc_trace(draws_thinned, facet_args = list(ncol = 1, strip.position = "left"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace parameters season mu adaptive.png");
+dev.off ()
+
+# Summary
+params_est <- summarise_draws(draws_thinned, 
+                              mean, sd, median, mad, 
+                              q5 = ~quantile(.x, 0.025), 
+                              q95 = ~quantile(.x , 0.975),
+                              rhat, ess_bulk, ess_tail,
+                              min, max)
+
+draws_array_tuned <- as_draws_array(draws_thinned)
+# Posterior uncertainty intervals
+# Plot them separately because the values are very different
+mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty FOI season mu adaptive.png");
+dev.off ()
+
+mcmc_intervals(draws_array_tuned, pars = "mu")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty mu season mu adaptive.png");
+dev.off ()
+
+mcmc_intervals(draws_array_tuned, pars = "prop")
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty pi season mu adaptive.png");
+dev.off ()
+
+# Univariate marginal posterior distributions
+mcmc_hist(draws_array_tuned)
+dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Marginal posterior distributions season mu adaptive.png");
+dev.off ()
+
+
 # ------------------------------------------------------------------------------
 # Simulate the model with the parameter estimates
 msr_sim <- odin("~/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Simulation model.R")
