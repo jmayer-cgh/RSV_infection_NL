@@ -159,7 +159,7 @@ matplot(samples_tuned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 
 # Thin and check mixing
-samples_thinned <- monty_samples_thin(samples_tuned, burnin = 20000)
+samples_thinned <- monty_samples_thin(samples_tuned, burnin = 5000)
 matplot(samples_thinned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace log posterior season mu adaptive.png");
