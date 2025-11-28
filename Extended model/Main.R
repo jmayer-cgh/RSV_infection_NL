@@ -98,7 +98,7 @@ filter <- dust_filter_create(msr, time_start = 0, data = incidence_data_season_w
 # Now running an MCMC
 # List of inputs
 packer <- monty_packer(c("spring_comp", "summer_comp", "autumn_comp", "winter_comp", 
-                         # "mu", 
+                         "mu", 
                          "prop"))
 
 # Likelihood
@@ -107,7 +107,7 @@ dust_likelihood_run(filter, list(spring_comp = 0.003478,
                                  summer_comp = 0.00060,
                                  autumn_comp = 0.00264,
                                  winter_comp = 0.00692, 
-                                 # mu = 0.09,
+                                 mu = 0.09,
                                  prop = 0.3),
                     save_trajectories = T)
 
@@ -117,7 +117,7 @@ prior <- monty_dsl({
   summer_comp ~ Uniform(0, 0.1)
   autumn_comp ~ Uniform(0, 0.1)
   winter_comp ~ Uniform(0, 0.1)
-  # mu ~ Uniform(0.0001, 0.1)
+  mu ~ Normal(0.005, 0.00102) # centred around 200 days with 95% CI [143 - 333]
   prop ~ Uniform(0, 1)
 })
 
@@ -125,7 +125,7 @@ prior <- monty_dsl({
 posterior <- likelihood + prior
 
 # Define a sampler (adaptive MCMC)
-vcv <- diag(5) * 0.0004 # diag(6) * 0.0004
+vcv <- diag(6) * 0.0004
 sampler <- monty_sampler_adaptive(vcv)
 
 # Parallelise the process
@@ -135,20 +135,20 @@ runner <- monty_runner_callr(2, progress = T)
 properties <- monty_model_properties(is_stochastic = F)
 model <- monty_model(posterior, properties = properties)
 samples <- monty_sample(model, sampler, 80000, 
-                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, #0.09, 
+                        initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.004, 
                                     0.5),
                         runner = runner,
                         n_chains = 2)
 
 # Tune the sampler
 draws <- as_draws_df(samples)
-vcv_tuned <- cov(draws[1:5])
+vcv_tuned <- cov(draws[1:6])
 
 # Sample
 runner <- monty_runner_callr(6, progress = T)
 sampler_tuned <- monty_sampler_adaptive(vcv_tuned)
 samples_tuned <- monty_sample(model, sampler_tuned, 80000, 
-                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, #0.09, 
+                              initial = c(1e-05, 0.02002, 3e-05, 4e-05, 0.004, 
                                           0.5),
                               runner = runner,
                               n_chains = 6)
@@ -159,7 +159,7 @@ matplot(samples_tuned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 
 # Thin and check mixing
-samples_thinned <- monty_samples_thin(samples_tuned, burnin = 25000)
+samples_thinned <- monty_samples_thin(samples_tuned, burnin = 20000)
 matplot(samples_thinned$density, type = "l", lty = 1,
         xlab = "Sample", ylab = "Log posterior probability density")
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace log posterior season mu adaptive.png");
@@ -438,48 +438,6 @@ incidence_test %>% filter(age_midpoint <= 365) %>%
   theme_light()
 dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Incidence all.png");
 dev.off ()
-
-# Save diagnostic plots
-# Thin and check mixing
-matplot(samples_thinned$density, type = "l", lty = 1,
-        xlab = "Sample", ylab = "Log posterior probability density")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace log posterior season mu adaptive.png");
-dev.off ()
-
-# Check trace
-draws_thinned <- as_draws_df(samples_thinned)
-mcmc_trace(draws_thinned, facet_args = list(ncol = 1, strip.position = "left"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Trace parameters season mu adaptive.png");
-dev.off ()
-
-# Summary
-params_est <- summarise_draws(draws_thinned, 
-                              mean, sd, median, mad, 
-                              q5 = ~quantile(.x, 0.025), 
-                              q95 = ~quantile(.x , 0.975),
-                              rhat, ess_bulk, ess_tail,
-                              min, max)
-
-draws_array_tuned <- as_draws_array(draws_thinned)
-# Posterior uncertainty intervals
-# Plot them separately because the values are very different
-mcmc_intervals(draws_array_tuned, pars = c("spring_comp", "summer_comp", "autumn_comp", "winter_comp"))
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty FOI season mu adaptive.png");
-dev.off ()
-
-mcmc_intervals(draws_array_tuned, pars = "mu")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty mu season mu adaptive.png");
-dev.off ()
-
-mcmc_intervals(draws_array_tuned, pars = "prop")
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Uncertainty pi season mu adaptive.png");
-dev.off ()
-
-# Univariate marginal posterior distributions
-mcmc_hist(draws_array_tuned)
-dev.copy(jpeg,filename="/Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/Plots/Checks/monty/Marginal posterior distributions season mu adaptive.png");
-dev.off ()
-
 
 # ------------------------------------------------------------------------------
 # Simulate the model with the parameter estimates
