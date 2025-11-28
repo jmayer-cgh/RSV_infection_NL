@@ -1,2 +1,15 @@
 .DS_Store
 /Users/juliamayer/Library/CloudStorage/OneDrive-Charité-UniversitätsmedizinBerlin/LSTHM project/Extension/RSV_infection_NL/Extended model/Model with 1 M/Odin model with BT and 1 M.rds
+Erlang waning/Model outputs.csv
+.gitignore
+.gitignore
+Extended model/.Rhistory
+.gitignore
+RDS files/Odin model with BT and 1 M.rds
+RDS files/Odin model with BT, 1 M, summer only.rds
+RDS files/seroconversion model outputs.rds
+RDS files/seroconversion simulation outputs.rds
+Extended model/src/.Rhistory
+.gitignore
+RDS files/Odin model with BT, 1 M, adaptive.rds
+.gitignore
